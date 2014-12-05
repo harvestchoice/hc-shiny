@@ -11,7 +11,7 @@ library(ggvis)
 library(leaflet)
 library(RColorBrewer)
 library(classInt)
-library(hcapi3,  lib.loc="/usr/lib/opencpu/library")
+library(hcapi3)
 
 
 # Define server logic for slider examples
@@ -95,32 +95,31 @@ shinyServer(function(input, output, session) {
       # session$onFlushed is necessary to work around a bug in the Shiny/Leaflet
       # integration; without it, the addCircle commands arrive in the browser
       # before the map is created.
-      paintObs <- observe({
+      session$onFlushed(once=TRUE, function() {
+            paintObs <- observe({
+                  
+                  # Clear existing circles before drawing
+                  map$clearShapes()
+                  map$setView(mean(dt()$Y, na.rm=T), mean(dt()$X+2, na.rm=T), 6)
+                  
+                  # Draw in batches of 1000; makes the app feel a bit more responsive
+                  chunksize <- 1000
+                  for (from in seq.int(1, nrow(dt()), chunksize)) {
+                    to <- min(nrow(dt()), from + chunksize)
+                    chunk <- dt()[from:to,]
+                    # Bug in Shiny causes this to error out when user closes browser
+                    # before we get here
+                    try(map$addCircle(
+                            chunk$Y, chunk$X, 7000, chunk$my_var,
+                            options=list(stroke=F, fillOpacity=0.65, fill=T, color="red")
+                            #eachOptions=list(color="red")
+                        )
+                    )
+                  }
+                })
             
-            # Clear existing circles before drawing
-            map$clearShapes()
-            map$setView(mean(dt()$Y, na.rm=T), mean(dt()$X+2, na.rm=T), 6)
-            
-            # Draw in batches of 1000; makes the app feel a bit more responsive
-            chunksize <- 1000
-            for (from in seq.int(1, nrow(dt()), chunksize)) {
-              to <- min(nrow(dt()), from + chunksize)
-              chunk <- dt()[from:to,]
-              # Bug in Shiny causes this to error out when user closes browser
-              # before we get here
-              try(map$addCircle(
-                      chunk$Y, chunk$X, 7000, chunk$my_var,
-                      options=list(stroke=F, fillOpacity=0.65),
-                      eachOptions=list(color="red")
-                  )
-              )
-            }
+            # TIL this is necessary in order to prevent the observer from
+            # attempting to write to the websocket after the session is gone.
+            session$onSessionEnded(paintObs$suspend)
           })
-      
-      shiny:::flushReact()
-      
     })
-
-
-
-

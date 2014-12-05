@@ -3,14 +3,14 @@ library(ggvis)
 library(leaflet)
 
 # Define UI for random distribution application 
-shinyUI(fluidPage(title="Canvas Plots with ggvis",
-        
-        tags$head(tags$link(rel='stylesheet', type='text/css', href='style.css')), 
+shinyUI(fluidPage(
+        title="Canvas Plots with ggvis",
+        theme="style.css",
         
         leafletMap("map", width="100%", height="100%",
             initialTileLayer = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
             initialTileLayerAttribution = HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>'),
-            options=list(center= c(20, -20), zoom=7)
+            options=list(center=c(20, -20), zoom=7)
         ),            
         
         absolutePanel(id="results", class="modal", fixed=T, draggable=T,
