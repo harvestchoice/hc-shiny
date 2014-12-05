@@ -7,4 +7,4 @@
 #+LaTeX_CLASS: mel-article
 #+STARTUP: indent showstars
 
-A couple of visualization applications using RStudio Shiny framework, mostly for testing purposes.
+A couple of visualization applications using RStudio Shiny framework, mostly for testing purposes. These aps are viewable at http://shiny.harvestchoice.org/.
