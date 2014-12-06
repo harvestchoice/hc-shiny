@@ -11,7 +11,6 @@ library(hcapi3)
 library(leaflet)
 library(RColorBrewer)
 library(classInt)
-#library(ggvis)
 
 setwd("/home/projects/www/cell5mLeaflet")
 
@@ -19,6 +18,10 @@ setwd("/home/projects/www/cell5mLeaflet")
 # Define server logic for slider examples
 shinyServer(function(input, output, session) {
       
+      # Create the map
+      map <- createLeafletMap(session, "map")      
+      
+      # Create controls
       output$selectCat <- renderUI({ selectInput("selectCat", "Choose a Category", 
                 vi[order(cat1), unique(cat1)],
                 selected="Demographics") })
@@ -30,6 +33,12 @@ shinyServer(function(input, output, session) {
       output$selectISO3 <- renderUI({ selectInput("selectISO3", "Choose a Country", 
                 iso,
                 selected="GHA") })
+      
+      output$selectMin <- renderUI({ sliderInput("selectMin", "Minimum", 
+                stats()[1, Value], stats()[6, Value], stats()[1, Value], round=T) })
+      
+      output$selectMax <- renderUI({ sliderInput("selectMax", "Maximum", 
+                input$selectMin, stats()[6, Value], stats()[6, Value], round=T) })      
       
       cat <- reactive({
             ifelse(length(input$selectCat)>0, input$selectCat, "Demographics")
@@ -49,11 +58,12 @@ shinyServer(function(input, output, session) {
             return(tmp)
           })
       
+      # query hcapi3
       dt <- reactive({
             tmp <- hcapi3::getLayer(var(), iso3())
-            tmp <- tmp[ADM1_NAME_ALT!="buffer gridcell"]
             setkey(tmp, X, Y)
             setnames(tmp, 8, "my_var")
+            tmp <- tmp[!is.na(my_var) | my_var!=0 | ADM1_NAME_ALT!="buffer gridcell"]
             cv <- classIntervals(tmp$my_var, style="kmeans")$brks
             tmp[, my_col := cut(my_var, unique(cv), cutlabels=F)]
             tmp[, my_col := brewer.pal(8, "OrRd")[my_col]]
@@ -61,44 +71,37 @@ shinyServer(function(input, output, session) {
             return(tmp)
           })
       
-      # Statistics
-      output$tableSum <- renderTable(include.rownames=F, {
-            t(summary(dt()[["my_var"]]))  
+      stats <- reactive({
+            tmp <- summary(dt()$my_var)
+            tmp <- data.table(Statistic=names(tmp), Value=tmp)
+            return(tmp)            
           })
       
-#      # Redraw histogram
-#      dtf %>%
-#          ggvis(~my_var) %>%
-#          layer_histograms(fill.hover:="blue", width=0.1) %>%
-#          set_options(width=320, height=180) %>%
-#          bind_shiny("hist", "hist_ui")       
+      dtFilter <- reactive({
+            dt()[my_var >= input$selectMin & my_var <= input$selectMax]
+          })
       
-      
-      # Create the map
-      map <- createLeafletMap(session, "map")
+      # Statistics
+      output$tableSum <- renderTable(digits=0, include.rownames=F, stats())        
       
       # session$onFlushed is necessary to work around a bug in the Shiny/Leaflet
-      session$onFlushed(once=T, function() {
-            paintObs <- observe({                 
+      session$onFlushed(once=T, function() {           
+            
+            paintObs <- observe({               
                   
                   # Clear existing circles before drawing
                   map$clearShapes()
                   map$setView(mean(dt()$Y, na.rm=T), mean(dt()$X+2, na.rm=T), 6)
                   
                   # Draw in batches of 1000; makes the app feel a bit more responsive
-                  chunksize <- 5000
-                  for (from in seq.int(1, nrow(dt()), chunksize)) {
-                    to <- min(nrow(dt()), from + chunksize)
-                    chunk <- dt()[from:to]
-                    # Bug in Shiny causes this to error out when user closes browser
-                    # before we get here
-                    try(map$addCircle(
-                            chunk$Y, chunk$X, 5000,
-                            options=list(stroke=F, fillOpacity=0.55, fill=T),
-                            eachOptions=list(fillColor=chunk$my_col)
-                        )
-                    )
-                  }
+                  # Bug in Shiny causes this to error out when user closes browser
+                  # before we get here
+                  try(map$addCircle(
+                          dtFilter()$Y, dtFilter()$X, 5000,
+                          options=list(stroke=F, fillOpacity=0.55, fill=T),
+                          eachOptions=list(fillColor=dtFilter()$my_col)
+                      )
+                  )
                 })
             
             # TIL this is necessary in order to prevent the observer from

@@ -6342,26 +6342,6 @@ body {
   font-weight: 300;
 }
 
-.container-fluid {
-  padding: 0;
-  height: 100%;
-}
-
-.modal-content {
-  padding: 20px;
-  opacity: 0.8;
-}
-
-.modal-content:hover {
-  opacity: 2;
-}
-
-#map {
-  position: fixed;
-  width: auto;
-  height: 100%;
-}
-
 #cite {
   font-size: .8em;
 }
