@@ -5,7 +5,7 @@ library(leaflet)
 # Define UI for random distribution application 
 shinyUI(fluidPage(
         title="Canvas Plots with ggvis",
-        theme="leaf.css",
+        theme="bootstrap.css",      
         
         leafletMap("map", width="100%", height="100%",
             initialTileLayer = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
@@ -14,27 +14,37 @@ shinyUI(fluidPage(
         ),          
         
         
-        absolutePanel(id="results", class="modal", fixed=T, draggable=T,
-            top=300, left="auto", right=20, bottom="auto",
-            width=420, height="auto",                
+        absolutePanel(id="results", fixed=F, draggable=T,
+            top="auto", left="auto", right=20, bottom=10,
+            width=480, height="auto", cursor="move",              
             
-            #h4("Province Summary"),
-            #tableOutput("tableVar"),
-            h4("Layer Statistics"),
-            ggvisOutput("hist"),
-            tableOutput("tableSum")
-        
+            div(class="modal-content",
+                #h4("Province Summary"),
+                #tableOutput("tableVar"),
+                h4("Layer Statistics"),
+                ggvisOutput("hist"),
+                tableOutput("tableSum")
+            )
         ),        
         
-        absolutePanel(id="controls", class="modal", fixed=T, draggable=F,
+        absolutePanel(id="controls", fixed=T, draggable=F,
             top=20, left="auto", right=20, bottom="auto",
             width=260, height="auto",
             
-            uiOutput("selectCat"),
-            uiOutput("selectVar"),
-            uiOutput("selectISO3"),
-            #uiOutput("ggvis_ui"),
-            uiOutput("hist_ui")
+            div(class="modal-content",
+                uiOutput("selectCat"),
+                uiOutput("selectVar"),
+                uiOutput("selectISO3"),
+                #uiOutput("ggvis_ui"),
+                uiOutput("hist_ui")
+            )
+        ),
+        
+        absolutePanel(id="cite", fixed=F, draggable=F,
+            top="auto", left=10, right="auto", bottom=0,
+            width="auto", height="auto",  
+            p("IFPRI/HarvestChoice, 2014.")
+        
         )
     )
 )

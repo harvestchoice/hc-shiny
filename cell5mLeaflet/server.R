@@ -86,7 +86,7 @@ shinyServer(function(input, output, session) {
                   map$setView(mean(dt()$Y, na.rm=T), mean(dt()$X+2, na.rm=T), 6)
                   
                   # Draw in batches of 1000; makes the app feel a bit more responsive
-                  chunksize <- 1000
+                  chunksize <- 5000
                   for (from in seq.int(1, nrow(dt()), chunksize)) {
                     to <- min(nrow(dt()), from + chunksize)
                     chunk <- dt()[from:to]
@@ -94,8 +94,8 @@ shinyServer(function(input, output, session) {
                     # before we get here
                     try(map$addCircle(
                             chunk$Y, chunk$X, 5000,
-                            options=list(stroke=F, fillOpacity=0.65, fill=T),
-                            eachOptions=list(color=dt()$my_col)
+                            options=list(stroke=F, fillOpacity=0.55, fill=T),
+                            eachOptions=list(fillColor=chunk$my_col)
                         )
                     )
                   }
