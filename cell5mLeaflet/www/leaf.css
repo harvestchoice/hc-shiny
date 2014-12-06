@@ -21,6 +21,7 @@ input[type="number"] {
 
 .container-fluid {
   padding: 0;
+  height: 100%;
 }
 
 #map {
