@@ -47,8 +47,8 @@ shinyUI(fluidPage(
         absolutePanel(id="cite", fixed=F, draggable=F,
             top="auto", left=10, right="auto", bottom=0,
             width="auto", height="auto",  
-            p("IFPRI/HarvestChoice, 2014. Source code at ",
-            a("https://github.com/harvestchoice/hc-shiny"), ".")
+            p("IFPRI/HarvestChoice, 2014. Source code on ",
+            a("Github", href="https://github.com/harvestchoice/hc-shiny"), ".")
         
         )
     )
