@@ -19,7 +19,6 @@ shinyUI(fluidPage(
             
             div(class="modal-content",
                 h3("Map Overlays"),
-                p("Source code on <a href='https://github.com/harvestchoice/hc-shiny'>Github</a>."),
                 bsAlert("alertNoData"),                
                 uiOutput("selectCat"),
                 uiOutput("selectVar"),
@@ -48,7 +47,8 @@ shinyUI(fluidPage(
         absolutePanel(id="cite", fixed=F, draggable=F,
             top="auto", left=10, right="auto", bottom=0,
             width="auto", height="auto",  
-            p("IFPRI/HarvestChoice, 2014.")
+            p("IFPRI/HarvestChoice, 2014. Source code at ",
+            a("https://github.com/harvestchoice/hc-shiny"), ".")
         
         )
     )
