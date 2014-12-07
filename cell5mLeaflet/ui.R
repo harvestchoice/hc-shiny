@@ -19,7 +19,7 @@ shinyUI(fluidPage(
             
             div(class="modal-content",
                 h3("Map Overlays"),
-                html("<p>Source code on <a href='https://github.com/harvestchoice/hc-shiny'>Github</a>.</p>"),
+                p("Source code on <a href='https://github.com/harvestchoice/hc-shiny'>Github</a>."),
                 bsAlert("alertNoData"),                
                 uiOutput("selectCat"),
                 uiOutput("selectVar"),
