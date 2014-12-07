@@ -19,6 +19,7 @@ shinyUI(fluidPage(
             
             div(class="modal-content",
                 h3("Map Overlays"),
+                html("<p>Source code on <a href='https://github.com/harvestchoice/hc-shiny'>Github</a>.</p>"),
                 bsAlert("alertNoData"),                
                 uiOutput("selectCat"),
                 uiOutput("selectVar"),
@@ -26,6 +27,8 @@ shinyUI(fluidPage(
                 hr(),                
                 #h4("Province Summary"),
                 #tableOutput("tableVar"),
+                plotOutput("plotHist", height="100%"),
+                p(),
                 tableOutput("tableSum")
             )
         ),

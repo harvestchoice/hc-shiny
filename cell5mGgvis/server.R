@@ -64,10 +64,10 @@ shinyServer(function(input, output, session) {
           }) 
       
       # Redraw dot plot
-      dt %>% ggvis(~X, ~Y, fill=~my_var) %>%
-          layer_points(size=.8) %>%
-          set_options(width=220, height=180) %>%
-          bind_shiny("ggvis", "ggvis_ui") 
+#      dt %>% ggvis(~X, ~Y, fill=~my_var) %>%
+#          layer_points(size=.8) %>%
+#          set_options(width=220, height=180) %>%
+#          bind_shiny("ggvis", "ggvis_ui") 
       
       # Redraw histogram
       dt %>% ggvis(~my_var) %>%

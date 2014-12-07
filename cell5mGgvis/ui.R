@@ -11,14 +11,14 @@ shinyUI(fluidPage(
             uiOutput("selectCat"),
             uiOutput("selectVar"),
             uiOutput("selectISO3"),
-            uiOutput("hist_ui"),               
-            uiOutput("ggvis_ui")                 
+            uiOutput("hist_ui")              
+            #uiOutput("ggvis_ui")                 
         ),
         
-        column(3, offset=1,
+        column(3, offset=1
             #h4("Province Summary"),
             #tableOutput("tableVar"), 
-            ggvisOutput("ggvis")
+            #ggvisOutput("ggvis")
         ),
         
         column(3, offset=1,
