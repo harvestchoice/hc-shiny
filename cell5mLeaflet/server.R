@@ -7,6 +7,7 @@
 
 library(data.table)
 library(shiny)
+library(shinyBS)
 library(hcapi3)
 library(leaflet)
 library(RColorBrewer)
@@ -38,7 +39,11 @@ shinyServer(function(input, output, session) {
                 stats()[1, Value], stats()[6, Value], stats()[1, Value], round=T) })
       
       output$selectMax <- renderUI({ sliderInput("selectMax", "Maximum", 
-                input$selectMin, stats()[6, Value], stats()[6, Value], round=T) })      
+                input$selectMin, stats()[6, Value], stats()[6, Value], round=T) })  
+      
+      output$varTitle <- reactive({
+            ifelse(length(input$selectVar)>0, vi[input$selectVar][, varTitle], "")
+          }) 
       
       cat <- reactive({
             ifelse(length(input$selectCat)>0, input$selectCat, "Demographics")
@@ -46,7 +51,7 @@ shinyServer(function(input, output, session) {
       
       var <- reactive({
             ifelse(length(input$selectVar)>0, input$selectVar, "PN05_TOT")
-          })
+          })     
       
       iso3 <- reactive({
             ifelse(length(input$selectISO3)>0, input$selectISO3, "GHA")
@@ -64,10 +69,18 @@ shinyServer(function(input, output, session) {
             setkey(tmp, X, Y)
             setnames(tmp, 8, "my_var")
             tmp <- tmp[!is.na(my_var) | my_var!=0 | ADM1_NAME_ALT!="buffer gridcell"]
-            cv <- classIntervals(tmp$my_var, style="kmeans")$brks
-            tmp[, my_col := cut(my_var, unique(cv), cutlabels=F)]
-            tmp[, my_col := brewer.pal(8, "OrRd")[my_col]]
-            tmp[is.na(my_col), my_col := "#ffffff"]
+            cv <- try(classIntervals(tmp$my_var, style="kmeans")$brks)
+            if (class(cv)=="try-error") {
+              # Not enough data, alert, and create empty dt
+              createAlert(session, "alertNoData", 
+                  title="No Data!", message="Choose another combination.", type="warning", block=T)
+              tmp <- data.table(X=NA, Y=NA, my_var=NA, my_col=NA) 
+            } else {
+              # kmeans algo worked, classify
+              tmp[, my_col := cut(my_var, unique(cv), cutlabels=F)]
+              tmp[, my_col := brewer.pal(8, "OrRd")[my_col]]
+              tmp[is.na(my_col), my_col := "#ffffff"]
+            }
             return(tmp)
           })
       

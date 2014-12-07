@@ -1,4 +1,5 @@
 library(shiny)
+library(shinyBS)
 library(leaflet)
 
 # Define UI for random distribution application 
@@ -16,19 +17,30 @@ shinyUI(fluidPage(
             top=20, left="auto", right=20, bottom="auto",
             width=260, height="auto", cursor="move",              
             
-            div(class="modal-content",                
+            div(class="modal-content",
+                h3("Map Overlays"),
+                bsAlert("alertNoData"),                
                 uiOutput("selectCat"),
                 uiOutput("selectVar"),
-                uiOutput("selectISO3"),                  
+                uiOutput("selectISO3"), 
                 hr(),                
                 #h4("Province Summary"),
                 #tableOutput("tableVar"),
-                tableOutput("tableSum"),
-                hr(),
-                uiOutput("selectMin"),
-                uiOutput("selectMax")
+                tableOutput("tableSum")
             )
         ),
+        
+        absolutePanel(id="filter", fixed=F, draggable=T,
+            top="auto", left=20, right="auto", bottom=60,
+            width="auto", height="auto", cursor="move",              
+            
+            div(class="modal-content", style="height:180px;",
+                h3(htmlOutput("varTitle")),
+                p("Filter Layer to Min/Max"),
+                column(2, uiOutput("selectMin", inline=T)),
+                column(2, uiOutput("selectMax", inline=T))
+            )
+        ),        
         
         absolutePanel(id="cite", fixed=F, draggable=F,
             top="auto", left=10, right="auto", bottom=0,

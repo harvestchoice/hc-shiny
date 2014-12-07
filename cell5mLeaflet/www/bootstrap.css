@@ -6348,7 +6348,7 @@ body {
 }
 
 .modal-content {
-  padding: 20px;
+  padding: 0 20px;
   opacity: 0.8;
 }
 
