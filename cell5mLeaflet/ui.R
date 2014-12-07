@@ -4,7 +4,7 @@ library(leaflet)
 
 # Define UI for random distribution application 
 shinyUI(fluidPage(
-        title="Canvas Plots with ggvis",
+        title="Map overalys with leaflet",
         theme="bootstrap.css",      
         
         leafletMap("map", width="100%", height="100%",
@@ -38,7 +38,7 @@ shinyUI(fluidPage(
             
             div(class="modal-content", style="height:180px;",
                 h3(htmlOutput("varTitle")),
-                p("Filter Layer to Min/Max"),
+                p("Click map to show pixel value. Filter Layer to Min/Max"),
                 column(2, uiOutput("selectMin", inline=T)),
                 column(2, uiOutput("selectMax", inline=T))
             )

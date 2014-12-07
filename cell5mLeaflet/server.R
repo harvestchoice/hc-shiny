@@ -1,7 +1,7 @@
 #####################################################################################
 # Title: Testing HTML Canvas with ggvis
 # Date: December 2014
-# Project: HarvestChoice for the Bill and Melinda Gates Foundation
+# Project: HarvestChoice/IFPRI
 # Authors: Bacou, Melanie <mel@mbacou.com>
 #####################################################################################
 
@@ -12,7 +12,6 @@ library(hcapi3)
 library(leaflet)
 library(classInt)
 
-# Define server logic for slider examples
 shinyServer(function(input, output, session) {
       
       # Create the map
@@ -61,7 +60,7 @@ shinyServer(function(input, output, session) {
       
       # query hcapi3
       dt <- reactive({
-            tmp <- hcapi3::getLayer(var(), iso3())
+            tmp <- getLayer(var(), iso3())
             setkey(tmp, X, Y)
             setnames(tmp, 8, "my_var")
             tmp <- tmp[!is.na(my_var) | ADM1_NAME_ALT!="buffer gridcell"]
@@ -89,16 +88,16 @@ shinyServer(function(input, output, session) {
           })
       
       dtFilter <- reactive({
-            data.frame(dt()[my_var >= input$selectMin & my_var <= input$selectMax])
+            dt()[my_var >= input$selectMin & my_var <= input$selectMax]
           })
       
       # Statistics
-      output$tableSum <- renderTable(digits=0, include.rownames=F, stats())   
+      output$tableSum <- renderTable(stats(), digits=0, include.rownames=F)   
       
       # Histogram
       output$plotHist <- renderPlot(width=220, height=220, {
             par(mar=c(2,2,0,0), bty="n", family="Helvetica-Narrow", cex.axis=.8)
-            hist(dtFilter()$my_var, col=4, main=NULL, ylab=NULL, xlab=NULL)
+            hist(dtFilter()$my_var, col=4, border="white", main=NULL, ylab=NULL, xlab=NULL)
           })
       
       # session$onFlushed is necessary to work around a bug in the Shiny/Leaflet
@@ -112,7 +111,7 @@ shinyServer(function(input, output, session) {
                   
                   # Bug in Shiny causes this to error out when user closes browser            
                   map$addCircle(
-                      dtFilter()$Y, dtFilter()$X, 5000,
+                      dtFilter()$Y, dtFilter()$X, 5000, dtFilter()$CELL5M,
                       options=list(stroke=F, fillOpacity=0.55, fill=T),
                       eachOptions=list(fillColor=dtFilter()$my_col)
                   )
@@ -121,6 +120,22 @@ shinyServer(function(input, output, session) {
             # TIL this is necessary in order to prevent the observer from
             # attempting to write to the websocket after the session is gone.
             session$onSessionEnded(paintObs$suspend)
-          })       
+          })
+      
+      # When map is clicked, show a popup with layer info
+      clickObs <- observe({
+            map$clearPopups()
+            event <- input$map_shape_click
+            if (is.null(event)) return()
+            isolate({
+                  map$showPopup(event$lat, event$lng, paste(
+                          "Lat: ", event$lat, "<br/>",
+                          "Long: ", event$lng, "<br/>",
+                          "Value: ", dtFilter()[CELL5M==event$id, my_var]),
+                      options=list(className=""))
+                })
+          })
+      
+      session$onSessionEnded(clickObs$suspend)
       
     })
