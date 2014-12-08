@@ -37,7 +37,7 @@ shinyUI(fluidPage(
         ),
         
         absolutePanel(id="filter", fixed=F, draggable=T,
-            top=20, left=40, right="auto", bottom="auto",
+            top=50, left=40, right="auto", bottom="auto",
             width=560, height="auto", cursor="move",              
             
             div(class="modal-content", style="height:600px",

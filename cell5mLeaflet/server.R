@@ -48,8 +48,6 @@ shinyServer(function(input, output, session) {
           function(file) file.copy(genFile(var(), iso3(), format=input$fileType), file)
       )
       
-      
-      
       cat <- reactive({
             ifelse(length(input$selectCat)>0, input$selectCat, "Demographics")
           })      
@@ -68,7 +66,7 @@ shinyServer(function(input, output, session) {
             return(tmp)
           })
       
-      # query hcapi3
+      # Query hcapi3 and symbolize
       dt <- reactive({
             tmp <- getLayer(var(), iso3())
             setkey(tmp, X, Y)
@@ -80,7 +78,7 @@ shinyServer(function(input, output, session) {
             cv <- try(classIntervals(tmp$my_var, style="kmeans")$brks)
             
             if (class(cv)=="try-error") {
-              # Not enough data, alert, and create empty dt
+              # Not enough data for kmeans, alert, and create empty data.table
               createAlert(session, "alertNoData", 
                   title="No Data!",
                   message="Choose another combination.",
@@ -98,7 +96,8 @@ shinyServer(function(input, output, session) {
           })
       
       dtFilter <- reactive({
-            dt()[my_var >= input$selectFilter[1] & my_var <= input$selectFilter[2]]
+            tmp <- input$selectFilter
+            dt()[my_var >= tmp[1] & my_var <= tmp[2]]
           })      
       
       stats <- reactive({
@@ -118,7 +117,7 @@ shinyServer(function(input, output, session) {
             hist(dtFilter()$my_var, col=4, border="white", main=NULL, ylab=NULL, xlab=NULL)
           })
       
-      # session$onFlushed is necessary to work around a bug in the Shiny/Leaflet
+      # session$onFlushed is necessary to work around a bug in the Shiny/Leaflet (?)
       session$onFlushed(once=T, function() {           
             
             paintObs <- observe({
@@ -175,9 +174,9 @@ shinyServer(function(input, output, session) {
       ################################################################################
       # Domain Summary
       ################################################################################
-
-      output$selectDomain <- renderUI({ selectInput("selectDomain", "Choose a layer to summarize by",
-                domlst())
+      
+      output$selectDomain <- renderUI({ selectInput("selectDomain",
+                "Choose a layer to summarize by", domlst())
           })
       
       output$tableDomain <- renderTable(digits=0, include.rownames=F,
