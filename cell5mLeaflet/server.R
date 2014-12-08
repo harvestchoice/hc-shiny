@@ -45,8 +45,10 @@ shinyServer(function(input, output, session) {
       
       output$saveData <- downloadHandler(
           function() paste("data-", Sys.Date(), ".zip", sep=""),
-          function(file) file.copy(genFile(var(), iso3(), format=input$fileType()), file)
+          function(file) file.copy(genFile(var(), iso3(), format=input$fileType), file)
       )
+      
+      
       
       cat <- reactive({
             ifelse(length(input$selectCat)>0, input$selectCat, "Demographics")
@@ -106,7 +108,9 @@ shinyServer(function(input, output, session) {
           })
       
       # Statistics
-      output$tableSum <- renderTable(stats(), digits=0, include.rownames=F)   
+      output$tableSum <- renderTable(digits=0, include.rownames=F,
+          format.args=list(big.mark=",", decimal.mark="."),
+          stats())
       
       # Histogram
       output$plotHist <- renderPlot(width=220, height=220, {
@@ -121,7 +125,7 @@ shinyServer(function(input, output, session) {
                   
                   # Clear existing circles before drawing
                   map$clearShapes()
-                  # Create local
+                  # Get data
                   tmp <- dtFilter()
                   
                   if ( !identical(my_iso3, iso3()) ) {
@@ -137,12 +141,11 @@ shinyServer(function(input, output, session) {
                     )
                     
                   } else {
-                    # Draw circles (place holder for optimized code)
+                    # Draw circles (placeholder for optimized code)
                     map$addCircle(
                         tmp$Y, tmp$X, 5000, tmp$CELL5M,
                         options=list(stroke=F, fillOpacity=0.55, fill=T),
-                        eachOptions=list(fillColor=tmp$my_col)
-                    )
+                        eachOptions=list(fillColor=tmp$my_col))
                   }
                 })
             
@@ -159,15 +162,72 @@ shinyServer(function(input, output, session) {
             isolate({
                   tmp <- dtFilter()[CELL5M==event$id]
                   map$showPopup(event$lat, event$lng, paste(
+                          "CELL5M: ", event$id, "<br/>",
                           "Lat: ", event$lat, "<br/>",
                           "Long: ", event$lng, "<br/>",
                           "Province: ", tmp$ADM1_NAME_ALT, "<br/>",
                           "District: ", tmp$ADM2_NAME_ALT, "<br/>",
-                          "Value: ", tmp$my_var, " ", vi[var()][, unit]),
-                      options=list(className=""))
+                          "Value: ", tmp$my_var, " ", vi[var()][, unit]))
+                })
+          })
+      
+      
+      ################################################################################
+      # Domain Summary
+      ################################################################################
+
+      output$selectDomain <- renderUI({ selectInput("selectDomain", "Choose a layer to summarize by",
+                domlst())
+          })
+      
+      output$tableDomain <- renderTable(digits=0, include.rownames=F,
+          format.args=list(big.mark=",", decimal.mark="."), {
+            input$btnDomain
+            isolate(getLayer(var(), iso3(), by=domby()))
+          })       
+      
+      domlst <- function() {
+        tmp <- c("ADM1_NAME_ALT", vi$varCode[sample(1:600, 10)])
+        names(tmp) <- vi[tmp][, varLabel] 
+        return(tmp)
+      }
+      
+      domby <- reactive({
+            ifelse(length(input$selectDomain)>0, input$selectDomain, "ADM1_NAME_ALT")
+          })        
+      
+      output$txtDomain <- reactive({
+            # Bound to btnMapDomain
+            if (input$btnMapDomain==0) return()
+            
+            isolate({
+                  # Clear existing circles before drawing
+                  map$clearShapes()
+                  
+                  # Summarize layer
+                  tmp <- getLayer(var(), iso3(), by=domby(), collapse=F)
+                  setkey(tmp, X, Y)
+                  setnames(tmp, 5, "my_var")
+                  tmp <- tmp[!is.na(my_var)]
+                  
+                  # Get default symbology from `vi`
+                  cc <-  as.character(unlist(strsplit(vi[var()][, classColors], "|", fixed=T)))
+                  cv <- classIntervals(tmp$my_var, length(cc))$brks
+                  rg <- range(tmp$my_var, na.rm=T)
+                  tmp[, my_col := cut(my_var, unique(c(rg[1]-1, cv, rg[2]+1)), cutlabels=F, ordered_result=T)]
+                  tmp[, my_col := colorRampPalette(cc)(length(cv)+2)[my_col]]
+                  tmp[is.na(my_col), my_col := "#ffffff"]        
+                  
+                  # Draw circles
+                  map$addCircle(
+                      tmp$Y, tmp$X, 5000, tmp$CELL5M,
+                      options=list(stroke=F, fillOpacity=0.55, fill=T),
+                      eachOptions=list(fillColor=tmp$my_col))
+                  
+                  # Check
+                  return("Done!")
                 })
           })
       
       session$onSessionEnded(clickObs$suspend)
-      
     })
