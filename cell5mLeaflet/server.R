@@ -45,7 +45,7 @@ shinyServer(function(input, output, session) {
       
       output$saveData <- downloadHandler(
           function() paste("data-", Sys.Date(), ".zip", sep=""),
-          function(file) file.copy(genFile(var(), iso3(), format=input$fileType), file)
+          function(file) file.copy(genFile(var(), iso3(), format=input$fileType()), file)
       )
       
       cat <- reactive({

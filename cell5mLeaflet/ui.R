@@ -30,7 +30,8 @@ shinyUI(fluidPage(
                 uiOutput("selectFilter"),
                 hr(),
                 selectInput("fileType", "Choose Export Format",
-                    choices=c(`ASCII Raster`="asc", GeoTIFF="tif", STATA="dta", RData="rdata")),
+                    choices=c(`ASCII Raster`="asc", GeoTIFF="tif", STATA="dta", RData="rdata"),
+                    selected="ASCII Raster"),
                 downloadButton("saveData", "Save Layer")
             )
         ),
