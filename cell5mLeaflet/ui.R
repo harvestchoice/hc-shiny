@@ -10,7 +10,8 @@ shinyUI(fluidPage(
         leafletMap("map", width="100%", height="100%",
             initialTileLayer = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
             initialTileLayerAttribution = HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>'),
-            options=list(center=c(20, 20), zoom=7)
+            # Center on Ghana
+            options=list(center=c(7.79167, -1.20833 ), zoom=6)
         ),          
         
         absolutePanel(id="results", fixed=F, draggable=T,
@@ -22,25 +23,28 @@ shinyUI(fluidPage(
                 bsAlert("alertNoData"),                
                 uiOutput("selectCat"),
                 uiOutput("selectVar"),
-                uiOutput("selectISO3"), 
-                hr(),                
+                uiOutput("selectISO3"),            
                 #h4("Province Summary"),
                 #tableOutput("tableVar"),
-                plotOutput("plotHist", height="100%"),
-                p(),
-                tableOutput("tableSum")
+                hr(),
+                uiOutput("selectFilter"),
+                hr(),
+                selectInput("fileType", "Choose Export Format",
+                    choices=c(`ASCII Raster`="asc", GeoTIFF="tif", STATA="dta", RData="rdata")),
+                downloadButton("saveData", "Save Layer")
             )
         ),
         
         absolutePanel(id="filter", fixed=F, draggable=T,
-            top="auto", left=20, right="auto", bottom=60,
-            width="auto", height="auto", cursor="move",              
+            top="auto", left=40, right="auto", bottom=60,
+            width=280, height="auto", cursor="move",              
             
-            div(class="modal-content", style="height:180px;",
+            div(class="modal-content",
                 h3(htmlOutput("varTitle")),
-                p("Click map to show pixel value. Filter Layer to Min/Max"),
-                column(2, uiOutput("selectMin", inline=T)),
-                column(2, uiOutput("selectMax", inline=T))
+                p("Click map to show pixel data."),
+                plotOutput("plotHist", height="100%"),
+                p(),
+                tableOutput("tableSum")
             )
         ),        
         
@@ -48,7 +52,7 @@ shinyUI(fluidPage(
             top="auto", left=10, right="auto", bottom=0,
             width="auto", height="auto",  
             p("IFPRI/HarvestChoice, 2014. Source code on ",
-            a("Github", href="https://github.com/harvestchoice/hc-shiny"), ".")
+                a("Github", href="https://github.com/harvestchoice/hc-shiny"), ".")
         
         )
     )

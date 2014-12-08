@@ -12,7 +12,12 @@ library(hcapi3)
 library(leaflet)
 library(classInt)
 
+setwd("/home/projects/www/tmp")
+
 shinyServer(function(input, output, session) {
+      
+      # Locals
+      my_iso3 <- "GHA"
       
       # Create the map
       map <- createLeafletMap(session, "map")      
@@ -30,15 +35,18 @@ shinyServer(function(input, output, session) {
                 iso,
                 selected="GHA") })
       
-      output$selectMin <- renderUI({ sliderInput("selectMin", "Minimum", 
-                stats()[1, Value], stats()[6, Value], stats()[1, Value], round=T) })
-      
-      output$selectMax <- renderUI({ sliderInput("selectMax", "Maximum", 
-                stats()[1, Value], stats()[6, Value], stats()[6, Value], round=T) })  
+      output$selectFilter <- renderUI({ sliderInput("selectFilter", "Filter layer to Min/Max", 
+                stats()[1, Value], stats()[6, Value],
+                c(stats()[1, Value], stats()[6, Value]), round=T) }) 
       
       output$varTitle <- reactive({
             ifelse(length(input$selectVar)>0, vi[input$selectVar][, varTitle], "")
           }) 
+      
+      output$saveData <- downloadHandler(
+          function() paste("data-", Sys.Date(), ".zip", sep=""),
+          function(file) file.copy(genFile(var(), iso3(), format=input$fileType), file)
+      )
       
       cat <- reactive({
             ifelse(length(input$selectCat)>0, input$selectCat, "Demographics")
@@ -64,31 +72,37 @@ shinyServer(function(input, output, session) {
             setkey(tmp, X, Y)
             setnames(tmp, 8, "my_var")
             tmp <- tmp[!is.na(my_var) | ADM1_NAME_ALT!="buffer gridcell"]
+            
+            # Get default symbology from `vi`
             cc <-  as.character(unlist(strsplit(vi[var()][, classColors], "|", fixed=T)))
-            rg <- range(tmp$my_var, na.rm=T)
             cv <- try(classIntervals(tmp$my_var, style="kmeans")$brks)
+            
             if (class(cv)=="try-error") {
               # Not enough data, alert, and create empty dt
               createAlert(session, "alertNoData", 
-                  title="No Data!", message="Choose another combination.", type="warning", block=T)
+                  title="No Data!",
+                  message="Choose another combination.",
+                  type="warning", block=T)
               tmp <- data.table(X=NA, Y=NA, my_var=NA, my_col=NA) 
+              
             } else {
-              # kmeans algo worked, classify
+              # kmeans algo worked, good to classify
+              rg <- range(tmp$my_var, na.rm=T)
               tmp[, my_col := cut(my_var, unique(c(rg[1]-1, cv, rg[2]+1)), cutlabels=F, ordered_result=T)]
               tmp[, my_col := colorRampPalette(cc)(length(cv)+2)[my_col]]
-              tmp[is.na(my_col), my_col := "#ffffff"]
+              tmp[is.na(my_col), my_col := "#ffffffff"]
             }
             return(tmp)
           })
+      
+      dtFilter <- reactive({
+            dt()[my_var >= input$selectFilter[1] & my_var <= input$selectFilter[2]]
+          })      
       
       stats <- reactive({
             tmp <- summary(dt()$my_var)
             tmp <- data.table(Statistic=names(tmp), Value=tmp)
             return(tmp)            
-          })
-      
-      dtFilter <- reactive({
-            dt()[my_var >= input$selectMin & my_var <= input$selectMax]
           })
       
       # Statistics
@@ -103,21 +117,36 @@ shinyServer(function(input, output, session) {
       # session$onFlushed is necessary to work around a bug in the Shiny/Leaflet
       session$onFlushed(once=T, function() {           
             
-            paintObs <- observe({               
+            paintObs <- observe({
                   
                   # Clear existing circles before drawing
                   map$clearShapes()
-                  map$setView(mean(dt()$Y, na.rm=T), mean(dt()$X+2, na.rm=T), 6)
+                  # Create local
+                  tmp <- dtFilter()
                   
-                  # Bug in Shiny causes this to error out when user closes browser            
-                  map$addCircle(
-                      dtFilter()$Y, dtFilter()$X, 5000, dtFilter()$CELL5M,
-                      options=list(stroke=F, fillOpacity=0.55, fill=T),
-                      eachOptions=list(fillColor=dtFilter()$my_col)
-                  )
+                  if ( !identical(my_iso3, iso3()) ) {
+                    # Recenter map only if country has changed
+                    map$setView(mean(tmp$Y, na.rm=T), mean(tmp$X+2, na.rm=T), 6)
+                    my_iso3 <<- iso3()
+                    
+                    # Draw circles
+                    map$addCircle(
+                        tmp$Y, tmp$X, 5000, tmp$CELL5M,
+                        options=list(stroke=F, fillOpacity=0.55, fill=T),
+                        eachOptions=list(fillColor=tmp$my_col)
+                    )
+                    
+                  } else {
+                    # Draw circles (place holder for optimized code)
+                    map$addCircle(
+                        tmp$Y, tmp$X, 5000, tmp$CELL5M,
+                        options=list(stroke=F, fillOpacity=0.55, fill=T),
+                        eachOptions=list(fillColor=tmp$my_col)
+                    )
+                  }
                 })
             
-            # TIL this is necessary in order to prevent the observer from
+            # This is necessary in order to prevent the observer from
             # attempting to write to the websocket after the session is gone.
             session$onSessionEnded(paintObs$suspend)
           })
@@ -128,10 +157,13 @@ shinyServer(function(input, output, session) {
             event <- input$map_shape_click
             if (is.null(event)) return()
             isolate({
+                  tmp <- dtFilter()[CELL5M==event$id]
                   map$showPopup(event$lat, event$lng, paste(
                           "Lat: ", event$lat, "<br/>",
                           "Long: ", event$lng, "<br/>",
-                          "Value: ", dtFilter()[CELL5M==event$id, my_var]),
+                          "Province: ", tmp$ADM1_NAME_ALT, "<br/>",
+                          "District: ", tmp$ADM2_NAME_ALT, "<br/>",
+                          "Value: ", tmp$my_var, " ", vi[var()][, unit]),
                       options=list(className=""))
                 })
           })
