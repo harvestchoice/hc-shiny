@@ -2,7 +2,6 @@ library(shiny)
 library(shinyBS)
 library(leaflet)
 
-# Define UI for random distribution application 
 shinyUI(fluidPage(
         title="Map overlays with leaflet",
         theme="bootstrap.css",      
