@@ -1,5 +1,5 @@
 #####################################################################################
-# Title: Testing HTML Canvas with ggvis
+# Title: Testing Interactive Viz with leaflet
 # Date: December 2014
 # Project: HarvestChoice/IFPRI
 # Authors: Bacou, Melanie <mel@mbacou.com>
@@ -89,8 +89,8 @@ shinyServer(function(input, output, session) {
               # kmeans algo worked, good to classify
               rg <- range(tmp$my_var, na.rm=T)
               tmp[, my_col := cut(my_var, unique(c(rg[1]-1, cv, rg[2]+1)), cutlabels=F, ordered_result=T)]
-              tmp[, my_col := colorRampPalette(cc)(length(cv)+2)[my_col]]
-              tmp[is.na(my_col), my_col := "#ffffffff"]
+              tmp[, my_col := colorRampPalette(cc)(length(cv)+1)[my_col]]
+              tmp[is.na(my_col), my_col := "#ffffff"]
             }
             return(tmp)
           })
@@ -214,7 +214,7 @@ shinyServer(function(input, output, session) {
                   cv <- classIntervals(tmp$my_var, length(cc))$brks
                   rg <- range(tmp$my_var, na.rm=T)
                   tmp[, my_col := cut(my_var, unique(c(rg[1]-1, cv, rg[2]+1)), cutlabels=F, ordered_result=T)]
-                  tmp[, my_col := colorRampPalette(cc)(length(cv)+2)[my_col]]
+                  tmp[, my_col := colorRampPalette(cc)(length(cv)+1)[my_col]]
                   tmp[is.na(my_col), my_col := "#ffffff"]        
                   
                   # Draw circles

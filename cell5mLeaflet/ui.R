@@ -40,7 +40,7 @@ shinyUI(fluidPage(
             top=50, left=40, right="auto", bottom="auto",
             width=560, height="auto", cursor="move",              
             
-            div(class="modal-content", style="height:600px",
+            div(class="modal-content", style="height:560px",
                 
                 h3(htmlOutput("varTitle")),
                 p("Click map to show pixel data."),
@@ -48,7 +48,8 @@ shinyUI(fluidPage(
                     tabPanel(title="Overview",
                         column(3, offset=0,
                             h4("Histogram"),
-                            plotOutput("plotHist", height="100%")),
+                            plotOutput("plotHist", height="100%"),
+                            p(br(), "Showing frequencies for visible pixels.")),
                         column(2, 
                             h4("Layer Statistics"),
                             tableOutput("tableSum")
@@ -63,7 +64,7 @@ shinyUI(fluidPage(
                             actionButton("btnDomain", "Summarize", icon("cog")),
                             hr(),
                             actionButton("btnMapDomain", "Map It", icon("globe")),
-                            p("Click to display results on the map."),
+                            p(br(), "Click to display results on the map."),
                             p(htmlOutput("txtDomain"))
                         ),
                         column(3,
