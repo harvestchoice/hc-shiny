@@ -25,12 +25,13 @@ shinyUI(fluidPage(
                 uiOutput("selectVar"),           
                 #h4("Province Summary"),
                 #tableOutput("tableVar"),
+                actionButton("btnLayer", "Show Layer", icon("globe")),
                 hr(),
                 uiOutput("selectFilter"),
                 hr(),
                 selectInput("fileType", "Choose Export Format",
                     choices=c(`ASCII Raster`="asc", GeoTIFF="tif", STATA="dta", RData="rds"),
-                    selected="ASCII Raster"),
+                    selected="asc"),
                 downloadButton("saveData", "Save Layer")
             )
         ),
@@ -39,7 +40,7 @@ shinyUI(fluidPage(
             top=50, left=40, right="auto", bottom="auto",
             width=560, height="auto", cursor="move",              
             
-            div(class="modal-content", style="height:560px",
+            div(class="modal-content", style="height:580px",
                 
                 h3(htmlOutput("varTitle")),
                 p("Click map to show pixel data."),
@@ -61,10 +62,7 @@ shinyUI(fluidPage(
                             uiOutput("selectDomain"),
                             p("Showing a random list of 10 domains to summarize by."),
                             actionButton("btnDomain", "Summarize", icon("cog")),
-                            hr(),
-                            actionButton("btnMapDomain", "Map It", icon("globe")),
-                            p(br(), "Click to display results on the map."),
-                            p(htmlOutput("txtDomain"))
+                            p(br(), "Click to summary and map.")
                         ),
                         column(3,
                             h4("Domain Summary"),

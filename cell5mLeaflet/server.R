@@ -14,43 +14,41 @@ library(classInt)
 
 setwd("/home/projects/www/tmp")
 
-# Query hcapi3 and symbolize
-getCircles <- function(var="PN05_TOT", iso3="GHA", ...) {
-  tmp <- getLayer(var, iso3, ...)
-  setkey(tmp, X, Y)
-  setnames(tmp, length(names(tmp)), "my_var")
-  tmp <- tmp[!is.na(my_var) | ADM1_NAME_ALT!="buffer gridcell"]
-  
-  # Get default symbology from `vi`
-  cc <-  as.character(unlist(strsplit(vi[var][, classColors], "|", fixed=T)))
-  cv <- try(classIntervals(tmp$my_var, style="kmeans")$brks)
-  
-  if (class(cv)=="try-error") {
-    # Not enough data for kmeans, alert, and create empty data.table
-    createAlert(session, "alertNoData", 
-        title="No Data!",
-        message="Choose another combination.",
-        type="warning", block=T)
-    tmp <- data.table(X=NA, Y=NA, my_var=NA, my_col=NA) 
-    
-  } else {
-    # kmeans algo worked, good to classify
-    rg <- range(tmp$my_var, na.rm=T)
-    tmp[, my_col := cut(my_var, unique(c(rg[1]-1, cv, rg[2]+1)), cutlabels=F, ordered_result=T)]
-    tmp[, my_col := colorRampPalette(cc)(length(cv)+1)[my_col]]
-    tmp[is.na(my_col), my_col := "#ffffff"]
-  }
-  return(tmp)
-}
-
-
-
 shinyServer(function(input, output, session) {
       
       # Init some variables
       my_iso3 <- "GHA"
       my_var <- "PN05_TOT"
-      my_dom <- "ADM1_NAME_ALT"      
+      my_dom <- "ADM1_NAME_ALT"
+      
+      getCircles <- function(var="PN05_TOT", iso3="GHA", ...) {
+        # Query hcapi3
+        tmp <- getLayer(var, iso3, ...)
+        setkey(tmp, X, Y)
+        setnames(tmp, length(names(tmp)), "my_var")
+        tmp <- tmp[!is.na(my_var)]
+        
+        # Get default symbology from `vi`
+        cc <-  as.character(unlist(strsplit(vi[var][, classColors], "|", fixed=T)))
+        cv <- try(classIntervals(tmp$my_var, style="kmeans")$brks)
+        
+        if (class(cv)=="try-error") {
+          # Not enough data for kmeans, alert, and create empty data.table
+          createAlert(session, "alertNoData", 
+              title="No Data!",
+              message="Choose another combination.",
+              type="warning", block=T)
+          tmp <- data.table(X=NA, Y=NA, my_var=NA, my_col=NA) 
+          
+        } else {
+          # kmeans algo worked, good to classify
+          rg <- range(tmp$my_var, na.rm=T)
+          tmp[, my_col := cut(my_var, unique(c(rg[1]-1, cv, rg[2]+1)), cutlabels=F, ordered_result=T)]
+          tmp[, my_col := colorRampPalette(cc)(length(cv)+1)[my_col]]
+          tmp[is.na(my_col), my_col := "#ffffff"]
+        }
+        return(tmp)
+      }      
       
       # Create the map
       map <- createLeafletMap(session, "map")      
@@ -73,7 +71,7 @@ shinyServer(function(input, output, session) {
                 c(stats()[1, Value], stats()[6, Value]), round=T) }) 
       
       output$varTitle <- reactive({
-            ifelse(length(input$selectVar)>0, vi[input$selectVar][, varTitle], "")
+            ifelse(length(input$selectVar)>0, vi[var()][, varTitle], "")
           }) 
       
       output$saveData <- downloadHandler(
@@ -93,21 +91,23 @@ shinyServer(function(input, output, session) {
       # Not sure that's the right way to init variables
       cat <- reactive({
             ifelse(length(input$selectCat)>0, input$selectCat, "Demographics")
-          })      
-      
-      var <- reactive({
-            ifelse(length(input$selectVar)>0, input$selectVar, my_var)
-          })     
-      
-      iso3 <- reactive({
-            ifelse(length(input$selectISO3)>0, input$selectISO3, my_iso3)
-          })      
+          })   
       
       varlst <- reactive({
             tmp <- vi[genRaster==T & type=="continuous" & cat1==cat(), varCode]
             names(tmp) <- vi[tmp][, varLabel] 
             return(tmp)
           })
+      
+      var <- reactive({
+            # Bound to btnLayer
+            if (input$btnLayer==0) my_var else isolate(input$selectVar)
+          })     
+      
+      iso3 <- reactive({
+            # Bound to btnLayer
+            if (input$btnLayer==0) my_iso3 else isolate(input$selectISO3)
+          })      
       
       # Query and symbolize layer
       dt <- reactive({
@@ -117,7 +117,8 @@ shinyServer(function(input, output, session) {
       # Filter layer
       dtFilter <- reactive({
             tmp <- input$selectFilter
-            dt()[my_var >= tmp[1] & my_var <= tmp[2]]
+            tmp <- dt()[my_var >= tmp[1] & my_var <= tmp[2]]
+            tmp <- tmp[ADM1_NAME_ALT!="buffer gridcell"]
           })   
       
       # Compute 5 stats
@@ -129,7 +130,6 @@ shinyServer(function(input, output, session) {
       
       # Draw raster
       drawObs <- observe({
-            
             # Clear existing circles before drawing
             map$clearShapes()
             tmp <- dtFilter()
@@ -185,9 +185,7 @@ shinyServer(function(input, output, session) {
           format.args=list(big.mark=",", decimal.mark="."), {
             # Bound to btnDomain
             if (input$btnDomain==0) return()
-            isolate(setnames(
-                    dtDomain()[, .SD, .SDcols=-c("X", "Y", "my_col")],
-                    2, vi[var()][, varLabel]))
+            isolate(dtDomain())
           })   
       
       domlst <- function() {
@@ -203,12 +201,14 @@ shinyServer(function(input, output, session) {
       
       # Summarize layer
       dtDomain <- reactive({
-            getCircles(c("X", "Y", var()), iso3(), domby())
+            tmp <- getLayer(var(), iso3(), domby())
+            setkeyv(tmp, domby())
+            setnames(tmp, 1:2, vi[c(domby(), var())][, varLabel])
           })
       
       drawObsDomain <- observe({
             # Bound to btnMapDomain
-            if (input$btnMapDomain==0) return()
+            if (input$btnDomain==0) return()
             
             isolate({
                   # Clear existing circles before drawing
