@@ -90,8 +90,6 @@ shinyServer(function(input, output, session) {
     }
   )
 
-  output$periodTable <- renderTable({ stats.period()  })
-
   cntr <- reactive({
     if (is.null(input$selectg0)) "Ghana" else input$selectg0
   })
