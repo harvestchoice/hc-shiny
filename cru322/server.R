@@ -126,7 +126,7 @@ shinyServer(function(input, output, session) {
 
   stats.dt <- reactive({
     dt <- extract(stats(), g(), fun=mean, na.rm=T, df=T, small=T)
-    dt <- cbind(g()@data[, c("ADM1_NAME", "ADM2_NAME")], sp[, -1])
+    dt <- cbind(g()@data[, c("ADM1_NAME", "ADM2_NAME")], dt[, -1])
     dt <- data.table(dt)
     dt <- melt(dt, id.vars=c("ADM1_NAME", "ADM2_NAME"), variable.name="month", variable.factor=F)
     dt[, month := as.Date(month, format="X%Y.%m.%d")]
