@@ -45,6 +45,7 @@ shinyUI(fluidPage(
                 h3(htmlOutput("varTitle")),
                 p("Click map to show pixel data."),
                 tabsetPanel(position="left", selected="Overview",
+                    
                     tabPanel(title="Overview",
                         column(3, offset=0,
                             h4("Histogram"),
@@ -68,7 +69,24 @@ shinyUI(fluidPage(
                             h4("Domain Summary"),
                             tableOutput("tableDomain")
                         )
-                    )
+                    ),
+                    
+                    tabPanel(title="Homologue Finder",
+                        column(2,                   
+                            p(br(), "Use the Layer choices on the right to select up to 5 layers."),
+                            p(htmlOutput("selectRank")),
+                            p(actionLink("btnAddRank", "Add Layer", icon("plus"))),
+                            p("Then select a district on the map (mouse over and click."), 
+                            uiOutput("showRank"),
+                            actionButton("btnRank", "Rank all districts", icon("cog")),
+                            hr(),
+                            actionLink("btnClearRank", "Clear All", icon("refresh"))
+                        ),
+                        column(3,
+                            h4("District Comparison"),
+                            tableOutput("tableRank")
+                        )
+                    )                    
                 )
             )
         ),       
