@@ -38,7 +38,7 @@ shinyUI(fluidPage(
       uiOutput("selectMonth"),
       hr(),
       selectInput("fileType", "Choose Export Format",
-        choices=c(GeoTiff="tif", `R Raster Grid`="grd", netCDF="nc", `Erdas Images`="img", CSV="csv", STATA="dta"),
+        choices=c(GeoTiff="tif", `ASCII Raster`="asc", netCDF="nc", `Erdas Images`="img", CSV="csv", STATA="dta"),
         selected="csv"),
       downloadButton("saveData", "Save Layer")
     )

@@ -80,10 +80,12 @@ shinyServer(function(input, output, session) {
       r <- stats()
       dt <- stats.dt2()[, .SD, .SDcols=-c(1:3)]
       switch(input$fileType,
-        grd = writeRaster(r, file, format="raster", bylayer=F, overwrite=T),
-        tif = writeRaster(r, file, format="GTiff", bylayer=F, options="INTERLEAVE=BAND", overwrite=T),
-        nc = writeRaster(r, file, format="CDF", bylayer=F, overwrite=T),
-        img = writeRaster(r, file, format="HFA", bylayer=F, overwrite=T),
+        # Note that writeRaster() has an issue with download handler
+        grd = writeRaster(r, file, "raster", bylayer=F, overwrite=T),
+        tif = writeRaster(r, file, "GTiff", bylayer=F, options="INTERLEAVE=BAND", overwrite=T),
+        nc = writeRaster(r, file, "CDF", bylayer=F, overwrite=T),
+        img = writeRaster(r, file, "HFA", bylayer=F, overwrite=T),
+        # These 2 formats work okay
         csv = write.csv(dt, file, row.names=F, na=""),
         dta = foreign::write.dta(dt, file, version=9L)
       )
