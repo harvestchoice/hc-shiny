@@ -91,7 +91,7 @@ shinyServer(function(input, output, session) {
   )
 
   cntr <- reactive({
-    if (is.null(input$selectg0)) "Ghana" else input$selectg0
+    if (input$btn==0) "Ghana" else input$selectg0
   })
 
   sg2 <- reactive({
@@ -112,7 +112,7 @@ shinyServer(function(input, output, session) {
   g <- reactive({ g2[g2$ADM2_NAME==dist(),] })
 
   r.tm <- reactive({
-    if(is.null(input$rg)) return(tm)
+    if (input$btn==0) return(tm)
     seq(as.Date(paste0(input$rg[1], "-01-01")), as.Date(paste0(input$rg[2], "-12-31")), "month")
   })
 
