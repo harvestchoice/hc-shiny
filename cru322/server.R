@@ -54,7 +54,8 @@ shinyServer(function(input, output, session) {
 
   output$dygraph <-  renderDygraph({
     if (input$btn>0) {
-      dygraph(as.xts(stats.dt()[, list(value, mean)], order.by=stats.dt()$month)) %>%
+      dt <- stats.dt2()
+      dygraph(as.xts(dt[, list(value, mean)], order.by=dt$month)) %>%
         dySeries("value", label=cru(), color="#00BFFF") %>%
         dySeries("mean", label="long-term mean", color="red") %>%
         dyOptions(fillGraph=T, fillAlpha=0.4) %>%
@@ -76,12 +77,13 @@ shinyServer(function(input, output, session) {
     function() paste0(cntr(), "-", dist(), "-", cru(), "-",
       paste(range(r.tm()), collapse="-"), ".", input$fileType),
     function(file) {
-      dt <- stats.dt()[, .SD, .SDcols=-c(1:2)]
+      r <- stats()
+      dt <- stats.dt2()[, .SD, .SDcols=-c(1:3)]
       switch(input$fileType,
-        grd = writeRaster(stats(), file, format="raster", bylayer=F, overwrite=T),
-        tif = writeRaster(stats(), file, format="GTiff", bylayer=F, options="INTERLEAVE=BAND", overwrite=T),
-        nc = writeRaster(stats(), file, format="CDF", bylayer=F, overwrite=T),
-        img = writeRaster(stats(), file, format="HFA", bylayer=F, overwrite=T),
+        grd = writeRaster(r, file, format="raster", bylayer=F, overwrite=T),
+        tif = writeRaster(r, file, format="GTiff", bylayer=F, options="INTERLEAVE=BAND", overwrite=T),
+        nc = writeRaster(r, file, format="CDF", bylayer=F, overwrite=T),
+        img = writeRaster(r, file, format="HFA", bylayer=F, overwrite=T),
         csv = write.csv(dt, file, row.names=F, na=""),
         dta = foreign::write.dta(dt, file, version=9L)
       )
@@ -124,34 +126,44 @@ shinyServer(function(input, output, session) {
     return(r)
   })
 
-  stats.dt <- reactive({
+  stats.dt1 <- reactive({
+    # Summarize over district and convert to data.table
     dt <- extract(stats(), g(), fun=mean, na.rm=T, df=T, small=T)
-    dt <- cbind(g()@data[, c("ADM1_NAME", "ADM2_NAME")], dt[, -1])
+    dt <- cbind(g()@data[, c("ADM1_NAME", "ADM2_NAME")], dt)
     dt <- data.table(dt)
-    dt <- melt(dt, id.vars=c("ADM1_NAME", "ADM2_NAME"), variable.name="month", variable.factor=F)
+    dt <- melt(dt, id.vars=c("ADM1_NAME", "ADM2_NAME", "ID"), variable.name="month", variable.factor=F)
     dt[, month := as.Date(month, format="X%Y.%m.%d")]
+    return(dt)
+  })
+
+  stats.dt2 <- reactive({
+    # Filter by period and month
+    dt <- stats.dt1()
     dt <- dt[month %between% range(r.tm())]
     if (input$selectMonth>0) dt <- dt[which(month(month)==input$selectMonth)]
     dt[, mean := mean(value, na.rm=T)]
+    dt[, cv := cv(value, na.rm=T)]
     dt[, diff := value-mean]
     return(dt)
   })
 
   drawDistricts <- observe({
-    input$btn
-    isolate({
-      m <- g()
-      coords <- coordinates(m)
-      map$clearShapes()
-      map$setView(coords[2], coords[1], 8)
-      # Convert sp to map format (slow)
-      md <- maptools::sp2tmap(m)
-      names(md) <- c("ID", "X", "Y")
-      # Draw polygons
-      map$addPolygon(I(md$Y), I(md$X), I(md$ID),
-        lapply(md$ID, function(x) list(fillColor="yellow")),
-        list(fill=T, fillOpacity=0.5, stroke=T, opacity=1, color="white"))
-    })
+    if (input$btn==0) return()
+    else {
+      isolate({
+        m <- g()
+        coords <- coordinates(m)
+        map$clearShapes()
+        map$setView(coords[2], coords[1], 8)
+        # Convert sp to map format (too slow)
+        md <- maptools::sp2tmap(m)
+        names(md) <- c("ID", "X", "Y")
+        # Draw polygons
+        map$addPolygon(I(md$Y), I(md$X), I(md$ID),
+          lapply(md$ID, function(x) list(fillColor="yellow")),
+          list(fill=T, fillOpacity=0.5, stroke=T, opacity=1, color="white"))
+      })
+    }
   })
 
 
