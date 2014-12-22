@@ -54,7 +54,8 @@ shinyServer(function(input, output, session) {
 
   output$dygraph <-  renderDygraph({
     if (input$btn>0) {
-      dygraph(as.xts(stats.dt()[, list(value, mean)], order.by=stats.dt()$month)) %>%
+      dt <- stats.dt.dist()
+      dygraph(as.xts(dt[, list(value, mean)], order.by=dt$month)) %>%
         dySeries("value", label=cru(), color="#00BFFF") %>%
         dySeries("mean", label="long-term mean", color="red") %>%
         dyOptions(fillGraph=T, fillAlpha=0.4) %>%
@@ -76,7 +77,7 @@ shinyServer(function(input, output, session) {
     function() paste0(cntr(), "-", dist(), "-", cru(), "-",
       paste(range(r.tm()), collapse="-"), ".", input$fileType),
     function(file) {
-      dt <- stats.dt()[, .SD, .SDcols=-c(1:2)]
+      dt <- stats.dt.dist()[, .SD, .SDcols=-c(1:3)]
       switch(input$fileType,
         grd = writeRaster(stats(), file, format="raster", bylayer=F, overwrite=T),
         tif = writeRaster(stats(), file, format="GTiff", bylayer=F, options="INTERLEAVE=BAND", overwrite=T),
@@ -109,7 +110,7 @@ shinyServer(function(input, output, session) {
     if (input$btn==0) "Adansi East" else isolate(input$selectg2)
   })
 
-  g <- reactive({ g2[g2$ADM2_NAME==dist(),] })
+  g <- reactive({ g2[g2$ADM0_NAME==cntr(),] })
 
   r.tm <- reactive({
     if(is.null(input$rg)) return(tm)
@@ -121,37 +122,53 @@ shinyServer(function(input, output, session) {
     r <- crop(get(cru()), g())
     # Add z dimension (time)
     r <- setZ(r, tm, "month")
-    return(r)
+    # Summarize across districts
+    dt <- extract(r, g(), fun=mean, na.rm=T, df=T, small=T)
+    dt <- cbind(g()@data[, c("ADM1_NAME", "ADM2_NAME")], dt)
+    dt <- data.table(dt)
+    dt <- melt(dt, id.vars=c("ID", "ADM1_NAME", "ADM2_NAME"), variable.name="month", variable.factor=F)
+    dt[, month := as.Date(month, format="X%Y.%m.%d")]
+    return(dt)
   })
 
   stats.dt <- reactive({
-    dt <- extract(stats(), g(), fun=mean, na.rm=T, df=T, small=T)
-    dt <- cbind(g()@data[, c("ADM1_NAME", "ADM2_NAME")], dt[, -1])
-    dt <- data.table(dt)
-    dt <- melt(dt, id.vars=c("ADM1_NAME", "ADM2_NAME"), variable.name="month", variable.factor=F)
-    dt[, month := as.Date(month, format="X%Y.%m.%d")]
+    dt <- stats()
     dt <- dt[month %between% range(r.tm())]
     if (input$selectMonth>0) dt <- dt[which(month(month)==input$selectMonth)]
     dt[, mean := mean(value, na.rm=T)]
+    dt[, cv := cv(value, na.rm=T)]
     dt[, diff := value-mean]
     return(dt)
   })
 
+  stats.dt.dist <- reactive({
+    dt <- stats.dt()
+    dt <- dt[ADM2_NAME==dist()]
+    return(dt)
+  })
+
+  stats.dt.cntr <- reactive({
+    dt <- stats.dt()
+    dt <- dt[, list(mean=mean(value, na.rm=T), cv=cv(value, na.rm=T)),
+      keyby=list(ADM1_NAME, ADM2_NAME, ID)]
+    return(dt)
+  })
+
   drawDistricts <- observe({
-    input$btn
-    isolate({
-      m <- g()
-      coords <- coordinates(m)
-      map$clearShapes()
-      map$setView(coords[2], coords[1], 8)
-      # Convert sp to map format (slow)
-      md <- maptools::sp2tmap(m)
-      names(md) <- c("ID", "X", "Y")
-      # Draw polygons
-      map$addPolygon(I(md$Y), I(md$X), I(md$ID),
-        lapply(md$ID, function(x) list(fillColor="yellow")),
-        list(fill=T, fillOpacity=0.5, stroke=T, opacity=1, color="white"))
-    })
+    if(input$btn==0) return() else {
+      isolate({
+        m <- g()
+        m <- SpatialPolygonsDataFrame(m, stats.dt.cntr()[order(ID)], match.ID=F)
+        coords <- coordinates(m)
+        map$clearShapes()
+        map$setView(mean(coords[,2]), mean(coords[,1]), 8)
+        # Convert sp to map format (slow)
+        writeOGR(m[, "mean"], "./test.json", "layer", driver="GeoJSON")
+        m <- jsonlite::fromJSON("./test.json")
+        # Draw polygons
+        map$addGeoJSON(m)
+      })
+    }
   })
 
 
