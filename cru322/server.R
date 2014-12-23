@@ -18,21 +18,18 @@ setwd("/home/projects/www/tmp")
 
 # CRU variables
 d <- c("cld", "dtr", "frs", "pet", "pre", "tmn", "tmp", "tmx", "vap", "wet")
-names(d) <- c("Cloud Cover (%)", "dtr", "frs", "pet", "pre", "tmn", "Temperature (C)", "tmx", "vap", "wet")
+names(d) <- c("Cloud Cover (%)", "dtr", "frs", "pet", "Precipitation (mm)", "tmn", "Temperature (C)", "tmx", "vap", "wet")
 
 # CRU 3.22 time series
-tmp <- brick("../cru322/data/cru_ts3.22.1901.2013.tmp.dat.nc")
-cld <- brick("../cru322/data/cru_ts3.22.1901.2013.cld.dat.nc")
+#tmp <- brick("../cru322/data/cru_ts3.22.1901.2013.tmp.dat.nc")
+#cld <- brick("../cru322/data/cru_ts3.22.1901.2013.cld.dat.nc")
+pre <- brick("../cru322/data/cru_ts3.22.1901.2013.pre.dat.nc")
 tm <- seq(as.Date("1901-01-15"), as.Date("2013-12-16"), "month")
 
 # GAUL district boundaries
 load("../../cell5m/rdb/g2.rda")
 g2.dt <- data.table(g2@data)
 g2.dt <- g2.dt[ADM2_CODE>0, .N, by=list(ADM0_NAME, ADM1_NAME, ADM2_NAME)]
-
-# Month array
-mth <- 0:12
-names(mth) <- c("All", month.name)
 
 shinyServer(function(input, output, session) {
 
@@ -41,16 +38,13 @@ shinyServer(function(input, output, session) {
 
   # Create input controls
   output$selectCRU <- renderUI({ selectInput("selectCRU", "Choose a CRU Variable",
-    d[c(1,7)], selected="tmp") })
+    d[c(5)], selected="pre") })
 
   output$selectg0 <- renderUI({ selectInput("selectg0", "Choose a Country",
     g2.dt[order(ADM0_NAME), unique(as.character(ADM0_NAME))], selected="Ghana") })
 
   output$selectg2 <- renderUI({ selectizeInput("selectg2", "Choose a District",
     choices=sg2(), selected="Adansi East") })
-
-  output$selectMonth <- renderUI({ selectInput("selectMonth", "Limit to Month",
-    mth, selected=0) })
 
   output$dygraph <-  renderDygraph({
     if (input$btn>0) {
@@ -93,11 +87,11 @@ shinyServer(function(input, output, session) {
   )
 
   cntr <- reactive({
-    if (input$btn==0) "Ghana" else input$selectg0
+    if (input$btn==0) "Ghana" else isolate(input$selectg0)
   })
 
   sg2 <- reactive({
-    d <- g2.dt[ADM0_NAME==cntr(), .N, keyby=list(ADM1_NAME, ADM2_NAME)]
+    d <- g2.dt[ADM0_NAME==input$selectg0, .N, keyby=list(ADM1_NAME, ADM2_NAME)]
     r <- lapply(d[, unique(ADM1_NAME)], function(x) d[ADM1_NAME==x, as.character(ADM2_NAME)])
     names(r) <- d[, unique(ADM1_NAME)]
     return(r)

@@ -2,6 +2,10 @@ library(shiny)
 library(leaflet)
 library(dygraphs)
 
+# Month array
+mth <- 0:12
+names(mth) <- c("All", month.name)
+
 
 shinyUI(fluidPage(
   title="CRU-TS 3.22 with leaflet",
@@ -33,24 +37,24 @@ shinyUI(fluidPage(
 
     column(2,
       p(br()),
-      sliderInput("rg", "Limit to Date Range",
-        1901, 2013, value=c(1901, 2013), step=1, format="###0"),
-      uiOutput("selectMonth"),
+      sliderInput("rg", "Limit to Date Range", 1901, 2013, value=c(1901, 2013), step=1, format="###0"),
+      selectInput("selectMonth", "Limit to Month", mth, selected=0),
       hr(),
-      selectInput("fileType", "Choose Export Format",
-        choices=c(GeoTiff="tif", `ASCII Raster`="asc", netCDF="nc", `Erdas Images`="img", CSV="csv", STATA="dta"),
-        selected="csv"),
+      selectInput("fileType", "Choose Export Format", choices=c(
+        GeoTiff="tif", `ASCII Raster`="asc", netCDF="nc", `Erdas Images`="img",
+        CSV="csv", STATA="dta"), selected="csv"),
       downloadButton("saveData", "Save Layer")
     )
   ),
 
 
-  absolutePanel(top=320, left=10, with="auto",
+  absolutePanel(top=320, left=10,
     p(class="cite", "IFPRI/HarvestChoice, 2014. Source code on ",
       a("Github", href="https://github.com/harvestchoice/hc-shiny"),
-      ". Monthly observations from ", a("University of East Anglia CRU", href="http://www.cru.uea.ac.uk/cru/data/hrg/cru_ts_3.22"), ".")
+      ". Monthly observations from ",
+      a("University of East Anglia CRU", href="http://www.cru.uea.ac.uk/cru/data/hrg/cru_ts_3.22"), ".")
     )
-)
+  )
 )
 
 

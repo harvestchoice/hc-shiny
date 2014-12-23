@@ -19,7 +19,7 @@ f <- str_replace(f, "cru_ts", paste0(d, "/cru_ts"))
 # Retrieve netCDF files one variable at a time
 baseurl <- "http://www.cru.uea.ac.uk/cru/data/hrg/cru_ts_3.22/cruts.1406251334.v3.22/"
 
-for (i in 7) {
+for (i in 5) {
   download.file(paste0(baseurl, f[i]), paste0("./data/", basename(f[i])), mode="wb")
   system(paste0("gzip -d ./data/", basename(f[i])))
   assign(d[i], brick(paste0("./data/", str_replace(basename(f[i]), ".gz", ""))))
