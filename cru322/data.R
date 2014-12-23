@@ -74,4 +74,17 @@ for (i in unique(g2.web@data$ADM0_CODE)) {
   writeOGR(g2.web[g2.web$ADM0_CODE==i,], paste0("./cru322/data/g2web", i), paste0(i), "GeoJSON")
 }
 
+# Create well-formatted country, province, district list for re-use in web apps
+d2 <- data.table(g2.web@data)
+d2 <- d2[, .N, by=list(ADM0_NAME, ADM1_NAME, ADM2_NAME)]
+d2 <- d2[, lapply(.SD, as.character), .SDcols=1:3]
+setkey(d2, ADM0_NAME, ADM1_NAME, ADM2_NAME)
+d2 <- split(d2, d2$ADM0_NAME)
+d2 <- lapply(d2, function(x) x[, list(ADM1_NAME, ADM2_NAME)])
+d2 <- lapply(d2, function(x) split(x, x$ADM1_NAME))
+d2 <- lapply(d2, function(x) lapply(x, function(y) y$ADM2_NAME))
+
+g2.list <- d2
+save(g2.list, file="./cru322/data/g2.list.rda", compress=T)
+
 
