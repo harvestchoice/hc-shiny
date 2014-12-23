@@ -40,4 +40,38 @@ hist(r)
 
 
 
+#####################################################################################
+# Simplify GAUL District Boundaries
+#####################################################################################
+
+setwd("~/Projects/www")
+
+library(data.table)
+library(rgeos)
+library(rgdal)
+
+load("../cell5m/rdb/g2.rda")
+gha <- g2[g2$ADM0_NAME=="Ghana",]
+writeOGR(gha, "./cru322/data", "g2_gha", "ESRI Shapefile")
+
+# Then in the console try 
+# $ ogr2ogr -f GeoJSON g2_gha.geojson g2_gha.shp -simplify 0.001
+
+# Load the generated geojson and check
+tmp <- readOGR("./cru322/data/g2_gha.geojson", "OGRGeoJSON")
+plot(tmp)
+
+# I believe gSimplify uses the same OGR libraries
+g2.web <- gSimplify(g2, 0.01, topologyPreserve=T)
+g2.web <- SpatialPolygonsDataFrame(g2.web, g2@data)
+writeOGR(g2.web, "./cru322/data/g2_web.geojson", "g2008", "GeoJSON")
+
+# Save webified version for re-use
+save(g2.web, file="./cru322/data/g2.web.rda", compress=T)
+
+# Create as many geojson files as SSA countries
+for (i in unique(g2.web@data$ADM0_CODE)) {
+  writeOGR(g2.web[g2.web$ADM0_CODE==i,], paste0("./cru322/data/g2web", i), paste0(i), "GeoJSON")
+}
+
 
