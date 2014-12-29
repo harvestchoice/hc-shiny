@@ -56,7 +56,7 @@ shinyServer(function(input, output, session) {
   output$waitMsg <- reactive({
     if (input$btn>0) {
       paste0("Monthly ", names(d)[d==cru()], " (", dist(), ", ", cntr(), ") - Period: ",
-        paste0(format(range(r.tm()), "%Y-%m"), collapse=" - "))
+             paste0(format(range(r.tm()), "%Y-%m"), collapse=" - "))
     } else {
       paste0("Select a district, click 'Show Series' and wait a few seconds for the time-series graph and map to render.")
     }
@@ -80,14 +80,14 @@ shinyServer(function(input, output, session) {
       r <- stats()
       dt <- stats.dt3()[, .SD, .SDcols=-c(1:4)]
       switch(input$fileType,
-        # Note that writeRaster() has an issue with download handler
-        grd = writeRaster(r, file, "raster", bylayer=F, overwrite=T),
-        tif = writeRaster(r, file, "GTiff", bylayer=F, options="INTERLEAVE=BAND", overwrite=T),
-        nc = writeRaster(r, file, "CDF", bylayer=F, overwrite=T),
-        img = writeRaster(r, file, "HFA", bylayer=F, overwrite=T),
-        # These 2 formats work okay
-        csv = write.csv(dt, file, row.names=F, na=""),
-        dta = foreign::write.dta(dt, file, version=9L)
+             # Note that writeRaster() has an issue with download handler
+             grd = writeRaster(r, file, "raster", bylayer=F, overwrite=T),
+             tif = writeRaster(r, file, "GTiff", bylayer=F, options="INTERLEAVE=BAND", overwrite=T),
+             nc = writeRaster(r, file, "CDF", bylayer=F, overwrite=T),
+             img = writeRaster(r, file, "HFA", bylayer=F, overwrite=T),
+             # These 2 formats work okay
+             csv = write.csv(dt, file, row.names=F, na=""),
+             dta = foreign::write.dta(dt, file, version=9L)
       )
     }
   )
@@ -107,7 +107,7 @@ shinyServer(function(input, output, session) {
   g <- reactive({
     if (input$btn>0) isolate({
       m <<- jsonlite::fromJSON(paste0("../rainfall/data/json/g2web", g2.dt[cntr()][, ADM0_CODE]),
-        simplifyVector=F)
+                               simplifyVector=F)
       coords <- coordinates(g2.web[g2.web$ADM2_NAME==dist(),])
       map$setView(coords[2], coords[1], 6)
       return(g2.web[g2.web$ADM0_NAME==cntr(),])
