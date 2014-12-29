@@ -18,7 +18,7 @@ setwd("/home/projects/shiny/tmp")
 
 # CRU variables
 d <- c("cld", "dtr", "frs", "pet", "pre", "tmn", "tmp", "tmx", "vap", "wet")
-names(d) <- c("Cloud Cover (%)", "dtr", "frs", "pet", "Precipitation (mm)", "tmn", "Temperature (C)", "tmx", "vap", "wet")
+names(d) <- c("Cloud Cover (%)", "dtr", "frs", "pet", "Precipitation (mm/month)", "tmn", "Temperature (C)", "tmx", "vap", "wet")
 
 # CRU 3.22 time series
 #tmp <- brick("../rainfall/data/cru_ts3.22.1901.2013.tmp.dat.nc")
@@ -53,16 +53,17 @@ shinyServer(function(input, output, session) {
     selectizeInput("selectg2", "Limit to District", choices=c("Entire Country", g2.list[[cntr()]]), selected="Entire Country")
   })
 
-  output$waitMsg <- reactive({
-    if (input$btn>0) {
-      paste0("Monthly ", names(d)[d==cru()], " (", dist(), ", ", cntr(), ") - Period: ",
-        paste0(format(range(r.tm()), "%Y-%m"), collapse=" - "))
-    } else {
-      paste0("Select a district, click 'Show Series' and wait a few seconds for the time-series graph and map to render.")
-    }
+  output$waitMsg <- renderText({
+    as.character(
+      if (input$btn>0) {
+        tags$p("Monthly ", names(d)[d==cru()], " ", dist(), ", ", cntr(), " - Period: ",
+          paste0(format(range(r.tm()), "%Y-%m"), collapse=" - "))
+      } else {
+        tags$p("Select a district, click 'Show Series' and wait a few seconds for the time-series graph and map to render.")
+      })
   })
 
-  output$dygraph <-  renderDygraph({
+  output$dygraph <- renderDygraph({
     if (input$btn==0) return()
     dt <- stats.dt3()
     # Convert data.table to xts for use with TS chart
@@ -139,7 +140,11 @@ shinyServer(function(input, output, session) {
     if (input$btn==0) return()
     dt <- stats.dt1()
     # Summarize each district over entire period for mapping
-    dt[, mean := mean(value, na.rm=T), keyby=ADM2_CODE]
+    dt <- dt[, list(
+      mean=mean(value, na.rm=T),
+      min=min(value, na.rm=T),
+      max=max(value, na.rm=T),
+      sd=sd(value, na.rm=T)), keyby=ADM2_CODE]
     return(dt)
   })
 
@@ -149,7 +154,7 @@ shinyServer(function(input, output, session) {
     dt <- stats.dt1()
     # Limit to period and month
     dt <- dt[month %between% range(r.tm())]
-    if (input$selectMonth>0) dt <- dt[month(month)==input$selectMonth]
+    if (input$selectMonth>0) dt <- dt[which(month(month)==input$selectMonth)]
     if (sdist!="Entire Country") {
       # Filter to district
       dt <- dt[ADM2_NAME==sdist]
@@ -176,44 +181,70 @@ shinyServer(function(input, output, session) {
       m <- jsonlite::fromJSON(paste0("../rainfall/data/json/g2web", g2.dt[cntr()][, ADM0_CODE]), simplifyVector=F)
       # Center map to selected country centroid
       coords <- apply(coordinates(g()), 2, mean, na.rm=T)
-      map$setView(coords[2], coords[1], 6)
+      map$setView(coords[2], coords[1]+5, 6)
       # Construct symbology from district means
       dt <- stats.dt2()
-      dt <- dt[J(sapply(m$features, `[[`, "id"))]
+      dt <- dt[J(sapply(m$features, function(x) x$properties$ADM2_CODE))]
       rg <- range(dt$mean, na.rm=T)
       cv <- classInt::classIntervals(dt$mean, n=5)$brks
       cl <- cut(dt$mean, unique(c(rg[1]-1, cv, rg[2]+1)), cutlabels=F, ordered_result=T)
       cl <- colorRampPalette(c("#a1dab4", "#41b6c4", "#2c7fb8"))(length(cv)+1)[cl]
+
       # Add symbology to `m`
       for (i in 1:length(m$features)) {
+        m$features[[i]]$properties$mean <- dt[i, round(mean, 2)]
+        m$features[[i]]$properties$min <- dt[i, round(min, 2)]
+        m$features[[i]]$properties$max <- dt[i, round(max, 2)]
+        m$features[[i]]$properties$sd <- dt[i, round(sd, 2)]
         m$features[[i]]$style <- list(fillColor=cl[i], weight=.6, color="white", fillOpacity=0.7)
+        # Draw polygons
+        map$addGeoJSON(m$features[[i]], m$features[[i]]$id)
       }
-      # Redraw polygons
-      map$addGeoJSON(m)
+      m <<- m
     })
   })
 
-  #   drawSelectedDistrict <- observe({
-  #     if (input$btn==0) return()
-  #     m.selected <- m$features[[sapply(m$features, function(x) x$properties["ADM2_NAME"]==dist())]]
-  #     m.selected$id <- 0
-  #     m.selected$style <- list(fillColor="yellow", weight=.6, color="white", fillOpacity=0.7)
-  #     # Highlight selected polygon
-  #     map$clearShapes(0)
-  #     map$addGeoJSON(m)
-  #   })
+
+  drawSelectedDistrict <- observe({
+    if (dist()=="Entire Country") return()
+    # Highlight selected polygon
+    i <- which(sapply(m$features, function(x) x$properties$ADM2_NAME==dist()))
+    m$features <- m$features[i]
+    m$features[[1]]$style <- list(fillColor="yellow", weight=.6, color="white", fillOpacity=0.7)
+    map$addGeoJSON(m, 0)
+  })
 
 
-  #   # When map is clicked, show a popup with layer info
-  #   clickObs <- observe({
-  #     map$clearPopups()
-  #     evt <- input$map_geojson_click
-  #     if (is.null(evt)) return()
-  #     isolate({
-  #       map$showPopup(evt$lat, evt$lng, paste(
-  #         "Province: ", evt$properties$ADM1_NAME, "<br/>",
-  #         "District: ", evt$properties$ADM2_NAME, "<br/>"))
-  #     })
-  #   })
+  # Map mouseover
+  output$details <- renderText({
+    map$clearPopups()
+    evt <- input$map_geojson_mouseover
+    if (is.null(evt)) return()
+    isolate({
+      as.character(tags$div(
+        tags$h3(cntr()),
+        tags$p(
+          "Province: ", tags$strong(evt$properties$ADM1_NAME), br(),
+          "District: ", tags$strong(evt$properties$ADM2_NAME), hr()),
+        tags$h4(names(d)[d==cru()]),
+        tags$p(
+          "Period: ", tags$strong("1901-2013"), br(),
+          "Mean: ", tags$strong(evt$properties$mean), br(),
+          "Min: ", tags$strong(evt$properties$min), br(),
+          "Max: ", tags$strong(evt$properties$max), br(),
+          "Sd. Dev.: ", tags$strong(evt$properties$sd), hr())
+      ))
+    })
+  })
+
+  # Map click, refresh district
+  clickObs <- observe({
+    map$clearPopups()
+    evt <- input$map_geojson_click
+    if (is.null(evt)) return()
+    isolate({
+      updateSelectInput(session, "selectg2", selected=evt$properties$ADM2_NAME)
+    })
+  })
 
 })
