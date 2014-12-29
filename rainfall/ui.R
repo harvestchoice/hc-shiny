@@ -25,7 +25,6 @@ shinyUI(fluidPage(
            h3("CRU-TS 3.22"),
            uiOutput("selectCRU"),
            uiOutput("selectg0"),
-           uiOutput("selectg2"),
            actionButton("btn", "Show Series", icon("globe")),
            p(br())
     ),
@@ -38,6 +37,7 @@ shinyUI(fluidPage(
 
     column(2,
            p(br()),
+           uiOutput("selectg2"),
            sliderInput("rg", "Limit to Date Range", 1901, 2013, value=c(1901, 2013), step=1, format="###0"),
            selectInput("selectMonth", "Limit to Month", mth, selected=0),
            hr(),

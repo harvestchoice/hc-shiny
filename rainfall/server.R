@@ -50,13 +50,13 @@ shinyServer(function(input, output, session) {
   })
 
   output$selectg2 <- renderUI({
-    selectizeInput("selectg2", "Choose a District", choices=g2.list[[input$selectg0]], selected="Adansi East")
+    selectizeInput("selectg2", "Limit to District", choices=c("Entire Country", g2.list[[cntr()]]), selected="Entire Country")
   })
 
   output$waitMsg <- reactive({
     if (input$btn>0) {
       paste0("Monthly ", names(d)[d==cru()], " (", dist(), ", ", cntr(), ") - Period: ",
-             paste0(format(range(r.tm()), "%Y-%m"), collapse=" - "))
+        paste0(format(range(r.tm()), "%Y-%m"), collapse=" - "))
     } else {
       paste0("Select a district, click 'Show Series' and wait a few seconds for the time-series graph and map to render.")
     }
@@ -80,14 +80,14 @@ shinyServer(function(input, output, session) {
       r <- stats()
       dt <- stats.dt3()[, .SD, .SDcols=-c(1:4)]
       switch(input$fileType,
-             # Note that writeRaster() has an issue with download handler
-             grd = writeRaster(r, file, "raster", bylayer=F, overwrite=T),
-             tif = writeRaster(r, file, "GTiff", bylayer=F, options="INTERLEAVE=BAND", overwrite=T),
-             nc = writeRaster(r, file, "CDF", bylayer=F, overwrite=T),
-             img = writeRaster(r, file, "HFA", bylayer=F, overwrite=T),
-             # These 2 formats work okay
-             csv = write.csv(dt, file, row.names=F, na=""),
-             dta = foreign::write.dta(dt, file, version=9L)
+        # Note that writeRaster() has an issue with download handler
+        grd = writeRaster(r, file, "raster", bylayer=F, overwrite=T),
+        tif = writeRaster(r, file, "GTiff", bylayer=F, options="INTERLEAVE=BAND", overwrite=T),
+        nc = writeRaster(r, file, "CDF", bylayer=F, overwrite=T),
+        img = writeRaster(r, file, "HFA", bylayer=F, overwrite=T),
+        # These 2 formats work okay
+        csv = write.csv(dt, file, row.names=F, na=""),
+        dta = foreign::write.dta(dt, file, version=9L)
       )
     }
   )
@@ -97,21 +97,11 @@ shinyServer(function(input, output, session) {
   })
 
   cntr <- reactive({
-    if (input$btn>0) isolate(input$selectg0)
+    if (input$btn>0) isolate(input$selectg0) else "Ghana"
   })
 
   dist <- reactive({
-    if (input$btn>0) isolate(input$selectg2)
-  })
-
-  g <- reactive({
-    if (input$btn>0) isolate({
-      m <<- jsonlite::fromJSON(paste0("../rainfall/data/json/g2web", g2.dt[cntr()][, ADM0_CODE]),
-                               simplifyVector=F)
-      coords <- coordinates(g2.web[g2.web$ADM2_NAME==dist(),])
-      map$setView(coords[2], coords[1], 6)
-      return(g2.web[g2.web$ADM0_NAME==cntr(),])
-    })
+    if (input$btn>0) input$selectg2 else "Entire Country"
   })
 
   r.tm <- reactive({
@@ -119,45 +109,61 @@ shinyServer(function(input, output, session) {
     seq(as.Date(paste0(input$rg[1], "-01-01")), as.Date(paste0(input$rg[2], "-12-31")), "month")
   })
 
+  g <- reactive({
+    # Selected country boundaries
+    if (input$btn==0) return()
+    return(g2.web[g2.web$ADM0_NAME==cntr(),])
+  })
+
   stats <- reactive({
-    if (input$btn>0) isolate({
-      # Crop to selected country extent
-      r <- crop(get(cru()), g())
-      # Add z dimension (time)
-      r <- setZ(r, tm, "month")
-      return(r)
-    })
+    if (input$btn==0) return()
+    # Crop raster to selected country extent
+    r <- crop(get(cru()), g())
+    # Add z dimension (time)
+    r <- setZ(r, tm, "month")
+    return(r)
   })
 
   stats.dt1 <- reactive({
-    if (input$btn>0) isolate({
-      # Summarize raster over districts and convert to data.table
-      dt <- extract(stats(), g(), fun=mean, na.rm=T, df=T)
-      dt <- cbind(g()@data[, c("ADM1_NAME", "ADM2_NAME", "ADM2_CODE")], dt)
-      dt <- data.table(dt)
-      dt <- melt(dt, id.vars=c("ADM1_NAME", "ADM2_NAME", "ADM2_CODE", "ID"), variable.name="month", variable.factor=F)
-      dt[, month := as.Date(month, format="X%Y.%m.%d")]
-      return(dt)
-    })
+    if (input$btn==0) return()
+    # Summarize raster over each district and convert to data.table
+    dt <- extract(stats(), g(), fun=mean, na.rm=T, df=T)
+    dt <- cbind(g()@data[, c("ADM1_NAME", "ADM2_NAME", "ADM2_CODE")], dt)
+    dt <- data.table(dt)
+    dt <- melt(dt, id.vars=c("ADM1_NAME", "ADM2_NAME", "ADM2_CODE", "ID"), variable.name="month", variable.factor=F)
+    dt[, month := as.Date(month, format="X%Y.%m.%d")]
+    return(dt)
   })
 
   stats.dt2 <- reactive({
     if (input$btn==0) return()
     dt <- stats.dt1()
-    # Summarize all districts over entire period for mapping
-    dt[, mean := mean(value, na.rm=T), by=list(ADM1_NAME, ADM2_NAME, ADM2_CODE)]
+    # Summarize each district over entire period for mapping
+    dt[, mean := mean(value, na.rm=T), keyby=ADM2_CODE]
     return(dt)
   })
 
   stats.dt3 <- reactive({
     if (input$btn==0) return()
-    dt <- stats.dt2()
-    # Filter to district
-    dt <- dt[ADM2_NAME==dist()]
-    # Limit to period
+    sdist <- dist()
+    dt <- stats.dt1()
+    # Limit to period and month
     dt <- dt[month %between% range(r.tm())]
-    if (input$selectMonth>0) dt <- dt[which(month(month)==input$selectMonth)]
+    if (input$selectMonth>0) dt <- dt[month(month)==input$selectMonth]
+    if (sdist!="Entire Country") {
+      # Filter to district
+      dt <- dt[ADM2_NAME==sdist]
+    } else {
+      # Collapse to entire country
+      dt <- dt[, list(
+        ADM1_NAME=sdist,
+        ADM2_NAME=sdist,
+        ADM2_CODE=0, ID=0,
+        value=mean(value, na.rm=T)), by=month]
+    }
+    # Compute period stats
     dt[, mean := mean(value, na.rm=T)]
+    dt[, sd := sd(value, na.rm=T)]
     dt[, cv := cv(value, na.rm=T)]
     dt[, diff := value-mean]
     return(dt)
@@ -166,23 +172,36 @@ shinyServer(function(input, output, session) {
   drawDistricts <- observe({
     if (input$btn>0) isolate({
       map$clearShapes()
-      # Add symbology
+      # Load country GeoJSON as list
+      m <- jsonlite::fromJSON(paste0("../rainfall/data/json/g2web", g2.dt[cntr()][, ADM0_CODE]), simplifyVector=F)
+      # Center map to selected country centroid
+      coords <- apply(coordinates(g()), 2, mean, na.rm=T)
+      map$setView(coords[2], coords[1], 6)
+      # Construct symbology from district means
       dt <- stats.dt2()
-      dt <- dt[, .N, by=list(ADM1_NAME, ADM2_NAME, ADM2_CODE, mean)]
-      setkey(dt, ADM2_CODE)
       dt <- dt[J(sapply(m$features, `[[`, "id"))]
       rg <- range(dt$mean, na.rm=T)
       cv <- classInt::classIntervals(dt$mean, n=5)$brks
       cl <- cut(dt$mean, unique(c(rg[1]-1, cv, rg[2]+1)), cutlabels=F, ordered_result=T)
       cl <- colorRampPalette(c("#a1dab4", "#41b6c4", "#2c7fb8"))(length(cv)+1)[cl]
-      cl[dt[, which(ADM2_NAME==dist())]] <- "yellow"
+      # Add symbology to `m`
       for (i in 1:length(m$features)) {
         m$features[[i]]$style <- list(fillColor=cl[i], weight=.6, color="white", fillOpacity=0.7)
       }
-      # Draw polygons
+      # Redraw polygons
       map$addGeoJSON(m)
     })
   })
+
+  #   drawSelectedDistrict <- observe({
+  #     if (input$btn==0) return()
+  #     m.selected <- m$features[[sapply(m$features, function(x) x$properties["ADM2_NAME"]==dist())]]
+  #     m.selected$id <- 0
+  #     m.selected$style <- list(fillColor="yellow", weight=.6, color="white", fillOpacity=0.7)
+  #     # Highlight selected polygon
+  #     map$clearShapes(0)
+  #     map$addGeoJSON(m)
+  #   })
 
 
   #   # When map is clicked, show a popup with layer info
