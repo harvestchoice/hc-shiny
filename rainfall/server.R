@@ -11,28 +11,42 @@ library(reshape2)
 library(raster)
 library(rgdal)
 library(leaflet)
-library(xts)
 library(dygraphs)
 
 setwd("/home/projects/shiny/tmp")
 
-# CRU variables
-d <- c("cld", "dtr", "frs", "pet", "pre", "tmn", "tmp", "tmx", "vap", "wet")
-names(d) <- c("Cloud Cover (%)", "dtr", "frs", "pet", "Precipitation (mm/month)", "tmn", "Temperature (C)", "tmx", "vap", "wet")
 
-# CRU 3.22 time series
+# CRU and PDSI variables
+d <- c("cld", "dtr", "frs", "pet", "pre", "tmn", "tmp", "tmx", "vap", "wet", "pdsi")
+names(d) <- c("Cloud Cover (%)", "dtr", "frs", "pet", "Precipitation (mm)", "tmn", "Temperature (C)", "tmx", "vap", "wet", "Palmer Drough Severity Index (-25, 25)")
+
+# Load CRU 3.22 time series (from 1901 onwards)
 #tmp <- brick("../rainfall/data/cru_ts3.22.1901.2013.tmp.dat.nc")
 #cld <- brick("../rainfall/data/cru_ts3.22.1901.2013.cld.dat.nc")
 pre <- brick("../rainfall/data/cru_ts3.22.1901.2013.pre.dat.nc")
-tm <- seq(as.Date("1901-01-15"), as.Date("2013-12-16"), "month")
+tm.cru <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+col.cru <- rev(c("#2F6FBF", "#69DB4D", "#F9EF58", "#DC5207", "#830000"))
 
-# GAUL district boundaries (simplified)
+# Load PDSI (from 1850 onwards)
+pdsi <- brick("../rainfall/data/pdsisc.monthly.maps.1850-2012.nc")
+tm.pdsi <- seq(as.Date("1850-01-01"), as.Date("2012-12-31"), "month")
+col.pdsi <- c("#FF9900", "#FFFF66", "#FFFFFF", "#99FF99", "#009900")
+
+# Load GAUL district boundaries (webified version)
 load("../../cell5m/rdb/g2.web.rda")
 g2.dt <- data.table(g2.web@data)[, .N, by=list(ADM0_CODE, ADM0_NAME)]
 setkey(g2.dt, ADM0_NAME)
 
 # Well-formatted country/province/district list to populate controls
 load("../../cell5m/rdb/g2.list.rda")
+
+# Zip rasters for download
+writeRasterZip <- function(x, var, file, ...) {
+  writeRaster(x, file, bylayer=F, overwrite=T, ...)
+  f <- list.files(pattern=paste0(strsplit(file, ".", fixed=T)[[1]][1], ".*"))
+  zip(paste0(file, ".zip"), f, flags="-9Xjm", zip="zip")
+  return(TRUE)
+}
 
 
 shinyServer(function(input, output, session) {
@@ -42,7 +56,7 @@ shinyServer(function(input, output, session) {
 
   # Create dynamic controls
   output$selectCRU <- renderUI({
-    selectInput("selectCRU", "Choose a CRU Variable", d[c(5)], selected="pre")
+    selectInput("selectCRU", "Choose a Variable", d[c(5,11)], selected="pre")
   })
 
   output$selectg0 <- renderUI({
@@ -53,48 +67,14 @@ shinyServer(function(input, output, session) {
     selectizeInput("selectg2", "Limit to District", choices=c("Entire Country", g2.list[[cntr()]]), selected="Entire Country")
   })
 
-  output$waitMsg <- renderText({
-    as.character(
-      if (input$btn>0) {
-        tags$p("Monthly ", names(d)[d==cru()], " ", dist(), ", ", cntr(), " - Period: ",
-          paste0(format(range(r.tm()), "%Y-%m"), collapse=" - "))
-      } else {
-        tags$p("Select a district, click 'Show Series' and wait a few seconds for the time-series graph and map to render.")
-      })
+  output$chartMsg <- renderText({
+    msg <- ""
+    if (input$btn>0) msg <- h3(names(d)[d==cru()], br(), tags$small(tags$mark(dist()), ", ", cntr(), " - Period: ", paste0(format(range(r.tm()), "%b %Y"), collapse=" - ")))
+    return(as.character(msg))
   })
-
-  output$dygraph <- renderDygraph({
-    if (input$btn==0) return()
-    dt <- stats.dt3()
-    # Convert data.table to xts for use with TS chart
-    dygraph(as.xts(dt[, list(value, mean)], order.by=dt$month)) %>%
-      dySeries("value", label=cru(), color="#41b6c4") %>%
-      dySeries("mean", label="long-term mean", color="red") %>%
-      dyOptions(fillGraph=T, fillAlpha=0.4) %>%
-      dyLegend(show="always", hideOnMouseOut=F) %>%
-      dyRangeSelector(height=20)
-  })
-
-  output$saveData <- downloadHandler(
-    function() paste0(cntr(), "-", dist(), "-", cru(), "-", paste(range(r.tm()), collapse="-"), ".", input$fileType),
-    function(file) {
-      r <- stats()
-      dt <- stats.dt3()[, .SD, .SDcols=-c(1:4)]
-      switch(input$fileType,
-        # Note that writeRaster() has an issue with download handler
-        grd = writeRaster(r, file, "raster", bylayer=F, overwrite=T),
-        tif = writeRaster(r, file, "GTiff", bylayer=F, options="INTERLEAVE=BAND", overwrite=T),
-        nc = writeRaster(r, file, "CDF", bylayer=F, overwrite=T),
-        img = writeRaster(r, file, "HFA", bylayer=F, overwrite=T),
-        # These 2 formats work okay
-        csv = write.csv(dt, file, row.names=F, na=""),
-        dta = foreign::write.dta(dt, file, version=9L)
-      )
-    }
-  )
 
   cru <- reactive({
-    if (input$btn>0) isolate(input$selectCRU)
+    if (input$btn>0) isolate(input$selectCRU) else "pre"
   })
 
   cntr <- reactive({
@@ -106,7 +86,7 @@ shinyServer(function(input, output, session) {
   })
 
   r.tm <- reactive({
-    if (input$btn==0) return(tm)
+    if (input$btn==0) return(seq(as.Date("1960-01-01"), as.Date("2013-12-31"), "month"))
     seq(as.Date(paste0(input$rg[1], "-01-01")), as.Date(paste0(input$rg[2], "-12-31")), "month")
   })
 
@@ -118,89 +98,111 @@ shinyServer(function(input, output, session) {
 
   stats <- reactive({
     if (input$btn==0) return()
-    # Crop raster to selected country extent
+    # Crop raster to selected country extent (only useful to generate rasters for download)
     r <- crop(get(cru()), g())
-    # Add z dimension (time)
+    # Define z dimension (time) to CRU layers
+    tm <- if(cru()=="pdsi") tm.pdsi else tm.cru
     r <- setZ(r, tm, "month")
+    r <- mean(r, na.rm=T)
     return(r)
   })
 
   stats.dt1 <- reactive({
     if (input$btn==0) return()
-    # Summarize raster over each district and convert to data.table
-    dt <- extract(stats(), g(), fun=mean, na.rm=T, df=T)
-    dt <- cbind(g()@data[, c("ADM1_NAME", "ADM2_NAME", "ADM2_CODE")], dt)
-    dt <- data.table(dt)
-    dt <- melt(dt, id.vars=c("ADM1_NAME", "ADM2_NAME", "ADM2_CODE", "ID"), variable.name="month", variable.factor=F)
-    dt[, month := as.Date(month, format="X%Y.%m.%d")]
-    return(dt)
+    isolate({
+      # All district X month records have been pre-processed to .rds files for added speed (see `data.R`)
+      gCode <- g2.dt[cntr()][, ADM0_CODE]
+      dt <- readRDS(paste0("../rainfall/data/rds/", cru(), gCode, ".rds"))
+      return(dt)
+    })
   })
 
   stats.dt2 <- reactive({
     if (input$btn==0) return()
-    dt <- stats.dt1()
-    # Summarize each district over entire period for mapping
-    dt <- dt[, list(
-      mean=mean(value, na.rm=T),
-      min=min(value, na.rm=T),
-      max=max(value, na.rm=T),
-      sd=sd(value, na.rm=T)), keyby=ADM2_CODE]
-    return(dt)
-  })
-
-  stats.dt3 <- reactive({
-    if (input$btn==0) return()
     sdist <- dist()
     dt <- stats.dt1()
-    # Limit to period and month
-    dt <- dt[month %between% range(r.tm())]
-    if (input$selectMonth>0) dt <- dt[which(month(month)==input$selectMonth)]
-    if (sdist!="Entire Country") {
-      # Filter to district
-      dt <- dt[ADM2_NAME==sdist]
-    } else {
+
+    if (sdist=="Entire Country") {
       # Collapse to entire country
       dt <- dt[, list(
         ADM1_NAME=sdist,
         ADM2_NAME=sdist,
         ADM2_CODE=0, ID=0,
         value=mean(value, na.rm=T)), by=month]
+    } else {
+      # Limit to selected district
+      dt <- dt[ADM2_NAME==sdist]
     }
+
+    # Add trend
+    dt <- dt[order(month)]
+    dt.ts <- ts(dt$value, start=c(dt[, min(year(month))], 1), frequency=12)
+    dt.ts <- decompose(zoo::na.StructTS(dt.ts))
+    dt.ts <- data.table(trend=dt.ts$trend, seasonal=dt.ts$seasonal)
+    dt <- cbind(dt, dt.ts)
+
+    # Limit to selected period and month
+    dt <- dt[month %between% range(r.tm())]
+    if (input$selectMonth>0) dt <- dt[which(month(month)==input$selectMonth)]
+
     # Compute period stats
     dt[, mean := mean(value, na.rm=T)]
     dt[, sd := sd(value, na.rm=T)]
-    dt[, cv := cv(value, na.rm=T)]
-    dt[, diff := value-mean]
+    dt[, mad := mad(value, na.rm=T)]
     return(dt)
   })
+
+
+  output$dygraph <- renderDygraph({
+    if (input$btn==0) return()
+    dt <- stats.dt2()
+    # Convert data.table to xts for use with TS chart
+    dygraph(xts::as.xts(dt[, list(value, mean, trend)], order.by=dt$month)) %>%
+      dySeries("value", label=cru()) %>%
+      dySeries("mean", label="period mean") %>%
+      dySeries("trend", label="trend", fillGraph=F, strokeWidth=2, strokePattern="dashed") %>%
+      dyOptions(fillGraph=T, fillAlpha=0.4,
+        colors=if(cru()=="pdsi") col.pdsi[c(1,4,5)] else c("#53B376", "#DD5A0B", "#2F6FBF")) %>%
+      dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
+      dyRangeSelector(height=20)
+  })
+
+
+  output$saveData <- downloadHandler(function() {
+    f <- paste0(cntr(), "-", cru())
+    if(input$fileType %in% c("csv", "dta")) {
+      # Complete file path
+      f <- paste0(f, "-", dist(), "-", paste(range(r.tm()), collapse="-"), ".", input$fileType)
+    } else {
+      # Raster file path with `.zip`
+      f <- paste0(f, ".", input$fileType, ".zip")
+    }
+    return(f)
+  }, function(file) {
+    r <- stats()
+    dt <- stats.dt2()
+    switch(input$fileType,
+      grd = writeRasterZip(r, gsub(".zip", "", file, fixed=T), "raster"),
+      tif = writeRasterZip(r, gsub(".zip", "", file, fixed=T), "GTiff", options="INTERLEAVE=BAND"),
+      nc = writeRasterZip(r, gsub(".zip", "", file, fixed=T), "CDF"),
+      img = writeRasterZip(r, gsub(".zip", "", file, fixed=T), "HFA"),
+      csv = write.csv(dt, file, row.names=F, na=""),
+      dta = foreign::write.dta(dt, file, version=9L)
+    )
+  })
+
 
   drawDistricts <- observe({
     if (input$btn>0) isolate({
       map$clearShapes()
-      # Load country GeoJSON as list
-      m <- jsonlite::fromJSON(paste0("../rainfall/data/json/g2web", g2.dt[cntr()][, ADM0_CODE]), simplifyVector=F)
+      # Load country GeoJSON (pre-processed in `data.R`)
+      gCode <- g2.dt[cntr()][, ADM0_CODE]
+      m <<- readRDS(paste0("../rainfall/data/rds/", cru(), gCode, ".json.rds"))
       # Center map to selected country centroid
       coords <- apply(coordinates(g()), 2, mean, na.rm=T)
       map$setView(coords[2], coords[1]+5, 6)
-      # Construct symbology from district means
-      dt <- stats.dt2()
-      dt <- dt[J(sapply(m$features, function(x) x$properties$ADM2_CODE))]
-      rg <- range(dt$mean, na.rm=T)
-      cv <- classInt::classIntervals(dt$mean, n=5)$brks
-      cl <- cut(dt$mean, unique(c(rg[1]-1, cv, rg[2]+1)), cutlabels=F, ordered_result=T)
-      cl <- colorRampPalette(c("#a1dab4", "#41b6c4", "#2c7fb8"))(length(cv)+1)[cl]
-
-      # Add symbology to `m`
-      for (i in 1:length(m$features)) {
-        m$features[[i]]$properties$mean <- dt[i, round(mean, 2)]
-        m$features[[i]]$properties$min <- dt[i, round(min, 2)]
-        m$features[[i]]$properties$max <- dt[i, round(max, 2)]
-        m$features[[i]]$properties$sd <- dt[i, round(sd, 2)]
-        m$features[[i]]$style <- list(fillColor=cl[i], weight=.6, color="white", fillOpacity=0.7)
-        # Draw polygons
-        map$addGeoJSON(m$features[[i]], m$features[[i]]$id)
-      }
-      m <<- m
+      # Draw polygons one by one
+      for (i in m$features) map$addGeoJSON(i, i$id)
     })
   })
 
@@ -210,41 +212,55 @@ shinyServer(function(input, output, session) {
     # Highlight selected polygon
     i <- which(sapply(m$features, function(x) x$properties$ADM2_NAME==dist()))
     m$features <- m$features[i]
-    m$features[[1]]$style <- list(fillColor="yellow", weight=.6, color="white", fillOpacity=0.7)
+    m$features[[1]]$style <- list(fillColor="gray", weight=.6, color="white", fillOpacity=0.7)
     map$addGeoJSON(m, 0)
   })
 
 
-  # Map mouseover
+  # Map mouseover, show side panel
   output$details <- renderText({
-    map$clearPopups()
     evt <- input$map_geojson_mouseover
-    if (is.null(evt)) return()
-    isolate({
-      as.character(tags$div(
-        tags$h3(cntr()),
-        tags$p(
-          "Province: ", tags$strong(evt$properties$ADM1_NAME), br(),
-          "District: ", tags$strong(evt$properties$ADM2_NAME), hr()),
-        tags$h4(names(d)[d==cru()]),
-        tags$p(
-          "Period: ", tags$strong("1901-2013"), br(),
-          "Mean: ", tags$strong(evt$properties$mean), br(),
-          "Min: ", tags$strong(evt$properties$min), br(),
-          "Max: ", tags$strong(evt$properties$max), br(),
-          "Sd. Dev.: ", tags$strong(evt$properties$sd), hr())
-      ))
-    })
+    if (is.null(evt)) {
+      out <- div(h3(cntr(), br(), tags$small("Mouse over districts on the map to view details.")))
+    } else {
+      out <- div(
+        h3(cntr(), br(), tags$small(evt$properties$ADM2_NAME, ", ", evt$properties$ADM1_NAME)),
+        h4("1960-2013 ", names(d)[d==cru()]),
+        p("Mean: ", strong(evt$properties$mean), br(),
+          "Min: ", strong(evt$properties$min), br(),
+          "Max: ", strong(evt$properties$max), br(),
+          "Sd. Dev.: ", strong(evt$properties$sd)))
+    }
+    return(as.character(out))
   })
 
-  # Map click, refresh district
+
+  # Rank districts on barchart
+  output$barPlot <- renderPlot({
+    if(input$btn==0) return()
+    dt <- stats.dt1()
+    dt <- dt[, list(value=mean(value, na.rm=T)), by=list(ADM2_NAME)]
+    dt <- dt[order(value, decreasing=T)]
+    dt <- rbind(head(dt,4), data.table(ADM2_NAME="[ ... ]", value=0), tail(dt,4))
+    par(las=1, mar=c(3.1,5,0,0.1), fg="#444444" )
+    barplot(dt$value, names.arg=dt$ADM2_NAME, horiz=T,
+      col="#2F6FBF", border="white", xlab=NULL, ylab=NULL, main=NULL)
+  })
+
+
+  # Show country spplot
+  output$rasterPlot <- renderPlot({
+    if(input$btn==0) return()
+    spplot(stats(), col.regions=colorRampPalette(if(cru()=="pdsi") col.pdsi else col.cru)(20))
+    #plot(g(), add=T)
+  })
+
+
+  # Map click, update district
   clickObs <- observe({
-    map$clearPopups()
     evt <- input$map_geojson_click
     if (is.null(evt)) return()
-    isolate({
-      updateSelectInput(session, "selectg2", selected=evt$properties$ADM2_NAME)
-    })
+    updateSelectInput(session, "selectg2", selected=evt$properties$ADM2_NAME)
   })
 
 })
