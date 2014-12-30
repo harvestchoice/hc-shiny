@@ -7,7 +7,7 @@
 #+LaTeX_CLASS: mel-article
 #+STARTUP: indent showstars
 
-A couple of visualization demos using RStudio Shiny framework, for testing purposes. These apps are viewable at http://shiny.harvestchoice.org/:
+A couple of visualization demos using RStudio Shiny framework, for testing purposes. These apps are viewable at http://tools.harvestchoice.org/:
 - cell5mGgvis :: testing ggvis package with HC Data Services
 - cell5mLeaflet :: testing leaflet package with HC Data Services
 - 2014_BMGF :: viz of Ethiopia survey statistics
