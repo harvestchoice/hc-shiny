@@ -7,7 +7,7 @@
 
 # Note that all downloaded time-series are used as-is, so we can use drop-in replacements
 # without any further transformation, but we need to pre-process district summaries for
-# added speed using stats.cntr() below.
+# extra speed using stats.cntr() below.
 
 setwd("/home/projects/shiny/rainfall")
 library(stringr)
@@ -30,7 +30,6 @@ for (i in 5) {
   system(paste0("gzip -d ./data/", basename(f[i])))
   assign(d[i], brick(paste0("./data/", str_replace(basename(f[i]), ".gz", ""))))
 }
-
 
 
 ## CRU temperature anomalies
@@ -103,7 +102,7 @@ dt[, month := as.Date(month)]
 dt <- dt[month>=as.Date("1960-01-01")]
 summary(dt$value)
 
-# Test time serie analysis
+# Test time serie decomposition
 library(TTR)
 library(zoo)
 dt.ts <- dt[ID==1][order(month)]
@@ -118,7 +117,7 @@ dt <- cbind(dt, dt.ts)
 
 
 #####################################################################################
-# Pre-process District Summaries (to speed up mapping)
+# Pre-process District Summaries (faster to map)
 #####################################################################################
 
 setwd("/home/projects/shiny/rainfall")
@@ -144,7 +143,7 @@ stats.cntr <- function(x, y) {
 
 
 json.cntr <- function(x, y, col) {
-  # Load pre-processed district x month records
+  # Load pre-processed district X month records
   dt <- readRDS(paste0("./data/rds/", y, x, ".rds"))
   # Summarize each district over entire period for mapping (mm/month)
   dt <- dt[, list(
@@ -171,7 +170,7 @@ json.cntr <- function(x, y, col) {
     dt[, cl := colorRampPalette(col)(length(cv)+1)[cl]]
   }
 
-  # Add symbology to `m`
+  # Add symbology to GeoJSON
   for (i in 1:length(m$features)) {
     m$features[[i]]$properties$mean <- dt[i, round(mean, 2)]
     m$features[[i]]$properties$min <- dt[i, round(min, 2)]
@@ -215,6 +214,7 @@ setwd("/home/projects/shiny/rainfall")
 library(rgeos)
 library(rgdal)
 
+# Load GAUL 2008 (CELL5M version)
 load("../../cell5m/rdb/g2.rda")
 
 # I believe gSimplify uses the same OGR libraries as GRASS
@@ -222,7 +222,7 @@ g2.web <- gSimplify(g2, 0.06, topologyPreserve=T)
 g2.web <- SpatialPolygonsDataFrame(g2.web, g2@data)
 plot(g2.web[g2.web$ADM0_NAME=="Ghana", ])
 
-# Export to GRASS v.in.ogr 0.06 threshold, then reload
+# Export to GRASS v.in.ogr with a 0.06 snapping threshold, then reload
 writeOGR(g2.web, "../../cell5m/rdb", "g2.web", "ESRI Shapefile")
 g2.web <- readOGR("../../cell5m/rdb", "g2web2")
 crs(g2.web) <- crs("+proj=longlat +datum=WGS84 +no_defs")

@@ -11,4 +11,4 @@ A couple of visualization demos using RStudio Shiny framework, for testing purpo
 - cell5mGgvis :: testing ggvis package with HC Data Services
 - cell5mLeaflet :: testing leaflet package with HC Data Services
 - 2014_BMGF :: viz of Ethiopia survey statistics
-- cru322 :: showing CRU precipitation and cloud cover for all districts in SSA
+- rainfall :: 1960-2013 CRU-TS 3.22 precipitation and PDSI for all districts in SSA

@@ -64,7 +64,7 @@ shinyServer(function(input, output, session) {
   })
 
   output$selectg2 <- renderUI({
-    selectizeInput("selectg2", "Limit to District", choices=c("Entire Country", g2.list[[cntr()]]), selected="Entire Country")
+    selectizeInput("selectg2", "Limit to District", choices=c("Entire Country", g2.list[[input$selectg0]]), selected="Entire Country")
   })
 
   output$chartMsg <- renderText({
@@ -95,7 +95,7 @@ shinyServer(function(input, output, session) {
   g <- reactive({
     # Selected country boundaries
     if (input$btn==0) return()
-    return(g2.web[g2.web$ADM0_NAME==cntr(),])
+    g2.web[g2.web$ADM0_NAME==cntr(),]
   })
 
   stats <- reactive({
@@ -193,9 +193,9 @@ shinyServer(function(input, output, session) {
   })
 
 
-  drawDistricts <- observe({
-    if (input$btn>0) isolate({
-      map$clearShapes()
+  observe({
+    if (input$btn>0) {
+      map$clearGeoJSON()
       # Load country GeoJSON (pre-processed in `data.R`)
       gCode <- g2.dt[cntr()][, ADM0_CODE]
       m <<- readRDS(paste0("../rainfall/data/rds/", cru(), gCode, ".json.rds"))
@@ -204,11 +204,11 @@ shinyServer(function(input, output, session) {
       map$setView(coords[2], coords[1]+5, 6)
       # Draw polygons one by one
       for (i in m$features) map$addGeoJSON(i, i$id)
-    })
+    }
   })
 
 
-  drawSelectedDistrict <- observe({
+  observe({
     if (dist()=="Entire Country") return()
     # Highlight selected polygon
     i <- which(sapply(m$features, function(x) x$properties$ADM2_NAME==dist()))
@@ -238,7 +238,7 @@ shinyServer(function(input, output, session) {
   })
 
   # Map click, update district
-  clickObs <- observe({
+  observe({
     evt <- input$map_geojson_click
     if (is.null(evt)) return()
     updateSelectInput(session, "selectg2", selected=evt$properties$ADM2_NAME)
