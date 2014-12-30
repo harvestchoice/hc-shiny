@@ -68,9 +68,11 @@ shinyServer(function(input, output, session) {
   })
 
   output$chartMsg <- renderText({
-    msg <- ""
-    if (input$btn>0) msg <- h3(names(d)[d==cru()], br(), tags$small(tags$mark(dist()), ", ", cntr(), " - Period: ", paste0(format(range(r.tm()), "%b %Y"), collapse=" - ")))
-    return(as.character(msg))
+    if (input$btn==0) return()
+    out <- div(
+      h3(names(d)[d==cru()], br(), tags$small(tags$mark(dist()), ", ", cntr(), " - Period: ", paste0(format(range(r.tm()), "%b %Y"), collapse=" - "))),
+      p("The long-term mean is over the selected months only (or the entire year if no month is selected. The trend component is generated through classical seasonal decomposition by moving averages over the entire selected period."))
+    return(as.character(out))
   })
 
   cru <- reactive({
@@ -162,7 +164,7 @@ shinyServer(function(input, output, session) {
       dySeries("mean", label="period mean") %>%
       dySeries("trend", label="trend", fillGraph=F, strokeWidth=2, strokePattern="dashed") %>%
       dyOptions(fillGraph=T, fillAlpha=0.4,
-        colors=if(cru()=="pdsi") col.pdsi[c(1,4,5)] else c("#53B376", "#DD5A0B", "#2F6FBF")) %>%
+        colors=if(cru()=="pdsi") c("#FF9900", "#99FF99", "#009900") else c("#53B376", "#DD5A0B", "#2F6FBF")) %>%
       dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
       dyRangeSelector(height=20)
   })
@@ -185,7 +187,6 @@ shinyServer(function(input, output, session) {
       grd = writeRasterZip(r, gsub(".zip", "", file, fixed=T), "raster"),
       tif = writeRasterZip(r, gsub(".zip", "", file, fixed=T), "GTiff", options="INTERLEAVE=BAND"),
       nc = writeRasterZip(r, gsub(".zip", "", file, fixed=T), "CDF"),
-      img = writeRasterZip(r, gsub(".zip", "", file, fixed=T), "HFA"),
       csv = write.csv(dt, file, row.names=F, na=""),
       dta = foreign::write.dta(dt, file, version=9L)
     )
@@ -221,40 +222,20 @@ shinyServer(function(input, output, session) {
   output$details <- renderText({
     evt <- input$map_geojson_mouseover
     if (is.null(evt)) {
-      out <- div(h3(cntr(), br(), tags$small("Mouse over districts on the map to view details.")))
+      out <- div(h3(cntr()), p("Mouse over districts to view details."))
     } else {
       out <- div(
         h3(cntr(), br(), tags$small(evt$properties$ADM2_NAME, ", ", evt$properties$ADM1_NAME)),
+        hr(),
         h4("1960-2013 ", names(d)[d==cru()]),
         p("Mean: ", strong(evt$properties$mean), br(),
           "Min: ", strong(evt$properties$min), br(),
           "Max: ", strong(evt$properties$max), br(),
-          "Sd. Dev.: ", strong(evt$properties$sd)))
+          "Sd. Dev.: ", strong(evt$properties$sd)),
+        p(em("Click to select this district.")))
     }
     return(as.character(out))
   })
-
-
-  # Rank districts on barchart
-  output$barPlot <- renderPlot({
-    if(input$btn==0) return()
-    dt <- stats.dt1()
-    dt <- dt[, list(value=mean(value, na.rm=T)), by=list(ADM2_NAME)]
-    dt <- dt[order(value, decreasing=T)]
-    dt <- rbind(head(dt,4), data.table(ADM2_NAME="[ ... ]", value=0), tail(dt,4))
-    par(las=1, mar=c(3.1,5,0,0.1), fg="#444444" )
-    barplot(dt$value, names.arg=dt$ADM2_NAME, horiz=T,
-      col="#2F6FBF", border="white", xlab=NULL, ylab=NULL, main=NULL)
-  })
-
-
-  # Show country spplot
-  output$rasterPlot <- renderPlot({
-    if(input$btn==0) return()
-    spplot(stats(), col.regions=colorRampPalette(if(cru()=="pdsi") col.pdsi else col.cru)(20))
-    #plot(g(), add=T)
-  })
-
 
   # Map click, update district
   clickObs <- observe({
@@ -262,5 +243,26 @@ shinyServer(function(input, output, session) {
     if (is.null(evt)) return()
     updateSelectInput(session, "selectg2", selected=evt$properties$ADM2_NAME)
   })
+
+
+#   # Rank districts on barchart
+#   output$barPlot <- renderPlot({
+#     if(input$btn==0) return()
+#     dt <- stats.dt1()
+#     dt <- dt[, list(value=mean(value, na.rm=T)), by=list(ADM2_NAME)]
+#     dt <- dt[order(value, decreasing=T)]
+#     dt <- rbind(head(dt,4), data.table(ADM2_NAME="[ ... ]", value=0), tail(dt,4))
+#     par(las=1, mar=c(3.1,5,0,0.1), fg="#444444" )
+#     barplot(dt$value, names.arg=dt$ADM2_NAME, horiz=T,
+#       col="#2F6FBF", border="white", xlab=NULL, ylab=NULL, main=NULL)
+#   })
+#
+#
+#   # Show country spplot
+#   output$rasterPlot <- renderPlot({
+#     if(input$btn==0) return()
+#     spplot(stats(), col.regions=colorRampPalette(if(cru()=="pdsi") col.pdsi else col.cru)(20))
+#     #plot(g(), add=T)
+#   })
 
 })

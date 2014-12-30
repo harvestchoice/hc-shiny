@@ -157,12 +157,19 @@ json.cntr <- function(x, y, col) {
   f <- paste0("./data/json/g2web", x)
   m <- jsonlite::fromJSON(f, simplifyVector=F)
 
-  # Construct symbology from district means (note that PDSI has few values)
+  # Construct symbology from district means (note that PDSI has fewer values)
   dt <- dt[J(sapply(m$features, function(x) x$properties$ADM2_CODE))]
   rg <- range(dt$mean, na.rm=T)
-  cv <- classInt::classIntervals(dt$mean, n=min(c(5, dt[,length(unique(mean))])))$brks
-  cl <- cut(dt$mean, unique(c(rg[1]-1, cv, rg[2]+1)), cutlabels=F, ordered_result=T)
-  cl <- colorRampPalette(col)(length(cv)+1)[cl]
+  cv <- try(classInt::classIntervals(dt$mean, n=min(c(5, dt[,length(unique(mean))])))$brks)
+
+  if (class(cv)=="try-error") {
+    # classInt fails apply only 1 color (white)
+    dt[, cl := "white"]
+  } else {
+    # Symbolize normally
+    dt[, cl := cut(mean, unique(c(rg[1]-1, cv, rg[2]+1)), cutlabels=F, ordered_result=T)]
+    dt[, cl := colorRampPalette(col)(length(cv)+1)[cl]]
+  }
 
   # Add symbology to `m`
   for (i in 1:length(m$features)) {
@@ -170,7 +177,7 @@ json.cntr <- function(x, y, col) {
     m$features[[i]]$properties$min <- dt[i, round(min, 2)]
     m$features[[i]]$properties$max <- dt[i, round(max, 2)]
     m$features[[i]]$properties$sd <- dt[i, round(sd, 2)]
-    m$features[[i]]$style <- list(fillColor=cl[i], weight=.6, color="white", fillOpacity=0.7)
+    m$features[[i]]$style <- list(fillColor=dt[i, cl], weight=.6, color="white", fillOpacity=0.7)
   }
 
   # Write to RDS file
