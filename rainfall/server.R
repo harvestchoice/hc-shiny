@@ -6,12 +6,11 @@
 #####################################################################################
 
 library(shiny)
+library(shinyBS)
 library(data.table)
 library(reshape2)
-library(rgdal)
 library(leaflet)
 library(dygraphs)
-# library(raster)
 
 setwd("/home/projects/shiny/tmp")
 
@@ -21,33 +20,73 @@ d <- c("cld", "dtr", "frs", "pet", "pre", "tmn", "tmp", "tmx", "vap", "wet", "pd
 names(d) <- c("Cloud Cover (%)", "dtr", "frs", "pet", "Precipitation (mm)", "tmn",
   "Temperature (C)", "tmx", "vap", "wet", "Palmer Drought Severity Index (-25, 25)")
 
-# Load CRU 3.22 time series (from 1901 onwards)
-#tmp <- brick("../rainfall/data/cru_ts3.22.1901.2013.tmp.dat.nc")
-#cld <- brick("../rainfall/data/cru_ts3.22.1901.2013.cld.dat.nc")
-#pre <- brick("../rainfall/data/cru_ts3.22.1901.2013.pre.dat.nc")
-tm.cru <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
-col.cru <- rev(c("#2F6FBF", "#69DB4D", "#F9EF58", "#DC5207", "#830000"))
+# CRU 3.22 precipitation time series (from 1901 onwards)
+path.pre <- "../rainfall/data/cru_ts3.22.1901.2013.tmp.dat.nc"
+tm.pre <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+col.pre <- rev(c("#2F6FBF", "#69DB4D", "#F9EF58", "#DC5207", "#830000"))
 
-# Load PDSI (from 1850 onwards)
-#pdsi <- brick("../rainfall/data/pdsisc.monthly.maps.1850-2012.nc")
+# PDSI (from 1850 onwards)
+path.pdsi <- "../rainfall/data/pdsisc.monthly.maps.1850-2012.nc"
 tm.pdsi <- seq(as.Date("1850-01-01"), as.Date("2012-12-31"), "month")
 col.pdsi <- c("#FF9900", "#FFFF66", "#FFFFFF", "#99FF99", "#009900")
 
-# Load GAUL district boundaries (webified version)
-load("../../cell5m/rdb/g2.web.rda")
-g2.dt <- data.table(g2.web@data)[, .N, by=list(ADM0_CODE, ADM0_NAME)]
+# Load GAUL district boundaries (full version)
+load("../../cell5m/rdb/g2.rda")
+g2.dt <- data.table(g2@data)[, .N, by=list(ADM0_CODE, ADM0_NAME)]
 setkey(g2.dt, ADM0_NAME)
 
 # Load country/province/district list to populate controls
 load("../../cell5m/rdb/g2.list.rda")
 
-# Helper - Archive raster formats for download
-writeRasterZip <- function(x, var, file, ...) {
-  writeRaster(x, file, bylayer=F, overwrite=T, ...)
+
+# Helper - Archive spatial formats for download
+writeRasterZip <- function(x, var, file, format, ...) {
+  if (format=="ESRI Shapefile") {
+    rgdal::writeOGR(x, "./", file, format, overwrite_layer=T, check_exists=T)
+  } else {
+    raster::writeRaster(x, file, format, bylayer=F, overwrite=T, ...)
+  }
   f <- list.files(pattern=paste0(strsplit(file, ".", fixed=T)[[1]][1], ".*"))
   zip(paste0(file, ".zip"), f, flags="-9Xjm", zip="zip")
-  return(TRUE)
 }
+
+
+# Helper - Generate time series stats
+genStats <- function(dt, cntr, dist, tm, mth) {
+  if (dist=="Entire Country") {
+    # Collapse district records to entire country by month
+    dt <- dt[, list(
+      ADM0_CODE=g2.dt[ADM0_NAME==cntr, ADM0_CODE],
+      ADM0_NAME=cntr,
+      ADM1_CODE=0,
+      ADM1_NAME="Entire Country",
+      ADM2_CODE=0,
+      ADM2_NAME="Entire Country",
+      ID=0,
+      value=mean(value, na.rm=T)), by=month]
+  } else {
+    # Limit to selected district
+    dt <- dt[ADM2_NAME==dist]
+  }
+
+  # Add trend component for the 1960-2013 period
+  dt <- dt[order(month)]
+  dt.ts <- ts(dt$value, start=c(dt[, min(year(month))], 1), frequency=12)
+  dt.ts <- decompose(zoo::na.StructTS(dt.ts))
+  dt.ts <- data.table(trend=dt.ts$trend, seasonal=dt.ts$seasonal)
+  dt <- cbind(dt, dt.ts)
+
+  # Limit to selected period and month
+  dt <- dt[month %between% range(tm)]
+  if (mth>0) dt <- dt[which(month(month)==mth)]
+
+  # Compute stats over selected period/month
+  dt[, mean := mean(value, na.rm=T)]
+  dt[, sd := sd(value, na.rm=T)]
+  dt[, mad := mad(value, na.rm=T)]
+  return(dt)
+}
+
 
 
 shinyServer(function(input, output, session) {
@@ -56,8 +95,8 @@ shinyServer(function(input, output, session) {
   map <- createLeafletMap(session, "map")
 
   # Create reactive controls
-  output$selectCRU <- renderUI({
-    selectInput("selectCRU", "Choose a Variable", d[c(5,11)], selected="pre")
+  output$selectVar <- renderUI({
+    selectInput("selectVar", "Choose a Variable", d[c(5,11)], selected="pre")
   })
 
   output$selectg0 <- renderUI({
@@ -66,11 +105,11 @@ shinyServer(function(input, output, session) {
 
   output$selectg2 <- renderUI({
     selectizeInput("selectg2", "Limit to District",
-      choices=c("Entire Country", g2.list[[input$selectg0]]), selected="Entire Country")
+      choices=c("Entire Country", g2.list[[cntr()]]), selected="Entire Country")
   })
 
-  cru <- reactive({
-    if (input$btn>0) isolate(input$selectCRU) else "pre"
+  var <- reactive({
+    if (input$btn>0) isolate(input$selectVar) else "pre"
   })
 
   cntr <- reactive({
@@ -78,10 +117,10 @@ shinyServer(function(input, output, session) {
   })
 
   dist <- reactive({
-    if (input$btn>0) input$selectg2 else "Entire Country"
+    if(length(input$selectg2)>0) input$selectg2 else "Entire Country"
   })
 
-  r.tm <- reactive({
+  tm <- reactive({
     # Selected time range
     if (input$btn==0) return(seq(as.Date("1960-01-01"), as.Date("2013-12-31"), "month"))
     seq(as.Date(paste0(input$rg[1], "-01-01")), as.Date(paste0(input$rg[2], "-12-31")), "month")
@@ -90,113 +129,83 @@ shinyServer(function(input, output, session) {
   g <- reactive({
     # Selected country boundaries
     if (input$btn==0) return()
-    g2.web[g2.web$ADM0_NAME==cntr(),]
+    g2[g2$ADM0_NAME==cntr(),]
   })
+
 
   dt1 <- reactive({
     if (input$btn==0) return()
     isolate({
+      #closeAlert(session, "alertNoData")
       # Read district X month records from disk (see pre-process steps in `data.R`)
-      dt <- readRDS(paste0("../rainfall/data/rds/", cru(), g2.dt[cntr()][, ADM0_CODE], ".rds"))
-      return(dt)
+      dt <- try(readRDS(paste0("../rainfall/data/rds/", var(), g2.dt[cntr()][, ADM0_CODE], ".rds")))
+      if (class(dt)=="try-error") {
+        # File is missing for that country
+        createAlert(session, "alertNoData",
+          message="Try another combination.",
+          title="Missing Data", type="warning", block=F, append=F)
+      } else return(dt)
     })
   })
 
   dt2 <- reactive({
-    if (input$btn==0) return()
-    sdist <- dist()
-    dt <- dt1()
-
-    if (sdist=="Entire Country") {
-      # Collapse district records to entire country by month
-      dt <- dt[, list(
-        ADM1_NAME=sdist,
-        ADM2_NAME=sdist,
-        ADM2_CODE=0, ID=0,
-        value=mean(value, na.rm=T)), by=month]
-    } else {
-      # Limit to selected district
-      dt <- dt[ADM2_NAME==sdist]
-    }
-
-    # Add trend component for the 1960-2013 period
-    dt <- dt[order(month)]
-    dt.ts <- ts(dt$value, start=c(dt[, min(year(month))], 1), frequency=12)
-    dt.ts <- decompose(zoo::na.StructTS(dt.ts))
-    dt.ts <- data.table(trend=dt.ts$trend, seasonal=dt.ts$seasonal)
-    dt <- cbind(dt, dt.ts)
-
-    # Limit to selected period and month
-    dt <- dt[month %between% range(r.tm())]
-    if (input$selectMonth>0) dt <- dt[which(month(month)==input$selectMonth)]
-
-    # Compute stats over selected period/month
-    dt[, mean := mean(value, na.rm=T)]
-    dt[, sd := sd(value, na.rm=T)]
-    dt[, mad := mad(value, na.rm=T)]
-    return(dt)
+    # Isolate from button click
+    dist <- dist()
+    tm <- tm()
+    mth <- input$selectMonth
+    isolate({
+      if (input$btn==0) return()
+      genStats(dt1(), cntr(), dist, tm, mth)
+    })
   })
 
-
   output$dygraph <- renderDygraph({
-    if (input$btn==0) return()
+    if (is.null(dt2())) return()
+    # Isolate from all but dt2()
     dt <- dt2()
-    # Convert data.table to xts
-    dygraph(xts::as.xts(dt[, list(value, mean, trend)], order.by=dt$month)) %>%
-      dySeries("value", label=cru()) %>%
-      dySeries("mean", label="period mean") %>%
-      dySeries("trend", label="trend", fillGraph=F, strokeWidth=2, strokePattern="dashed") %>%
-      dyOptions(fillGraph=T, fillAlpha=0.4,
-        # Pick colors to match map symbology
-        colors=if(cru()=="pdsi") c("#FF9900", "#99FF99", "#009900") else c("#53B376", "#DD5A0B", "#2F6FBF")) %>%
-      dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
-      dyRangeSelector(height=20)
+    isolate ({
+      if (input$btn==0) return()
+      # Convert data.table to xts
+      dygraph(xts::as.xts(dt[, list(value, mean, trend)], order.by=dt$month)) %>%
+        dySeries("value", label=var()) %>%
+        dySeries("mean", label="period mean") %>%
+        dySeries("trend", label="trend", fillGraph=F, strokeWidth=2, strokePattern="dashed") %>%
+        dyOptions(fillGraph=T, fillAlpha=0.4,
+          # Pick colors to match map symbology
+          colors=if(var()=="pdsi") c("#FF9900", "#99FF99", "#009900") else c("#53B376", "#DD5A0B", "#2F6FBF")) %>%
+        dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
+        dyRangeSelector(height=20)
+    })
   })
 
   output$chartMsg <- renderText({
     if (input$btn==0) return()
     out <- div(
-      h3(names(d)[d==cru()], br(), tags$small(tags$mark(dist()), ", ", cntr(), " - Period: ",
-        paste0(format(range(r.tm()), "%b %Y"), collapse=" - "))),
+      h3(names(d)[d==var()], br(), tags$small(tags$mark(dist()), ", ", cntr(), " - Period: ",
+        paste0(format(range(tm()), "%b %Y"), collapse=" - "))),
       p("The long-term mean is over the selected months and period only (or over the
         entire year if no month is selected). The trend component is generated through
         classical seasonal decomposition by moving averages over the entire 1960-2013 period."))
     return(as.character(out))
   })
 
-  output$saveData <- downloadHandler(function() {
-    f <- paste0(cntr(), "-", cru())
-    if(input$fileType %in% c("csv", "dta")) {
-      # Complete file path
-      f <- paste0(f, "-", dist(), "-", paste(range(r.tm()), collapse="-"), ".", input$fileType)
-    } else {
-      # Raster file path with `.zip`
-      f <- paste0(f, ".", input$fileType, ".zip")
-    }
-    return(f)
-  }, function(file) {
-    r <- stats()
-    dt <- dt2()
-    switch(input$fileType,
-      grd = writeRasterZip(r, gsub(".zip", "", file, fixed=T), "raster"),
-      tif = writeRasterZip(r, gsub(".zip", "", file, fixed=T), "GTiff", options="INTERLEAVE=BAND"),
-      nc = writeRasterZip(r, gsub(".zip", "", file, fixed=T), "CDF"),
-      csv = write.csv(dt, file, row.names=F, na=""),
-      dta = foreign::write.dta(dt, file, version=9L)
-    )
-  })
-
   # Draw GeoJSON
   observe({
-    if (input$btn>0) {
-      map$clearGeoJSON()
-      # Read country GeoJSON from disk (pre-processed in `data.R` to .rds files)
-      m <<- readRDS(paste0("../rainfall/data/rds/", cru(), g2.dt[cntr()][, ADM0_CODE], ".json.rds"))
-      # Center map to selected country centroid
-      coords <- apply(coordinates(g()), 2, mean, na.rm=T)
-      map$setView(coords[2], coords[1]+5, 6)
-      map$addGeoJSON(m)
+    if (input$btn==0) return()
+    # Read country GeoJSON from disk (pre-processed in `data.R` to .rds files)
+    m <<- try(readRDS(paste0("../rainfall/data/rds/", var(), g2.dt[cntr()][, ADM0_CODE], ".json.rds")))
+    if (class(m)=="try-error") {
+      # File is missing for that country
+      createAlert(session, "alertNoData",
+        message="Try another combination.",
+        title="Missing Data", type="warning", block=T)
     }
+
+    # Center map to selected country centroid
+    map$clearGeoJSON()
+    coords <- apply(sp::coordinates(g()), 2, mean, na.rm=T)
+    map$setView(coords[2], coords[1]+5, 6)
+    map$addGeoJSON(m)
   })
 
   # Highlight selected polygon
@@ -217,7 +226,7 @@ shinyServer(function(input, output, session) {
       out <- div(
         h3(cntr(), br(), tags$small(evt$properties$ADM2_NAME, ", ", evt$properties$ADM1_NAME)),
         hr(),
-        h4("1960-2013 ", names(d)[d==cru()]),
+        h4("1960-2013 ", names(d)[d==var()]),
         p("Mean: ", strong(evt$properties$mean), br(),
           "Min: ", strong(evt$properties$min), br(),
           "Max: ", strong(evt$properties$max), br(),
@@ -234,17 +243,49 @@ shinyServer(function(input, output, session) {
     updateSelectInput(session, "selectg2", selected=evt$properties$ADM2_NAME)
   })
 
-  #   # Return raster brick for selected country (to download and plot)
-  #   stats <- reactive({
-  #     if (input$btn==0) return()
-  #     # Crop raster to selected country extent
-  #     r <- crop(get(cru()), g())
-  #     # Define z dimension (time) to CRU layers
-  #     tm <- if(cru()=="pdsi") tm.pdsi else tm.cru
-  #     r <- setZ(r, tm, "month")
-  #     r <- mean(r, na.rm=T)
-  #     return(r)
-  #   })
+
+  output$saveData <- downloadHandler(function() {
+    f <- paste0(cntr(), "-", var())
+    if (input$fileType %in% c("csv", "dta")) {
+      # Complete file path
+      paste0(f, "-", dist(), "-", paste(range(tm()), collapse="-"), ".", input$fileType)
+    } else {
+      # File path with `.zip`
+      paste0(f, ".", input$fileType, ".zip")
+    }
+  }, function(file) {
+
+    if (input$fileType %in% c("grd", "tif", "nc")) {
+      # Crop raster to selected country extent
+      r <- brick(get(paste0("path.", var())))
+      r <- crop(r, g())
+      # Define z dimension (time)
+      r <- setZ(r, get(paste0("tm.", var())), "month")
+      r <- mean(r, na.rm=T)
+    }
+
+    switch(input$fileType,
+      grd = writeRasterZip(r, paste(file, ".grd"), "raster"),
+      tif = writeRasterZip(r, paste(file, ".tif"), "GTiff",
+        options="INTERLEAVE=BAND"),
+      nc = writeRasterZip(r, paste(file, ".nc"), "CDF"),
+      csv = write.csv(dt2(), file, row.names=F, na=""),
+      dta = foreign::write.dta(dt2(), file, version=9L),
+      shp = {
+        # Combine attributes with GAUL 2008
+        dt <- genStats(dt1(), "Entire Country")
+        g2.tmp <- g2[g2$ADM0_NAME==cntr,]
+        tmp <- g2.tmp@data
+        tmp[, rn := row.names(g2.tmp)]
+        setkey(tmp, ADM2_CODE)
+        setkey(dt, ADM2_CODE)
+        tmp <- dt[, .SD, SDcols=-c(1:7)][tmp]
+        setkey(tmp, rn)
+        g2.tmp@data <- tmp[row.names(g2.tmp)]
+        writeRasterZip(g2.tmp, file, "ESRI Shapefile")
+      })
+  })
+
 
   #   # Rank districts on barchart
   #   output$barPlot <- renderPlot({
@@ -262,7 +303,7 @@ shinyServer(function(input, output, session) {
   #   # Show country raster plot
   #   output$rasterPlot <- renderPlot({
   #     if(input$btn==0) return()
-  #     spplot(stats(), col.regions=colorRampPalette(if(cru()=="pdsi") col.pdsi else col.cru)(20))
+  #     spplot(stats(), col.regions=colorRampPalette(if(var()=="pdsi") col.pdsi else col.pre)(20))
   #     #plot(g(), add=T)
   #   })
 

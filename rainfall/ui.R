@@ -8,6 +8,7 @@
 library(shiny)
 library(leaflet)
 library(dygraphs)
+library(shinyBS)
 
 # Month array
 mth <- 0:12
@@ -29,7 +30,7 @@ shinyUI(fluidPage(
 
     column(3,
       h3("Monthly Time Series"),
-      uiOutput("selectCRU"),
+      uiOutput("selectVar"),
       uiOutput("selectg0"),
       actionButton("btn", "Show Series", icon("globe")),
       hr(),
@@ -63,7 +64,8 @@ shinyUI(fluidPage(
     absolutePanel(class="panel panel-default",
       top=20, left="auto", right=20, bottom="auto", width=240, height="auto",
       div(class="panel-body",
-        uiOutput("details")
+        uiOutput("details"),
+        bsAlert("alertNoData")
       )
     )
   )
