@@ -55,7 +55,8 @@ shinyUI(fluidPage(
       selectInput("selectMonth", "Limit to Month", mth, selected=0),
       hr(),
       selectInput("fileType", "Choose Export Format", choices=c(
-        GeoTiff="tif", `ASCII Raster`="asc", netCDF="nc", CSV="csv", STATA="dta"), selected="csv"),
+        `ESRI Shapefile`="shp", GeoTiff="tif", netCDF="nc", CSV="csv", STATA="dta"),
+        selected="csv"),
       downloadButton("saveData", "Save Layer")
     )
   ),

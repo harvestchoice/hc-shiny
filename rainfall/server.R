@@ -14,7 +14,6 @@ library(dygraphs)
 
 setwd("/home/projects/shiny/tmp")
 
-
 # CRU and PDSI variables
 d <- c("cld", "dtr", "frs", "pet", "pre", "tmn", "tmp", "tmx", "vap", "wet", "pdsi")
 names(d) <- c("Cloud Cover (%)", "dtr", "frs", "pet", "Precipitation (mm)", "tmn",
@@ -40,14 +39,16 @@ load("../../cell5m/rdb/g2.list.rda")
 
 
 # Helper - Archive spatial formats for download
-writeRasterZip <- function(x, var, file, format, ...) {
+writeRasterZip <- function(x, file, filename, format, ...) {
   if (format=="ESRI Shapefile") {
-    rgdal::writeOGR(x, "./", file, format, overwrite_layer=T, check_exists=T)
+    rgdal::writeOGR(x, "./", filename, format, overwrite_layer=T, check_exists=T)
   } else {
-    raster::writeRaster(x, file, format, bylayer=F, overwrite=T, ...)
+    writeRaster(x, filename, format, bylayer=F, overwrite=T, ...)
   }
-  f <- list.files(pattern=paste0(strsplit(file, ".", fixed=T)[[1]][1], ".*"))
-  zip(paste0(file, ".zip"), f, flags="-9Xjm", zip="zip")
+  f <- list.files(pattern=paste0(strsplit(filename, ".", fixed=T)[[1]][1], ".*"))
+  zip(paste0(filename, ".zip"), f, flags="-9Xjm", zip="zip")
+  file.copy(paste0(filename, ".zip"), file)
+  file.remove(paste0(filename, ".zip"))
 }
 
 
@@ -255,34 +256,40 @@ shinyServer(function(input, output, session) {
     }
   }, function(file) {
 
-    if (input$fileType %in% c("grd", "tif", "nc")) {
+    if (input$fileType %in% c("tif", "nc")) {
       # Crop raster to selected country extent
+      require(raster)
       r <- brick(get(paste0("path.", var())))
       r <- crop(r, g())
       # Define z dimension (time)
       r <- setZ(r, get(paste0("tm.", var())), "month")
-      r <- mean(r, na.rm=T)
     }
 
+    f <- paste0(cntr(), "-", var(), ".", input$fileType)
+
     switch(input$fileType,
-      grd = writeRasterZip(r, paste(file, ".grd"), "raster"),
-      tif = writeRasterZip(r, paste(file, ".tif"), "GTiff",
+      tif = writeRasterZip(r, file, f, "GTiff",
         options="INTERLEAVE=BAND"),
-      nc = writeRasterZip(r, paste(file, ".nc"), "CDF"),
+      nc = writeRasterZip(r, file, f, "CDF"),
       csv = write.csv(dt2(), file, row.names=F, na=""),
       dta = foreign::write.dta(dt2(), file, version=9L),
       shp = {
-        # Combine attributes with GAUL 2008
-        dt <- genStats(dt1(), "Entire Country")
-        g2.tmp <- g2[g2$ADM0_NAME==cntr,]
-        tmp <- g2.tmp@data
-        tmp[, rn := row.names(g2.tmp)]
+        # Combine mean attributes with GAUL 2008 boundaries
+        dt <- dt1()[, list(
+          mean=mean(value, na.rm=T),
+          min=min(value, na.rm=T),
+          max=max(value, na.rm=T),
+          sd=sd(value, na.rm=T),
+          mad=mad(value, na.rm=T)), by=ADM2_CODE]
+        g <- g2[g2$ADM0_NAME==cntr(),]
+        tmp <- data.table(g@data)
+        tmp[, rn := row.names(g)]
         setkey(tmp, ADM2_CODE)
         setkey(dt, ADM2_CODE)
-        tmp <- dt[, .SD, SDcols=-c(1:7)][tmp]
+        tmp <- dt[tmp]
         setkey(tmp, rn)
-        g2.tmp@data <- tmp[row.names(g2.tmp)]
-        writeRasterZip(g2.tmp, file, "ESRI Shapefile")
+        g@data <- tmp[row.names(g)]
+        writeRasterZip(g, file, f, "ESRI Shapefile")
       })
   })
 

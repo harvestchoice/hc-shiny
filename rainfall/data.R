@@ -240,6 +240,7 @@ for (i in unique(g2.web@data$ADM0_CODE)) {
     overwrite_layer=T)
 }
 
+
 # Create well-formatted country, province, district list for re-use in input controls
 d2 <- data.table(g2.web@data)
 d2 <- d2[, .N, by=list(ADM0_NAME, ADM1_NAME, ADM2_NAME)]
@@ -252,5 +253,23 @@ d2 <- lapply(d2, function(x) lapply(x, function(y) y$ADM2_NAME))
 
 g2.list <- d2
 save(g2.list, file="../../cell5m/rdb/g2.list.rda", compress=T)
+
+
+# Compare original and webified versions
+dt <- data.table(g2@data)
+dtw <- data.table(g2.web@data)
+tmp <- dt[, length(unique(ADM2_CODE)), keyby=ADM0_NAME]
+tmpw <- dtw[, length(unique(ADM2_CODE)), keyby=ADM0_NAME]
+# Which countries are missing?
+tmp[which(!ADM0_NAME %in% tmpw$ADM0_NAME), ADM0_NAME]
+# [1] British Indian Ocean Territory Cape Verde                     Glorioso Island
+# [4] Juan de Nova Island            Mauritius                      Réunion
+# [7] Saint Helena                   Sao Tome and Principe          Seychelles
+tmp <- tmpw[tmp]
+setnames(tmp, 2:3, c("g2.web", "g2"))
+tmp <- tmp[g2!=g2.web]
+tmp[, diff := g2-g2.web]
+tmp[, sum(diff)]
+# [1] 398 missing districts
 
 
