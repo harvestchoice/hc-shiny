@@ -1,5 +1,5 @@
 #####################################################################################
-# Title: Prepare CRU-TS 3.22 Persisent Datasets
+# Title: Prepare CRU-TS 3.22 Persistent Datasets
 # Date: December 2014
 # Project: HarvestChoice
 # Author: Bacou, Melanie <mel@mbacou.com>
