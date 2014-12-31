@@ -2,6 +2,8 @@
 /tmp/
 /dash/
 /rainfall/data/
+!/rainfall/data/rds/
+!/rainfall/data/rds/*
 /data/
 /docs/
 /out/
