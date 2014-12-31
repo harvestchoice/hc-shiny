@@ -127,6 +127,9 @@ library(reshape2)
 library(raster)
 library(rgdal)
 
+# Use webified boundaries
+load("../../cell5m/rdb/g2.web.rda")
+
 stats.cntr <- function(x, y) {
   # Summarize raster over each district and convert to data.table
   g <- g2.web[g2.web$ADM0_CODE==x,]
