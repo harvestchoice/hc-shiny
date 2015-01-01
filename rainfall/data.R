@@ -127,12 +127,13 @@ library(reshape2)
 library(raster)
 library(rgdal)
 
-# Use webified boundaries (updated with GAUL 2014_2013 version)
-load("../../cell5m/rdb/g2_2014.web.rda")
+load("../../cell5m/rdb/g2.rda")
+# Use webified boundaries (updated with GAUL 2013 v14 version)
+g2.web <- readRDS("../../cell5m/rdb/g2_2013v14.web.rds")
 
 stats.cntr <- function(x, y) {
   # Summarize raster over each district and convert to data.table
-  g <- g2.web[g2.web$ADM0_CODE==x,]
+  g <- g2[g2$ADM0_CODE==x,]
   dt <- extract(get(y), g, fun=mean, na.rm=T, df=T, small=T)
   dt <- cbind(g@data, dt)
   dt <- data.table(dt)
@@ -173,8 +174,10 @@ json.cntr <- function(x, y, col) {
     dt[, cl := colorRampPalette(col)(length(cv)+1)[cl]]
   }
 
-  # Add symbology to GeoJSON
+  # Add symbology to GeoJSON. Note that the districts do not necessarily match here
+  # since we used the original g2 to generate stats, and g2.web to generate GeoJSON
   for (i in 1:length(m$features)) {
+    j <- m$features[[i]]$properties$ADM2_CODE
     m$features[[i]]$properties$mean <- dt[i, round(mean, 2)]
     m$features[[i]]$properties$min <- dt[i, round(min, 2)]
     m$features[[i]]$properties$max <- dt[i, round(max, 2)]
@@ -196,6 +199,7 @@ pre <- setZ(pre, tm, "month")
 col <- rev(c("#2F6FBF", "#69DB4D", "#F9EF58", "#DC5207", "#830000"))
 for (i in cntr) stats.cntr(i, "pre")
 for (i in cntr) json.cntr(i, "pre", col)
+# 3 countries 6, 102, 74 failed to overlay (31, 42, 48)
 
 # Pre-process `pdsi`
 pdsi <- brick("./data/pdsisc.monthly.maps.1850-2012.nc")
@@ -204,7 +208,7 @@ pdsi <- setZ(pdsi, tm, "month")
 col <- c("#FF9900", "#FFFF66", "#FFFFFF", "#99FF99", "#009900")
 for (i in cntr) stats.cntr(i, "pdsi")
 for (i in cntr) json.cntr(i, "pdsi", col)
-
+# countries 6, 102, 74 failed to overlay
 
 
 #####################################################################################
@@ -222,16 +226,14 @@ library(data.table)
 load("../../cell5m/rdb/g2.rda")
 
 # I believe gSimplify uses the same OGR libraries as GRASS
-g2.web <- gSimplify(g2, 0.06, topologyPreserve=T)
+g2.web <- gSimplify(g2, 0.05, topologyPreserve=T)
 g2.web <- SpatialPolygonsDataFrame(g2.web, g2@data)
 plot(g2.web[g2.web$ADM0_NAME=="Ghana", ])
 
 # Export to GRASS v.in.ogr with a 0.06 snapping threshold, then reload
 writeOGR(g2.web, "../../cell5m/rdb", "g2.web", "ESRI Shapefile")
-
-# Updated on 12/31/2014 using GAUL 2014_2013 instead
-g2.web <- readOGR("../../cell5m/rdb", "g2_2014.web")
-crs(g2.web) <- crs("+proj=longlat +datum=WGS84 +no_defs")
+g2.web <- readOGR("../../cell5m/rdb", "g2.web")
+#load("../../cell5m/rdb/g2_2008v09.web.rda")
 g2.web@data <- g2.web@data[, -c(3:6,11:12)]
 
 # Add X,Y centroids
@@ -242,7 +244,7 @@ dt[, Y := coordinates(g2.web)[, 2]]
 g2.web@data <- dt
 
 # Save webified version for re-use
-saveRDS(g2.web, "../../cell5m/rdb/g2_2014.web.rds", compress=T)
+saveRDS(g2.web, "../../cell5m/rdb/g2_2008v09.web.rds", compress=T)
 
 # Create as many geojson files as SSA countries
 for (i in unique(g2.web@data$ADM0_CODE)) {
@@ -261,7 +263,7 @@ d2 <- lapply(d2, function(x) x[, list(ADM1_NAME, ADM2_NAME)])
 d2 <- lapply(d2, function(x) split(x, x$ADM1_NAME))
 d2 <- lapply(d2, function(x) lapply(x, function(y) y$ADM2_NAME))
 
-save(d2, "../../cell5m/rdb/g2._2014.list.rds", compress=T)
+saveRDS(d2, "../../cell5m/rdb/g2_2008v09.list.rds", compress=T)
 
 
 # Compare original and webified versions
