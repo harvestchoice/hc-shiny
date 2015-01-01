@@ -127,8 +127,8 @@ library(reshape2)
 library(raster)
 library(rgdal)
 
-# Use webified boundaries
-load("../../cell5m/rdb/g2.web.rda")
+# Use webified boundaries (updated with GAUL 2014_2013 version)
+load("../../cell5m/rdb/g2_2014.web.rda")
 
 stats.cntr <- function(x, y) {
   # Summarize raster over each district and convert to data.table
@@ -186,7 +186,7 @@ json.cntr <- function(x, y, col) {
   saveRDS(m, file=paste0("./data/rds/", y, x, ".json.rds"), compress=T)
 }
 
-# Load country code list
+# Country code list
 cntr <- unique(g2.web@data$ADM0_CODE)
 
 # Pre-process `pre`
@@ -216,6 +216,7 @@ setwd("/home/projects/shiny/rainfall")
 
 library(rgeos)
 library(rgdal)
+library(data.table)
 
 # Load GAUL 2008 (CELL5M version)
 load("../../cell5m/rdb/g2.rda")
@@ -227,12 +228,21 @@ plot(g2.web[g2.web$ADM0_NAME=="Ghana", ])
 
 # Export to GRASS v.in.ogr with a 0.06 snapping threshold, then reload
 writeOGR(g2.web, "../../cell5m/rdb", "g2.web", "ESRI Shapefile")
-g2.web <- readOGR("../../cell5m/rdb", "g2web2")
+
+# Updated on 12/31/2014 using GAUL 2014_2013 instead
+g2.web <- readOGR("../../cell5m/rdb", "g2_2014.web")
 crs(g2.web) <- crs("+proj=longlat +datum=WGS84 +no_defs")
-g2.web@data <- g2.web@data[, -c(1:2)]
+g2.web@data <- g2.web@data[, -c(3:6,11:12)]
+
+# Add X,Y centroids
+dt <- data.table(g2.web@data)
+setcolorder(dt, c(3:6,1,2))
+dt[, X := coordinates(g2.web)[, 1]]
+dt[, Y := coordinates(g2.web)[, 2]]
+g2.web@data <- dt
 
 # Save webified version for re-use
-save(g2.web, file="../../cell5m/rdb/g2.web.rda", compress=T)
+saveRDS(g2.web, "../../cell5m/rdb/g2_2014.web.rds", compress=T)
 
 # Create as many geojson files as SSA countries
 for (i in unique(g2.web@data$ADM0_CODE)) {
@@ -251,8 +261,7 @@ d2 <- lapply(d2, function(x) x[, list(ADM1_NAME, ADM2_NAME)])
 d2 <- lapply(d2, function(x) split(x, x$ADM1_NAME))
 d2 <- lapply(d2, function(x) lapply(x, function(y) y$ADM2_NAME))
 
-g2.list <- d2
-save(g2.list, file="../../cell5m/rdb/g2.list.rda", compress=T)
+save(d2, "../../cell5m/rdb/g2._2014.list.rds", compress=T)
 
 
 # Compare original and webified versions
