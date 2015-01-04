@@ -1,6 +1,7 @@
 /temp/
 /tmp/
 /dash/
+/dhs/data/
 /rainfall/data/*
 !/rainfall/data/rds
 !/rainfall/data/rds/*

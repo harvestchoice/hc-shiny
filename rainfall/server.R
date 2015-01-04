@@ -35,7 +35,7 @@ g2.dt <- data.table(g2@data)[, .N, by=list(ADM0_CODE, ADM0_NAME)]
 setkey(g2.dt, ADM0_NAME)
 
 # Load country/province/district list to populate controls
-load("../../cell5m/rdb/g2_2008v09.list.rda")
+g2.list <- readRDS("../../cell5m/rdb/g2_2008v09.list.rds")
 
 
 # Helper - Archive spatial formats for download
