@@ -9,11 +9,11 @@
 # /cell5m/R/cell5mDataUpdate.2014.12.R. We just need a few additional steps to prep
 # the data for web use.
 
-setwd("/home/projects/shiny/dhs")
 library(data.table)
 library(rgdal)
 library(rgeos)
 
+setwd("/home/projects/shiny/dhs")
 load("./data/dhsMap.2014.10.16.RData")
 
 # Load metadata from Joe Green at

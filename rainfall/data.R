@@ -9,11 +9,12 @@
 # without any further transformation, but we need to pre-process district summaries for
 # extra speed using stats.cntr() below.
 
-setwd("/home/projects/shiny/rainfall")
 library(stringr)
 library(data.table)
 library(reshape2)
 library(raster)
+
+setwd("/home/projects/shiny/rainfall")
 
 ## CRU variables are in directory tree
 # Note that each 1901-2013 time series is 2.6GB uncrompressed
