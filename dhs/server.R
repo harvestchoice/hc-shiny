@@ -66,7 +66,7 @@ shinyServer(function(input, output, session) {
     if (input$btn>0) isolate(input$selectVar) else "i101_hv271_wealth_index"
   })
 
-  iso <- reactive({
+  iso2 <- reactive({
     if (input$btn>0) isolate(input$selectISO) else "GH"
   })
 
@@ -75,7 +75,7 @@ shinyServer(function(input, output, session) {
   })
 
   svyCode <- reactive({
-    if(input$btn>0) paste0(iso(), year()) else "GH2008"
+    if(input$btn>0) paste0(iso2(), year()) else "GH2008"
   })
 
   g <- reactive({

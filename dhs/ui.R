@@ -23,15 +23,15 @@ shinyUI(fluidPage(
       options=list(center=c(7.79167, -1.20833 ), zoom=6, zoomControl="topright"))
   ),
 
-  p(br()),
-
   sidebarLayout(position="right",
 
-    sidebarPanel(width=3,
+    sidebarPanel(width=3, style="margin-top:20px;",
       h3("Nutrition and Health Statistics"),
       uiOutput("selectISO"),
       uiOutput("selectVar"),
-      radioButtons("selectRes", "Residence", c("rural", "urban"), inline=T, selected="rural"),
+      div(style="margin-left:20px;",
+        radioButtons("selectRes", "Residence", c("rural", "urban"), selected="rural")
+      ),
       actionButton("btn", "Show Map", icon("globe")),
       hr(),
       uiOutput("selectYear"),
