@@ -12,3 +12,4 @@ A couple of visualization demos using RStudio Shiny framework, for testing purpo
 - cell5mLeaflet :: testing leaflet package with HC Data Services
 - 2014_BMGF :: viz of Ethiopia survey statistics
 - rainfall :: 1960-2013 CRU-TS 3.22 precipitation and PDSI for all districts in SSA
+- dhs :: sub-national DHS estimates across 60 countries
