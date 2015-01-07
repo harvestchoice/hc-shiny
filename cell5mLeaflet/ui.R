@@ -32,7 +32,8 @@ shinyUI(fluidPage(
                 selectInput("fileType", "Choose Export Format",
                     choices=c(`ASCII Raster`="asc", GeoTIFF="tif", STATA="dta", RData="rds"),
                     selected="asc"),
-                downloadButton("saveData", "Save Layer")
+                downloadButton("saveData", "Save Layer"),
+                p(br())
             )
         ),
         
@@ -44,35 +45,35 @@ shinyUI(fluidPage(
                 
                 h3(htmlOutput("varTitle")),
                 p("Click map to show pixel data."),
+                
                 tabsetPanel(position="left", selected="Overview",
-                    
                     tabPanel(title="Overview",
-                        column(3, offset=0,
+                        column(6,
                             h4("Histogram"),
                             plotOutput("plotHist", height="100%"),
                             p(br(), "Showing frequencies for visible pixels.")),
-                        column(2, 
+                        column(6, 
                             h4("Layer Statistics"),
                             tableOutput("tableSum")
                         )
                     ),
                     
                     tabPanel(title="Summarize",
-                        column(2,
+                        column(6,
                             p(),
                             uiOutput("selectDomain"),
                             p("Showing a random list of 10 domains to summarize by."),
                             actionButton("btnDomain", "Summarize", icon("cog")),
                             p(br(), "Click to summary and map.")
                         ),
-                        column(3,
+                        column(6,
                             h4("Domain Summary"),
                             tableOutput("tableDomain")
                         )
                     ),
                     
                     tabPanel(title="Homologue Finder",
-                        column(2,                   
+                        column(6,                   
                             p(br(), "Use the Layer choices on the right to select up to 5 layers."),
                             p(htmlOutput("selectRank")),
                             p(actionLink("btnAddRank", "Add Layer", icon("plus"))),
@@ -82,7 +83,7 @@ shinyUI(fluidPage(
                             hr(),
                             actionLink("btnClearRank", "Clear All", icon("refresh"))
                         ),
-                        column(3,
+                        column(6,
                             h4("District Comparison"),
                             tableOutput("tableRank")
                         )

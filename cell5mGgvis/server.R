@@ -10,7 +10,7 @@ library(shiny)
 library(hcapi3)
 library(ggvis)
 
-setwd("/home/projects/www/cell5mGgvis")
+setwd("/home/projects/shiny/cell5mGgvis")
 
 
 # Define server logic for slider examples

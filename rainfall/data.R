@@ -128,9 +128,10 @@ library(reshape2)
 library(raster)
 library(rgdal)
 
+# GAUL 2008 v2009
 load("../../cell5m/rdb/g2.rda")
-# Use webified boundaries (updated with GAUL 2013 v14 version)
-g2.web <- readRDS("../../cell5m/rdb/g2_2013v14.web.rds")
+# Use webified boundaries
+g2.web <- readRDS("../../cell5m/rdb/g2_2008v09.web.rds")
 
 stats.cntr <- function(x, y) {
   # Summarize raster over each district and convert to data.table
@@ -167,7 +168,7 @@ json.cntr <- function(x, y, col) {
   cv <- try(classInt::classIntervals(dt$mean, n=min(c(5, dt[,length(unique(mean))])))$brks)
 
   if (class(cv)=="try-error") {
-    # classInt fails apply only 1 color (white)
+    # classInt failed to find breaks, apply only 1 color (white)
     dt[, cl := "white"]
   } else {
     # Symbolize normally
@@ -175,15 +176,16 @@ json.cntr <- function(x, y, col) {
     dt[, cl := colorRampPalette(col)(length(cv)+1)[cl]]
   }
 
-  # Add symbology to GeoJSON. Note that the districts do not necessarily match here
+  # Append symbology to GeoJSON. Note that the districts do not necessarily match here
   # since we used the original g2 to generate stats, and g2.web to generate GeoJSON
   for (i in 1:length(m$features)) {
+    setkey(dt, ADM2_CODE)
     j <- m$features[[i]]$properties$ADM2_CODE
-    m$features[[i]]$properties$mean <- dt[i, round(mean, 2)]
-    m$features[[i]]$properties$min <- dt[i, round(min, 2)]
-    m$features[[i]]$properties$max <- dt[i, round(max, 2)]
-    m$features[[i]]$properties$sd <- dt[i, round(sd, 2)]
-    m$features[[i]]$style <- list(fillColor=dt[i, cl], weight=.6, color="white", fillOpacity=0.7)
+    m$features[[i]]$properties$mean <- dt[j][, round(mean, 2)]
+    m$features[[i]]$properties$min <- dt[j][, round(min, 2)]
+    m$features[[i]]$properties$max <- dt[j][, round(max, 2)]
+    m$features[[i]]$properties$sd <- dt[j][, round(sd, 2)]
+    m$features[[i]]$style <- list(fillColor=dt[j][, cl], weight=.6, color="white", fillOpacity=0.7)
   }
 
   # Write to RDS file
@@ -200,7 +202,7 @@ pre <- setZ(pre, tm, "month")
 col <- rev(c("#2F6FBF", "#69DB4D", "#F9EF58", "#DC5207", "#830000"))
 for (i in cntr) stats.cntr(i, "pre")
 for (i in cntr) json.cntr(i, "pre", col)
-# 3 countries 6, 102, 74 failed to overlay (31, 42, 48)
+# 4 countries failed to symbolize
 
 # Pre-process `pdsi`
 pdsi <- brick("./data/pdsisc.monthly.maps.1850-2012.nc")
