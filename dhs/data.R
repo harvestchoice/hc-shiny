@@ -51,28 +51,27 @@ for (i in 1:length(dhs.lbl)) names(dhs.lbl[[i]]) <- tmp[[i]]$varLabel
 
 
 ## Simplify admin boundaries
-# Load gis.web prepared on Jan 5, that already has simplified boundaries
-gis <- readRDS("./data/gis.web.rds")
+gis <- gis[!is.na(gis@data$ISO),]
+gis@data$svyUnit <- with(gis@data, paste0(svyCode, REGCODE))
+tmp <- unionSpatialPolygons(gis, gis@data$svyUnit)
+# Error in createPolygonsComment(p) :
+#  rgeos_PolyCreateComment: orphaned hole, cannot find containing polygon for hole at index 2
+# Bad geometries, try to clean in GRASS and reload
+writeOGR(gis, "./data", "dhsMap_2014", "ESRI Shapefile")
+tmp <- readOGR("./data", "dhsMap_2014")
 
-# Beautify attributes and add X, Y centroids
-dt <- data.table(gis@data)
-dt[, REGNAME := NULL]
-setnames(dt, c("iso", "year", "country", "svyRegName", "svyID", "svyRegID", "svyRegVar",
-  "svyRegCode", "svyCode", "rn"))
-setcolorder(dt, c(9,5,1,3,2,6,8,4,7,10))
-dt[, svyRegVar := NULL]
-dt[, X := coordinates(gis)[, 1]]
-dt[, Y := coordinates(gis)[, 2]]
-gis@data <- dt
-rm(dt)
-
-# Save to geoJSON, then re-save into .rds format (`rn` identifies unique polygons)
+# Simplify survey by survey and save to geoJSON
 for (i in unique(gis@data$svyCode)) {
-  tmp <- gis[gis$svyCode==i,]
-  f <- paste0("./data/json/", i, ".json")
-  writeOGR(tmp, f, i, "GeoJSON")
-  tmp <- jsonlite::fromJSON(f, simplifyVector=F)
-  saveRDS(tmp, paste0("./data/rds/", i, ".json.rds"), compress=T)
+  tmp <- gis[gis@data$svyCode==i,]
+  tmp <- gSimplify(tmp, tol=0.06)
+  writeOGR(tmp, paste0("./data/json/svy", i), "GeoJSON")
 }
 
+
+gis.dt[, REGNAME := NULL]
+setnames(gis.dt, c("iso", "svyYear", "country", "svyID",
+  "regID", "regVar", "regCode", "regName", "svyCode", "svyUnit", "rn"))
+setcolorder(gis.dt, )
+
 save.image("./data/dhsMap.2014.10.16.RData")
+

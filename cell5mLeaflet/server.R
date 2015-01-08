@@ -5,7 +5,7 @@
 # Authors: Bacou, Melanie <mel@mbacou.com>
 #####################################################################################
 
-setwd("/home/projects/shiny/tmp")
+setwd("/home/projects/www/tmp")
 
 library(data.table)
 library(shiny)

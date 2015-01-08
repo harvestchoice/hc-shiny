@@ -30,36 +30,9 @@ writeZip <- function(x, file, filename, format, ...) {
 }
 
 
-# Helper - Merge DHS indicator and symbolize
-genMap <- function(var, svy, rur="rural", cl="", cv=5) {
-  # Load survey GeoJSON as list
-  m <- readRDS(paste("../dhs/data/rds/", svy, ".rds"))
+# Helper - Merge attributes and symbolize
+genMap <- function(var, iso, year, cl, cv) {
 
-  # Construct symbology
-  dt <- dt[J(sapply(m$features, function(x) x$properties$ADM2_CODE))]
-  rg <- range(dt$mean, na.rm=T)
-  cv <- try(classInt::classIntervals(dt$mean, n=min(c(5, dt[,length(unique(mean))])))$brks)
-
-  if (class(cv)=="try-error") {
-    # classInt fails apply only 1 color (white)
-    dt[, cl := "white"]
-  } else {
-    # Symbolize normally
-    dt[, cl := cut(mean, unique(c(rg[1]-1, cv, rg[2]+1)), cutlabels=F, ordered_result=T)]
-    dt[, cl := colorRampPalette(col)(length(cv)+1)[cl]]
-  }
-
-  # Add symbology to GeoJSON
-  for (i in 1:length(m$features)) {
-    j <- m$features[[i]]$properties$ADM2_CODE
-    m$features[[i]]$properties$mean <- dt[i, round(mean, 2)]
-    m$features[[i]]$properties$min <- dt[i, round(min, 2)]
-    m$features[[i]]$properties$max <- dt[i, round(max, 2)]
-    m$features[[i]]$properties$sd <- dt[i, round(sd, 2)]
-    m$features[[i]]$style <- list(fillColor=dt[i, cl], weight=.6, color="white", fillOpacity=0.7)
-  }
-
-  return(m)
 }
 
 
@@ -71,15 +44,15 @@ shinyServer(function(input, output, session) {
 
   # Reactive controls
   output$selectVar <- renderUI({
-    selectInput("selectVar", "Choose an indicator", dhs.lbl, selected="i101_hv271_wealth_index")
+    selectInput("selectVar", "Choose an Indicator", dhs.lbl, selected="i101_hv271_wealth_index")
   })
 
   output$selectISO <- renderUI({
-    selectInput("selectISO", "Choose a country", iso, selected="GH")
+    selectInput("selectISO", "Choose a Country", iso, selected="GH")
   })
 
   output$cl <- renderUI({
-    selectInput("cl", "Choose a color palette", row.names(brewer.pal.info), selected="RdBu")
+    selectInput("cl", "Choose a Color Palette", row.names(brewer.pal.info), selected="RdBu")
   })
 
   output$selectYear <- renderUI({
@@ -106,6 +79,7 @@ shinyServer(function(input, output, session) {
   })
 
   g <- reactive({
+    # Selected country boundaries
     if (input$btn==0) return()
     gis[gis$svyCode==svyCode(),]
   })
@@ -185,7 +159,7 @@ shinyServer(function(input, output, session) {
   })
 
 
-  # Download handler
+  # Download
   output$saveData <- downloadHandler(function() {
     f <- paste0(cntr(), "-", var())
     if (input$fileType %in% c("csv", "dta")) {

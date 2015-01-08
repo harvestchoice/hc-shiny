@@ -101,7 +101,7 @@ shinyServer(function(input, output, session) {
   })
 
   output$selectg0 <- renderUI({
-    selectInput("selectg0", "Choose a Country", names(g2.list), selected="Kenya")
+    selectInput("selectg0", "Choose a Country", names(g2.list), selected="Ghana")
   })
 
   output$selectg2 <- renderUI({
@@ -114,7 +114,7 @@ shinyServer(function(input, output, session) {
   })
 
   cntr <- reactive({
-    if (input$btn>0) isolate(input$selectg0) else "Kenya"
+    if (input$btn>0) isolate(input$selectg0) else "Ghana"
   })
 
   dist <- reactive({

@@ -16,19 +16,20 @@ names(mth) <- c("All", month.name)
 
 
 shinyUI(fluidPage(
-        title="CRU and PDSI 1960-2013 Time Series across Africa",
+        title="CRU-TS 3.22 with leaflet",
         theme="bootstrap.css",
-
+        
         absolutePanel(top=0, bottom="auto", left=0, right=0, width="auto", height="auto",
-            leafletMap("map", width="100%", height=440,
-                initialTileLayer="//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
-                initialTileLayerAttribution=HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>'),
-                options=list(center=c(0.75, 40), zoom=6)
+            leafletMap("map", width="100%", height=460,
+                initialTileLayer = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+                initialTileLayerAttribution = HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>'),
+                # Center on Ghana
+                options=list(center=c(7.79167, -1.20833 ), zoom=6)
             )
         ),
-
-        fluidRow(style="margin-top: 440px;",
-
+        
+        fluidRow(style="margin-top: 460px;",
+            
             column(3,
                 h3("Monthly Time Series"),
                 uiOutput("selectVar"),
@@ -38,7 +39,7 @@ shinyUI(fluidPage(
                 includeHTML("../rainfall/www/txtCredits.html"),
                 p(br())
             ),
-
+            
             column(7,
                 conditionalPanel(condition="input.btn==0",
                     includeHTML("../rainfall/www/txtIntro.html")),
@@ -48,12 +49,11 @@ shinyUI(fluidPage(
                     dygraphOutput("dygraph", width="100%", height="320px"),
                     p(br()))
             ),
-
+            
             column(2,
                 p(br()),
                 uiOutput("selectg2"),
-                sliderInput("rg", "Limit to Date Range", 1960, 2013, c(1960, 2013),
-                  step=1, sep="", ticks=F),
+                sliderInput("rg", "Limit to Date Range", 1960, 2013, value=c(1960, 2013), step=1, format="###0"),
                 selectInput("selectMonth", "Limit to Month", mth, selected=0),
                 hr(),
                 selectInput("fileType", "Choose Export Format", choices=c(
@@ -62,7 +62,7 @@ shinyUI(fluidPage(
                 downloadButton("saveData", "Save Layer")
             )
         ),
-
+        
         conditionalPanel(condition="input.btn>0",
             absolutePanel(class="panel panel-default",
                 top=20, right=20, width=240, height="auto",
