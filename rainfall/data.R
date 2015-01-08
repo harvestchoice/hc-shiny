@@ -132,8 +132,8 @@ load("../../cell5m/rdb/g2.rda")
 # Use webified boundaries (updated with GAUL 2013 v14 version)
 g2.web <- readRDS("../../cell5m/rdb/g2_2013v14.web.rds")
 
+# Helper - summarize rasters over districts
 stats.cntr <- function(x, y) {
-  # Summarize raster over each district and convert to data.table
   g <- g2[g2$ADM0_CODE==x,]
   dt <- extract(get(y), g, fun=mean, na.rm=T, df=T, small=T)
   dt <- cbind(g@data, dt)
@@ -146,7 +146,7 @@ stats.cntr <- function(x, y) {
   saveRDS(dt, file=paste0("./data/rds/", y, x, ".rds"), compress=T)
 }
 
-
+# Helper - symbolize GeoJSON
 json.cntr <- function(x, y, col) {
   # Load pre-processed district X month records
   dt <- readRDS(paste0("./data/rds/", y, x, ".rds"))
@@ -226,7 +226,7 @@ library(data.table)
 # Load GAUL 2008 (CELL5M version)
 load("../../cell5m/rdb/g2.rda")
 
-# I believe gSimplify uses the same OGR libraries as GRASS
+# I believe gSimplify uses the same libraries as GRASS
 g2.web <- gSimplify(g2, 0.05, topologyPreserve=T)
 g2.web <- SpatialPolygonsDataFrame(g2.web, g2@data)
 plot(g2.web[g2.web$ADM0_NAME=="Ghana", ])
@@ -273,7 +273,7 @@ dtw <- data.table(g2.web@data)
 tmp <- dt[, length(unique(ADM2_CODE)), keyby=ADM0_NAME]
 tmpw <- dtw[, length(unique(ADM2_CODE)), keyby=ADM0_NAME]
 # Which countries are missing?
-tmp[which(!ADM0_NAME %in% tmpw$ADM0_NAME), ADM0_NAME]
+tmp[!tmpw][, ADM0_NAME]
 # [1] British Indian Ocean Territory Cape Verde                     Glorioso Island
 # [4] Juan de Nova Island            Mauritius                      Réunion
 # [7] Saint Helena                   Sao Tome and Principe          Seychelles

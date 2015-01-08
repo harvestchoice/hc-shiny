@@ -38,7 +38,7 @@ shinyUI(fluidPage(
       uiOutput("cl"),
       p(actionLink("btnShowBrewer", "Show color palettes"),
         `data-toggle`="modal", `data-target`="#brew"),
-      sliderInput("cv", "Number of legend breaks", 2, 8, 4),
+      sliderInput("cv", "Number of legend breaks", 2, 8, 4, ticks=F, sep=""),
       hr(),
       selectInput("fileType", "Choose Export Format",
         choices=c(`ESRI Shapefile`="shp", CSV="csv", STATA="dta"),
