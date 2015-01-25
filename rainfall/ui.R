@@ -23,8 +23,8 @@ shinyUI(fluidPage(
             leafletMap("map", width="100%", height=420,
                 initialTileLayer = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
                 initialTileLayerAttribution = HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>'),
-                # Center on Ghana
-                options=list(center=c(7.79167, -1.20833 ), zoom=6)
+                # Center on Kenya
+                options=list(center=c(1, 41), zoom=6)
             )
         ),
 

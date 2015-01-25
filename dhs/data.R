@@ -19,59 +19,59 @@ load("./data/dhsMap.2014.10.16.RData")
 # Load metadata from Joe Green at
 # https://docs.google.com/spreadsheets/d/1v8DDLgi9lQbS4uKnxYPM83PYC90rijJvjKN4xAntKlE/edit#gid=916658631
 svy <- fread("./data/dhsSvyList.csv")
-iso <- svy[, unique(country_code)]
-names(iso) <- svy[, unique(country)]
-
-# Create survey year start/end
-setkey(svy, country_code, year)
 # Some country codes are missing
 svy[1:6, country_code := c("ML", "PE", "HN", "SN", "EK", "PE")]
-setkey(svy, country_code, year)
-svyYear <- svy[, list(year=paste(year, collapse=",")), by=country_code]
-svyYear[, yearStart := sapply(strsplit(year, ",", fixed=T), unlist)[1], by=country_code]
-svyYear[, yearEnd := tail(sapply(strsplit(year, ",", fixed=T), unlist), 1), by=country_code]
-setnames(svyYear, c("iso", "year", "yearStart", "yearEnd"))
+iso <- svy[, unique(country_code)]
+names(iso) <- svy[, unique(country)]
+iso <- iso[order(iso)]
 
-# Create pretty survey list
+# Create pretty survey list (svy)
 svy[, svyCode := paste0(country_code, year)]
 setnames(svy, c("country", "iso", "year", "phase", "recode", "released", "gps", "recall", "svyCode"))
 setcolorder(svy, c(9,2,1,3,4:8))
 
-# Create pretty indicator list
+# Survey years (svyYear)
+setkey(svy, iso, year)
+svyYear <- svy[, list(year=paste(year, collapse=",")), by=iso]
+svyYear[, year := sapply(strsplit(year, ",", fixed=T), unlist)]
+svyYear <- split(svyYear$year, svyYear$iso)
+svyYear <- lapply(svyYear, unlist)
+
+# Create pretty indicator list (dhs.lbl)
+var <- fread("./data/dhsVarGroup.csv")
+dhs.lbl <- fread("./data/dhs.lbl.csv")
+
 dhs.lbl[, varGroup := sapply(strsplit(varCode, "_", fixed=T), unlist)[1], by=varCode]
 dhs.lbl[, varGroup := as.integer(gsub("i", "", varGroup, fixed=T))]
 setkey(dhs.lbl, varGroup)
 setkey(var, `indicator\ngroup`)
 dhs.lbl$varCat <- var[dhs.lbl][, summary]
 dhs.lbl[1:8, varCat := "survey design"]
-dhs.lbl <- split(dhs.lbl, dhs.lbl$varCat)
-tmp <- dhs.lbl
-dhs.lbl <- lapply(dhs.lbl, function(x) x$varCode)
-for (i in 1:length(dhs.lbl)) names(dhs.lbl[[i]]) <- tmp[[i]]$varLabel
+
+# Add male/female attribute
+dhs.lbl[, gender := substr(varCode, nchar(varCode)-1, nchar(varCode))]
+dhs.lbl <- dhs.lbl[gender!="_m"]
+dhs.lbl[gender=="_f", varCode := substr(varCode, 1, nchar(varCode)-2)]
+dhs.lbl[, gender := gender=="_f"]
+
+# Fix labels by hand
+write.csv(dhs.lbl, "./data/dhs.lbl.gender.csv", na="", row.names=F)
+dhs.lbl <- fread("./data/dhs.lbl.gender.csv")
+setkey(dhs.lbl, varGroup, varLabel)
 
 
-## Simplify admin boundaries
-gis <- gis[!is.na(gis@data$ISO),]
-gis@data$svyUnit <- with(gis@data, paste0(svyCode, REGCODE))
-tmp <- unionSpatialPolygons(gis, gis@data$svyUnit)
-# Error in createPolygonsComment(p) :
-#  rgeos_PolyCreateComment: orphaned hole, cannot find containing polygon for hole at index 2
-# Bad geometries, try to clean in GRASS and reload
-writeOGR(gis, "./data", "dhsMap_2014", "ESRI Shapefile")
-tmp <- readOGR("./data", "dhsMap_2014")
+# Load preprocessed GeoJSON resources as list
+gis.web <- readRDS("./data/gis.web.rds")
+gis <- readRDS("./data/gis.simple.rds")
 
-# Simplify survey by survey and save to geoJSON
-for (i in unique(gis@data$svyCode)) {
-  tmp <- gis[gis@data$svyCode==i,]
-  tmp <- gSimplify(tmp, tol=0.06)
-  writeOGR(tmp, paste0("./data/json/svy", i), "GeoJSON")
-}
+# Test print::xtable on `dhs`
+dt <- dhs[country_code=="GH", .SD,   .SDcols=c("year", "hv025", "hv024", "hv024_name",
+  "i316_exclusive_bf0_5_f", "i316_exclusive_bf0_5_m")]
+dt[, hv024_name := stringi::stri_trans_totitle(hv024_name)]
+dt <- melt(dt, id.vars=c("year", "hv025", "hv024", "hv024_name"))
+dt[, variable := factor(variable, labels=c("female", "male"))]
+dt <- tabular(Heading("Region")*factor(hv024_name)~Heading()*factor(year)*Heading()*factor(hv025)*Heading()*variable*Heading()*value*Heading()*mean, dt)
 
 
-gis.dt[, REGNAME := NULL]
-setnames(gis.dt, c("iso", "svyYear", "country", "svyID",
-  "regID", "regVar", "regCode", "regName", "svyCode", "svyUnit", "rn"))
-setcolorder(gis.dt, )
-
+rm(tmp, i, f, var, gis.dt, dhs.svy, dt)
 save.image("./data/dhsMap.2014.10.16.RData")
-

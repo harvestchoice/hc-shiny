@@ -31,169 +31,193 @@ writeZip <- function(x, file, filename, format, ...) {
 
 
 # Helper - Merge attributes and symbolize
-genMap <- function(var, iso, year, cl, cv) {
-
+genMap <- function(svy, res, var, col, brks) {
+  dt <- dhs[svyCode==svy & hv025==res, .SD, .SDcols=c("hv024", var)]
+  setnames(dt, var, "var")
+  setkey(dt, hv024)
+  m <- gis.web[[svy]]
+  dt <- dt[J(sapply(m$features, function(x) x$properties$regCode))]
+  rg <- range(dt$var, na.rm=T)
+  
+  # Try equal interval breaks
+  cv <- try(classInt::classIntervals(dt$var, n=min(brks, dt[, length(unique(var))], na.rm=T))$brks)
+  
+  if (class(cv)=="try-error") {
+    return(class(cv))
+    
+  } else {
+    # Symbolize
+    dt[, cl := cut(var, unique(c(rg[1]-1, cv, rg[2]+1)), cutlabels=F, ordered_result=T)]
+    dt[, cl := brewer.pal(length(cv)+1, col)[cl]]
+    
+    for (i in 1:length(m$features)) {
+      m$features[[i]]$properties$var <- var
+      m$features[[i]]$properties$value <- dt$var
+      m$features[[i]]$style <- list(fillColor=dt[i, cl], weight=.6, color="white", fillOpacity=0.7)
+    }
+    return(m)
+  }
 }
 
 
 
 shinyServer(function(input, output, session) {
-
-  # Leaflet map
-  map <- createLeafletMap(session, "map")
-
-  # Reactive controls
-  output$selectVar <- renderUI({
-    selectInput("selectVar", "Choose an Indicator", dhs.lbl, selected="i101_hv271_wealth_index")
-  })
-
-  output$selectISO <- renderUI({
-    selectInput("selectISO", "Choose a Country", iso, selected="GH")
-  })
-
-  output$cl <- renderUI({
-    selectInput("cl", "Choose a Color Palette", row.names(brewer.pal.info), selected="RdBu")
-  })
-
-  output$selectYear <- renderUI({
-    svy <- svyYear[iso==input$selectISO]
-    sliderInput("selectYear", "Select Survey Year", format="###0",
-      svy$yearStart, svy$yearEnd, svy$yearStart)
-  })
-
-  # Reactive values
-  var <- reactive({
-    if (input$btn>0) isolate(input$selectVar) else "i101_hv271_wealth_index"
-  })
-
-  iso2 <- reactive({
-    if (input$btn>0) isolate(input$selectISO) else "GH"
-  })
-
-  year <- reactive({
-    if(length(input$selectYear)>0) input$selectYear else 2008
-  })
-
-  svyCode <- reactive({
-    if(input$btn>0) paste0(iso2(), year()) else "GH2008"
-  })
-
-  g <- reactive({
-    # Selected country boundaries
-    if (input$btn==0) return()
-    gis[gis$svyCode==svyCode(),]
-  })
-
-
-  # Reactive data tables
-  dt1 <- reactive({
-    if (input$btn==0) return()
-  })
-
-  dt2 <- reactive({
-  })
-
-
-
-  # Draw GeoJSON
-  observe({
-    if (input$btn==0) return()
-    # Symbolize and read country GeoJSON from disk
-    m <<- try(readRDS(genMap(svyCode())))
-    if (class(m)=="try-error") {
-      # File is missing for that country
-      createAlert(session, "alertNoData",
-        message="Try another combination.",
-        title="Missing Data", type="warning", block=T)
-    }
-
-    # Center map to selected country centroid
-    map$clearGeoJSON()
-    coords <- apply(sp::coordinates(g()), 2, mean, na.rm=T)
-    map$setView(coords[2], coords[1]+5, 6)
-    map$addGeoJSON(m)
-  })
-
-
-  # Show admin details on click
-  output$details <- renderText({
-    evt <- input$map_geojson_mouseclick
-    if (is.null(evt)) {
-      out <- div(h3(cntr()), p("Click a region to view details."))
-    } else {
-      out <- div(
-        h3(cntr(), br(), tags$small(evt$properties$DHSREGEN, ", ", evt$properties$ISO)),
-        hr(),
-        h4(names(d)[d==var()]),
-        p("Mean: ", strong(evt$properties$iso), br(),
-          "Min: ", strong(evt$properties$svyYear), br(),
-          "Max: ", strong(evt$properties$DHSREGEN), br(),
-          "Sd. Dev.: ", strong(evt$properties$svyUnit)))
-    }
-    return(as.character(out))
-  })
-
-
-  # Plot #1
-  output$plot1 <- renderPlot({
-    if(input$btn==0) return()
-  })
-
-
-  # Plot #2
-  output$plot2 <- renderPlot({
-    if(input$btn==0) return()
-  })
-
-  # Brewer color palettes
-  output$plotBrewer <- renderPlot(height=500, {
-    if(input$btnShowBrewer==0) return()
-    par(mar=c(0,3,0,0))
-    display.brewer.all()
-  })
-
-
-  # Survey details
-  output$svydt <- renderTable({
-
-  })
-
-
-  # Download
-  output$saveData <- downloadHandler(function() {
-    f <- paste0(cntr(), "-", var())
-    if (input$fileType %in% c("csv", "dta")) {
-      # Complete file path
-      paste0(f, "-", dist(), "-", paste(range(tm()), collapse="-"), ".", input$fileType)
-    } else {
-      # File path with `.zip`
-      paste0(f, ".", input$fileType, ".zip")
-    }
-  }, function(file) {
-
-    f <- paste0(cntr(), "-", var(), ".", input$fileType)
-
-    switch(input$fileType,
-      csv = write.csv(dt2(), file, row.names=F, na=""),
-      dta = foreign::write.dta(dt2(), file, version=9L),
-      shp = {
-        # Combine attributes with admin boundaries
-        dt <- dt1()[, list(
-          mean=mean(value, na.rm=T),
-          min=min(value, na.rm=T),
-          max=max(value, na.rm=T),
-          sd=sd(value, na.rm=T),
-          mad=mad(value, na.rm=T)), by=ADM2_CODE]
-        g <- g2[g2$ADM0_NAME==cntr(),]
-        tmp <- data.table(g@data)
-        tmp[, rn := row.names(g)]
-        setkey(tmp, ADM2_CODE)
-        setkey(dt, ADM2_CODE)
-        tmp <- dt[tmp]
-        setkey(tmp, rn)
-        g@data <- tmp[row.names(g)]
-        writeZip(g, file, f, "ESRI Shapefile")
+    
+    # Leaflet map
+    map <- createLeafletMap(session, "map")
+    
+    # Reactive controls
+    output$selectCat <- renderUI({
+        selectInput("selectCat", "Choose a Category", dhs.lbl[, unique(varCat)],
+          selected="wealth index")
       })
+    
+    output$selectVar <- renderUI({
+        var <- dhs.lbl[varCat==input$selectCat, varCode]
+        names(var) <- dhs.lbl[varCat==input$selectCat, varLabel]
+        selectInput("selectVar", "Choose an Indicator", var, selected=var[1])
+      })
+    
+    output$selectISO <- renderUI({
+        selectInput("selectISO", "Choose a Country", iso, selected="GH")
+      })
+    
+    output$col <- renderUI({
+        selectInput("col", "Color palette", row.names(brewer.pal.info),
+          selected="RdBu")
+      })
+    
+    output$svydt <- renderTable(digits=1, include.rownames=F, dt1())
+    
+    # Reactive values
+    init <- reactive( if (input$btn+input$btnUpdate==0) NULL else input$btn+input$btnUpdate )
+    svyCode <- reactive( paste0(input$selectISO, input$selectYear) )
+    s <- reactive( gis[[svyCode()]] )
+    g <- reactive( genMap(svyCode(), input$selectRes,
+        paste0(input$selectVar, input$selectGender), input$col, input$brks) )  
+    
+    observeEvent(input$btn, {
+        # Update year
+        y <- svyYear[[input$selectISO]]
+        updateRadioButtons(session, "selectYear", choices=y, selected=tail(y,1), inline=T)
+        # Update gender
+        if (dhs.lbl[varCode==input$selectVar, gender]==T) {
+          updateRadioButtons(session, "selectGender", choices=c(male="_m", female="_f"), selected="_f")
+        } else {
+          updateRadioButtons(session, "selectGender", choices=c(`n/a`=""), selected="")
+        }
+      }, priority=3)
+    
+    # Reactive data tables
+    dt1 <- eventReactive(input$btn, {
+        var <- names(dhs)[names(dhs) %like% input$selectVar]
+        dt <- dhs[country_code==input$selectISO, .SD, .SDcols=c("year", "hv025", "hv024", var)]
+        if (dim(dt)[2]>4) setnames(dt, 4:5, c("Female", "Male")) else setnames(dt, 4, "mean")
+        dt <- melt(dt, id.vars=c("year", "hv025", "hv024"))
+        dt <- dcast.data.table(dt, hv024~year+hv025+variable)
+        setnames(dt, gsub("_", " ", names(dt), fixed=T))
+        setnames(dt, 1, c("Region"))
+        return(dt)
+      })
+    
+    dt2 <- reactive({
+      })
+    
+    # Draw GeoJSON
+    observeEvent(init(), {
+        layer <- g()
+        if (layer=="try-error") {
+          # File is missing for that country
+          createAlert(session, "alertNoData",
+            message="Try another combination.",
+            title="Missing Map Data", type="warning", block=T)
+          
+        } else {
+          # Center map to selected country centroid
+          map$clearGeoJSON()
+          coords <- apply(sp::coordinates(s()), 2, mean, na.rm=T)
+          map$setView(coords[2], coords[1], 6)
+          map$addGeoJSON(layer)
+        }
+      }, priority=1)
+    
+    
+    # Show selected
+    output$details <- renderText({
+        my_iso <- input$selectISO
+        my_iso <- names(iso)[iso==my_iso]
+        my_var <- input$selectVar 
+        my_var <- dhs.lbl[varCode==my_var, varLabel]
+        out <- h3(my_iso, br(), tags$small(my_var))
+        return(as.character(out))
+      })
+    
+    # Show admin details on click
+    output$tips <- renderText({
+        evt <- input$map_geojson_mouseclick
+        if (!is.null(evt)) {
+          out <- div(
+            p(evt$properties$regName, " (code: ", evt$properties$regCode, ")"),
+            hr(),
+            p("Survey: ", strong(svyCode()), br(),
+              "Year: ", strong(evt$properties$year), br(),
+              "Value: ", strong(evt$properties$value)))
+        }
+        return(as.character(out))
+      })    
+    
+    
+    # Plot #1
+    output$plot1 <- renderPlot({
+        if(input$btn==0) return()
+      })
+    
+    
+    # Plot #2
+    output$plot2 <- renderPlot({
+        if(input$btn==0) return()
+      })
+    
+    
+    # Brewer color palettes
+    output$plotBrewer <- renderPlot(height=500, {
+        if(input$btnShowBrewer==0) return()
+        par(mar=c(0,3,0,0))
+        display.brewer.all()
+      })
+    
+    
+    # Download
+    output$saveData <- downloadHandler(function() {
+        t <- input$fileType
+        f <- paste0(input$selectISO, "-", input$selectVar)
+        if (t %in% c("csv", "dta")) {
+          # Complete file path
+          paste0(f, ".", t)
+        } else {
+          # File path with `.zip`
+          paste0(year(), "-", f, ".", t, ".zip")
+        }
+      }, function(file) {
+        t <- input$fileType
+        f <- paste0(input$selectISO, "-", input$selectVar, ".", t)
+        
+        switch(t,
+          csv = write.csv(dt1(), file, row.names=F, na=""),
+          dta = foreign::write.dta(dt1(), file, version=9L),
+          shp = {
+            # Combine attributes with admin boundaries
+            dt <- data.table(do.call(rbind, lapply(g()$features, properties)))
+            s <- s()
+            tmp <- data.table(s@data)
+            tmp[, rn := row.names(g)]
+            setkey(tmp, regCode)
+            setkey(dt, regCode)
+            tmp <- dt[tmp]
+            setkey(tmp, rn)
+            s@data <- tmp[row.names(s)]
+            writeZip(s, file, f, "ESRI Shapefile")
+          })
+      })
+    
   })
-
-})

@@ -178,7 +178,6 @@ json.cntr <- function(x, y, col) {
   # Add symbology to GeoJSON. Note that the districts do not necessarily match here
   # since we used the original g2 to generate stats, and g2.web to generate GeoJSON
   for (i in 1:length(m$features)) {
-    j <- m$features[[i]]$properties$ADM2_CODE
     m$features[[i]]$properties$mean <- dt[i, round(mean, 2)]
     m$features[[i]]$properties$min <- dt[i, round(min, 2)]
     m$features[[i]]$properties$max <- dt[i, round(max, 2)]
