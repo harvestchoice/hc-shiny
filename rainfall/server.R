@@ -175,7 +175,7 @@ shinyServer(function(input, output, session) {
               dySeries("trend", label="trend", fillGraph=F, strokeWidth=3, strokePattern="dashed") %>%
               dyOptions(fillGraph=T, fillAlpha=0.4,
                 # Pick colors to match map symbology
-                colors=if(var()=="pdsi") c("#FF9900", "#99FF99", "#009900", "#F8DE70") else c("#53B376", "#DD5A0B", "#2F6FBF", "#F4EB7E")) %>%
+                colors=if(var()=="pdsi") c("#FF9900", "#99FF99", "#009900", "#F8DE70") else c("#53B376", "#F4EB7E", "#2F6FBF", "#DD5A0B")) %>%
               dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
               dyRangeSelector(height=20)
           })
