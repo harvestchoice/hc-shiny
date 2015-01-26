@@ -44,7 +44,7 @@ shinyUI(fluidPage(
               ),
               column(5,
                 uiOutput("col"),
-                sliderInput("brks", "Legend breaks", 2, 8, 4, ticks=F, sep=""),
+                sliderInput("brks", "Legend breaks", 2, 8, 5, ticks=F, sep=""),
                 tags$small(actionLink("btnShowBrewer", "Show color palettes"),
                   `data-toggle`="modal", `data-target`="#brew")
               )

@@ -54,7 +54,7 @@ genMap <- function(svy, res, var, col, brks) {
     # Symbolize
     dt[, cl := cut(var, unique(c(rg[1]-1, cv, rg[2]+1)), cutlabels=F, ordered_result=T)]
     dt[, cl := brewer.pal(length(cv)+1, col)[cl]]
-    m@data <- dt
+    m@data <- cbind(m@data, dt)
     return(m)
   }
 }
@@ -67,7 +67,7 @@ shinyServer(function(input, output, session) {
     map <- leaflet() %>%
       addTiles("http://{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
         attribution=HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>')) %>%
-      setView(8, 8, 5)
+      setView(8, 8, 6)
     
     # Reactive controls
     output$map <- renderLeaflet(map)
@@ -126,11 +126,7 @@ shinyServer(function(input, output, session) {
     
     
     # Update map    
-    observeEvent({input$btn+input$btnUpdate}, {
-        
-#        m <- genMap(svyCode(), input$selectRes,
-#          paste0(input$selectVar, input$selectGender), input$col, input$brks)
-        
+    observeEvent({input$btn+input$btnUpdate}, {       
         svyCode <- paste0(input$selectISO, input$selectYear)
         
         if (!svyCode %in% unique(gis.web@data$svyCode)) {
@@ -144,10 +140,12 @@ shinyServer(function(input, output, session) {
             input$col, input$brks)
           coords <- apply(sp::coordinates(g), 2, mean, na.rm=T)
           m <- map %>%
-            setView(coords[1], coords[2], 5) %>%
+            setView(coords[1], coords[2], 6) %>%
             addPolygons(data=g, layerId=g@data$regCode, fillColor=g@data$cl,
               weight=.6, color="white", fillOpacity=0.7,
-              popup=paste(g@data$regName, g@data$var, sep="\n"))
+              popup=paste0(
+                "<small>Region</small><strong><br/>", g@data$regName, "</strong><br/>",
+                "<small>Value</small><strong><br/>", round(g@data$var, 2), "</strong>"))
           output$map <- renderLeaflet(m)
         }
       }, priority=2)
