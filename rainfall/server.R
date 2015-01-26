@@ -83,6 +83,7 @@ genStats <- function(dt, cntr, dist, tm, mth) {
   
   # Compute stats over selected period/month
   dt[, mean := mean(value, na.rm=T)]
+  dt[, meanAnnual := mean(value, na.rm=T), by=year(month)]
   dt[, sd := sd(value, na.rm=T)]
   dt[, mad := mad(value, na.rm=T)]
   return(dt)
@@ -167,15 +168,15 @@ shinyServer(function(input, output, session) {
         isolate ({
             if (input$btn==0) return()
             # Convert data.table to xts
-            dygraph(xts::as.xts(dt[, list(value, mean, trend)], order.by=dt$month)) %>%
+            dygraph(xts::as.xts(dt[, list(value, mean, meanAnnual, trend)], order.by=dt$month)) %>%
               dySeries("value", label=var()) %>%
               dySeries("mean", label="period mean") %>%
+              dySeries("meanAnnual", label="annual mean") %>%
               dySeries("trend", label="trend", fillGraph=F, strokeWidth=2, strokePattern="dashed") %>%
               dyOptions(fillGraph=T, fillAlpha=0.4,
                 # Pick colors to match map symbology
                 colors=if(var()=="pdsi") c("#FF9900", "#99FF99", "#009900") else c("#53B376", "#DD5A0B", "#2F6FBF")) %>%
               dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
-              dyRoller(rollPeriod=12) %>%
               dyRangeSelector(height=20)
           })
       })
