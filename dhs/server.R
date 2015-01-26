@@ -12,9 +12,13 @@ library(reshape2)
 library(leaflet)
 library(RColorBrewer)
 
-setwd("/home/projects/shiny/tmp")
-load("../dhs/data/dhsMap.2014.10.16.RData")
+if (.Platform$OS.type=="windows") {
+  setwd("~/Projects/hc-shiny/tmp")
+} else {
+  setwd("/home/projects/shiny/tmp")
+}
 
+load("../dhs/data/dhsMap.2014.10.16.RData")
 
 # Helper - Archive spatial formats for download
 writeZip <- function(x, file, filename, format, ...) {
@@ -63,10 +67,15 @@ genMap <- function(svy, res, var, col, brks) {
 
 shinyServer(function(input, output, session) {
     
-    # Leaflet map
-    map <- createLeafletMap(session, "map")
+    # Init map
+    map <- leaflet() %>%
+      addTiles("http://{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+        attribution=HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>')) %>%
+      setView(8, 8, 5)
     
     # Reactive controls
+    output$map <- renderLeaflet(map)
+    
     output$selectCat <- renderUI({
         selectInput("selectCat", "Choose a Category", dhs.lbl[, unique(varCat)],
           selected="wealth index")
@@ -90,23 +99,7 @@ shinyServer(function(input, output, session) {
     output$svydt <- renderTable(digits=1, include.rownames=F, dt1())
     
     # Reactive values
-    init <- reactive( if (input$btn+input$btnUpdate==0) NULL else input$btn+input$btnUpdate )
-    svyCode <- reactive( paste0(input$selectISO, input$selectYear) )
-    s <- reactive( gis[[svyCode()]] )
-    g <- reactive( genMap(svyCode(), input$selectRes,
-        paste0(input$selectVar, input$selectGender), input$col, input$brks) )  
-    
-    observeEvent(input$btn, {
-        # Update year
-        y <- svyYear[[input$selectISO]]
-        updateRadioButtons(session, "selectYear", choices=y, selected=tail(y,1), inline=T)
-        # Update gender
-        if (dhs.lbl[varCode==input$selectVar, gender]==T) {
-          updateRadioButtons(session, "selectGender", choices=c(male="_m", female="_f"), selected="_f")
-        } else {
-          updateRadioButtons(session, "selectGender", choices=c(`n/a`=""), selected="")
-        }
-      }, priority=3)
+    init <- reactive(input$btn+input$btnUpdate) 
     
     # Reactive data tables
     dt1 <- eventReactive(input$btn, {
@@ -123,23 +116,42 @@ shinyServer(function(input, output, session) {
     dt2 <- reactive({
       })
     
-    # Draw GeoJSON
-    observeEvent(init(), {
-        layer <- g()
-        if (layer=="try-error") {
+    observeEvent(input$btn, {
+        # Update year
+        y <- svyYear[[input$selectISO]]
+        updateRadioButtons(session, "selectYear", choices=y, selected=tail(y,1), inline=T)
+        # Update gender
+        if (dhs.lbl[varCode==input$selectVar, gender]==T) {
+          updateRadioButtons(session, "selectGender", choices=c(male="_m", female="_f"), selected="_f")
+        } else {
+          updateRadioButtons(session, "selectGender", choices=c(`n/a`=""), selected="")
+        }
+      }, priority=3)
+    
+    
+    # Update map    
+    observeEvent({input$btn+input$btnUpdate}, {
+        
+#        m <- genMap(svyCode(), input$selectRes,
+#          paste0(input$selectVar, input$selectGender), input$col, input$brks)
+        
+        svyCode <- paste0(input$selectISO, input$selectYear)
+        
+        if (!svyCode %in% unique(gis.web@data$svyCode)) {
           # File is missing for that country
           createAlert(session, "alertNoData",
             message="Try another combination.",
             title="Missing Map Data", type="warning", block=T)
           
         } else {
-          # Center map to selected country centroid
-          map$clearGeoJSON()
-          coords <- apply(sp::coordinates(s()), 2, mean, na.rm=T)
-          map$setView(coords[2], coords[1], 6)
-          map$addGeoJSON(layer)
+          g <- gis.web[gis.web$svyCode==svyCode, ]
+          coords <- apply(sp::coordinates(g), 2, mean, na.rm=T)
+          m <- map %>%
+            setView(coords[1], coords[2], 5) %>%
+            addPolygons(data=g, fillColor=topo.colors(10, alpha=.2), stroke=T)
+          output$map <- renderLeaflet(m)
         }
-      }, priority=1)
+      }, priority=2)
     
     
     # Show selected
@@ -208,15 +220,15 @@ shinyServer(function(input, output, session) {
           shp = {
             # Combine attributes with admin boundaries
             dt <- data.table(do.call(rbind, lapply(g()$features, properties)))
-            s <- s()
-            tmp <- data.table(s@data)
+            g <- gis[[svyCode()]] 
+            tmp <- data.table(g@data)
             tmp[, rn := row.names(g)]
             setkey(tmp, regCode)
             setkey(dt, regCode)
             tmp <- dt[tmp]
             setkey(tmp, rn)
-            s@data <- tmp[row.names(s)]
-            writeZip(s, file, f, "ESRI Shapefile")
+            g@data <- tmp[row.names(g)]
+            writeZip(g, file, f, "ESRI Shapefile")
           })
       })
     

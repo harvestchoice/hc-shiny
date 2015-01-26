@@ -11,9 +11,9 @@
 
 library(data.table)
 library(rgdal)
-library(rgeos)
+library(leaflet)
 
-setwd("/home/projects/shiny/dhs")
+setwd("~/Projects/hc-shiny/dhs")
 load("./data/dhsMap.2014.10.16.RData")
 
 # Load metadata from Joe Green at
@@ -60,9 +60,24 @@ dhs.lbl <- fread("./data/dhs.lbl.gender.csv")
 setkey(dhs.lbl, varGroup, varLabel)
 
 
-# Load preprocessed GeoJSON resources as list
-gis.web <- readRDS("./data/gis.web.rds")
-gis <- readRDS("./data/gis.simple.rds")
+# Load simplified boundaries and test (simplified and transformed to EPSG:4326 in QGIS)
+# The raw boundaries from DHS are in `gis`
+gis.web <- readOGR("~/Projects/2010-HH/DHS/maps", "MEASURE_DHS_Regions_2014_proj4326")
+proj4string(gis.web)
+# [1] "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+
+dt <- gis.web[gis.web$svyCode=="GH2008", ]
+coords <- apply(sp::coordinates(dt), 2, mean, na.rm=T)
+plot(dt)
+
+m = leaflet() %>%
+  addTiles("http://{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+    attribution=HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>')) %>%
+  setView(coords[2], coords[1], 6) %>%
+  addPolygons(data=dt, fillColor=topo.colors(10, alpha=.2)[dt@data$regCode], stroke=T)
+
+m
+
 
 # Test print::xtable on `dhs`
 dt <- dhs[country_code=="GH", .SD,   .SDcols=c("year", "hv025", "hv024", "hv024_name",

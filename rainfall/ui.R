@@ -6,7 +6,7 @@
 #####################################################################################
 
 library(shiny)
-library(leaflet)
+library(leaflet, lib.loc="/home/mbacou/R/x86_64-redhat-linux-gnu-library/3.1")
 library(dygraphs)
 library(shinyBS)
 

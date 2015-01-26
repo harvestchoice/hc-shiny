@@ -14,63 +14,71 @@ shinyUI(fluidPage(
     title="DHS - Subnational Nutrition and Health Statistics",
     theme="bootstrap.css",
     
-    column(5, includeHTML("../dhs/www/txtIntro.html")),
-    column(7, p(br())),
-    column(3, offset=1,
-      uiOutput("selectCat"),
-      uiOutput("selectVar")
-    ),
-    column(2,
-      uiOutput("selectISO"),
-      actionButton("btn", "Show Indicator", icon("bar-chart"), class="btn-primary"),
-      p(br())
-    ),
-
-    
-    fluidRow(style="position: relative;",
-      leafletMap("map", width="100%", height=380,
-        initialTileLayer="//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
-        initialTileLayerAttribution=HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>'),
-        options=list(center=c(1, 41), zoom=6)),
-      
-      # Anchor side panel to map
-      absolutePanel(bottom=10, right=20, width=380, height="auto",
-        class="panel panel-primary",
-        div(class="panel-heading", p(class="panel-title", tags$small("Map Options"))),
-        div(class="panel-body",
-          column(7,
-            radioButtons("selectYear", "Survey Year", c("2003", "2008"), "2008", inline=T),
-            radioButtons("selectRes", "Residence", c("rural", "urban"), "rural", inline=T),
-            radioButtons("selectGender", "Gender", c(`n/a`=""), "", inline=T)
-          ),
-          column(5,
-            uiOutput("col"),
-            sliderInput("brks", "Legend breaks", 2, 8, 4, ticks=F, sep=""),
-            tags$small(actionLink("btnShowBrewer", "Show color palettes"),
-              `data-toggle`="modal", `data-target`="#brew")
-          )
-        ),
-        div(class="panel-footer", actionLink("btnUpdate", "Update Map", icon("globe")))
+    fluidRow(
+      column(5, includeHTML("../dhs/www/txtIntro.html")),
+      column(7, p(br())),
+      column(3, offset=1,
+        uiOutput("selectCat"),
+        uiOutput("selectVar"),
+        bsAlert("alertNoData")),
+      column(3,
+        uiOutput("selectISO"),
+        actionButton("btn", "Show Indicator", icon("bar-chart"), class="btn-primary")
       )
     ),
     
-    column(10,
-      conditionalPanel(condition="input.btn>0",
-        bsAlert("alertNoData"),
-        uiOutput("details"),
-        tableOutput("svydt"),
-        column(6, plotOutput("plot1")),
-        column(6, plotOutput("plot2")))
+    
+    tabsetPanel(type="tabs", postion="right",
+      
+      tabPanel("Map", style="position: relative;padding-top: 5px;",      
+        leafletOutput("map", width="100%", height=480),
+        
+        absolutePanel(right=10, bottom=20, width=400, draggable=T,
+          div(class="panel panel-primary",
+            div(class="panel-heading", p(class="panel-title", tags$small("Map Options"))),
+            div(class="panel-body",
+              column(7,
+                radioButtons("selectYear", "Survey Year", c("2003", "2008"), "2008", inline=T),
+                radioButtons("selectRes", "Residence", c("rural", "urban"), "rural", inline=T),
+                radioButtons("selectGender", "Gender", c(`n/a`=""), "", inline=T)
+              ),
+              column(5,
+                uiOutput("col"),
+                sliderInput("brks", "Legend breaks", 2, 8, 4, ticks=F, sep=""),
+                tags$small(actionLink("btnShowBrewer", "Show color palettes"),
+                  `data-toggle`="modal", `data-target`="#brew")
+              )
+            ),
+            div(class="panel-footer", actionLink("btnUpdate", "Update Map", icon("globe")))
+          )
+        )
+      ),
+      
+      tabPanel("Data",
+        column(10,
+          conditionalPanel(condition="input.btn>0",
+            uiOutput("details"),
+            tableOutput("svydt"),
+            column(6, plotOutput("plot1")),
+            column(6, plotOutput("plot2")))
+        ),
+        column(2,
+          p(br()),
+          selectInput("fileType", "Choose Export Format",
+            choices=c(`ESRI Shapefile`="shp", CSV="csv", STATA="dta"),
+            selected="csv"),
+          downloadButton("saveData", "Save Layer")
+        )
+      ),
+      
+      tabPanel("Graphs")
     ),
     
-    column(2,
-      p(br()),
-      selectInput("fileType", "Choose Export Format",
-        choices=c(`ESRI Shapefile`="shp", CSV="csv", STATA="dta"),
-        selected="csv"),
-      downloadButton("saveData", "Save Layer"),
-      hr(),
-      includeHTML("../dhs/www/txtCredits.html")
+    fluidRow(
+      column(12,
+        hr(),
+        includeHTML("../dhs/www/txtCredits.html")
+      )
     ),
     
     # Modal color palette (a bit code heavy)

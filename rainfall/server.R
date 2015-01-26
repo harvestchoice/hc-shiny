@@ -9,7 +9,7 @@ library(shiny)
 library(shinyBS)
 library(data.table)
 library(reshape2)
-library(leaflet)
+library(leaflet, lib.loc="/home/mbacou/R/x86_64-redhat-linux-gnu-library/3.1")
 library(dygraphs)
 
 setwd("/home/projects/shiny/tmp")
