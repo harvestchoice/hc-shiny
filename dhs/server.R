@@ -9,7 +9,7 @@ library(shiny)
 library(shinyBS)
 library(data.table)
 library(reshape2)
-library(leaflet, loc.lib="/usr/lib64/R/library")
+library(leaflet, lib.loc="/usr/lib64/R/library")
 library(RColorBrewer)
 
 if (.Platform$OS.type=="windows") {

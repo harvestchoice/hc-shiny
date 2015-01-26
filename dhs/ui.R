@@ -7,7 +7,7 @@
 
 library(shiny)
 library(shinyBS)
-library(leaflet, loc.lib="/usr/lib64/R/library")
+library(leaflet, lib.loc="/usr/lib64/R/library")
 
 
 shinyUI(fluidPage(
