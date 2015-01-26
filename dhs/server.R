@@ -215,16 +215,9 @@ shinyServer(function(input, output, session) {
           csv = write.csv(dt1(), file, row.names=F, na=""),
           dta = foreign::write.dta(dt1(), file, version=9L),
           shp = {
-            # Combine attributes with admin boundaries
-            dt <- data.table(do.call(rbind, lapply(g()$features, properties)))
-            g <- gis[[svyCode()]] 
-            tmp <- data.table(g@data)
-            tmp[, rn := row.names(g)]
-            setkey(tmp, regCode)
-            setkey(dt, regCode)
-            tmp <- dt[tmp]
-            setkey(tmp, rn)
-            g@data <- tmp[row.names(g)]
+            # TODO Use original boundaries for download
+            g <- genMap(svyCode, input$selectRes, paste0(input$selectVar, input$selectGender),
+              input$col, input$brks)
             writeZip(g, file, f, "ESRI Shapefile")
           })
       })
