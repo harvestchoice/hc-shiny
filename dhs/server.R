@@ -147,7 +147,7 @@ shinyServer(function(input, output, session) {
             setView(coords[1], coords[2], 5) %>%
             addPolygons(data=g, layerId=g@data$regCode, fillColor=g@data$cl,
               weight=.6, color="white", fillOpacity=0.7,
-              popup=HTML(g@data$regName))
+              popup=paste(g@data$regName, g@data$var, sep="\n"))
           output$map <- renderLeaflet(m)
         }
       }, priority=2)
