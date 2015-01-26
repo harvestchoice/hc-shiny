@@ -170,12 +170,12 @@ shinyServer(function(input, output, session) {
             # Convert data.table to xts
             dygraph(xts::as.xts(dt[, list(value, mean, meanAnnual, trend)], order.by=dt$month)) %>%
               dySeries("value", label=var()) %>%
-              dySeries("mean", label="period mean") %>%
-              dySeries("meanAnnual", label="annual mean") %>%
+              dySeries("mean", label="period mean", fillGraph=F) %>%
+              dySeries("meanAnnual", label="annual mean", fillGraph=F) %>%
               dySeries("trend", label="trend", fillGraph=F, strokeWidth=2, strokePattern="dashed") %>%
               dyOptions(fillGraph=T, fillAlpha=0.4,
                 # Pick colors to match map symbology
-                colors=if(var()=="pdsi") c("#FF9900", "#99FF99", "#009900") else c("#53B376", "#DD5A0B", "#2F6FBF")) %>%
+                colors=if(var()=="pdsi") c("#FF9900", "#99FF99", "#009900", "#F8DE70") else c("#53B376", "#DD5A0B", "#2F6FBF", "#F4EB7E")) %>%
               dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
               dyRangeSelector(height=20)
           })
