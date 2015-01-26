@@ -17,7 +17,7 @@ setwd("/home/projects/shiny/tmp")
 # CRU and PDSI variables
 d <- c("cld", "dtr", "frs", "pet", "pre", "tmn", "tmp", "tmx", "vap", "wet", "pdsi")
 names(d) <- c("Cloud Cover (%)", "dtr", "frs", "pet", "Precipitation (mm)", "tmn",
-  "Temperature (C)", "tmx", "vap", "wet", "Palmer Drought Severity Index (-25, 25)")
+  "Temperature (C)", "tmx", "vap", "wet", "Palmer Drought Severity Index (-10, 10)")
 
 # CRU 3.22 precipitation time series (from 1901 onwards)
 path.pre <- "../rainfall/data/cru_ts3.22.1901.2013.tmp.dat.nc"
