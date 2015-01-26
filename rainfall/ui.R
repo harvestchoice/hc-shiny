@@ -31,7 +31,7 @@ shinyUI(fluidPage(
         fluidRow(style="margin-top: 420px;",
 
             column(3,
-                h3("Monthly Time Series"),
+                h3("Climate Monthly Time Series", tags$small("sub-National Indicators")),
                 uiOutput("selectVar"),
                 uiOutput("selectg0"),
                 actionButton("btn", "Show Series", icon("globe")),
