@@ -31,7 +31,8 @@ shinyUI(fluidPage(
         fluidRow(style="margin-top: 420px;",
 
             column(3,
-                h3("Drought and Precipitation", tags$small("Monthly sub-National Time-Series")),
+                h3("Drought and Precipitation", 
+                  tags$small("Monthly sub-National Time-Series for sub-Saharan Africa")),
                 uiOutput("selectVar"),
                 uiOutput("selectg0"),
                 actionButton("btn", "Show Series", icon("globe")),
