@@ -18,6 +18,7 @@ if (.Platform$OS.type=="windows") {
   setwd("/home/projects/shiny/tmp")
 }
 
+
 load("../dhs/data/dhsMap.2014.10.16.RData")
 
 # Helper - Archive spatial formats for download
@@ -39,8 +40,8 @@ genMap <- function(svy, res, var, col, brks) {
   dt <- dhs[svyCode==svy & hv025==res, .SD, .SDcols=c("hv024", var)]
   setnames(dt, var, "var")
   setkey(dt, hv024)
-  m <- gis.web[[svy]]
-  dt <- dt[J(sapply(m$features, function(x) x$properties$regCode))]
+  m <- gis.web[gis.web$svyCode==svy, ]
+  dt <- dt[J(m$regCode)]
   rg <- range(dt$var, na.rm=T)
   
   # Try equal interval breaks
@@ -53,12 +54,7 @@ genMap <- function(svy, res, var, col, brks) {
     # Symbolize
     dt[, cl := cut(var, unique(c(rg[1]-1, cv, rg[2]+1)), cutlabels=F, ordered_result=T)]
     dt[, cl := brewer.pal(length(cv)+1, col)[cl]]
-    
-    for (i in 1:length(m$features)) {
-      m$features[[i]]$properties$var <- var
-      m$features[[i]]$properties$value <- dt$var
-      m$features[[i]]$style <- list(fillColor=dt[i, cl], weight=.6, color="white", fillOpacity=0.7)
-    }
+    m@data <- dt
     return(m)
   }
 }
@@ -141,14 +137,17 @@ shinyServer(function(input, output, session) {
           # File is missing for that country
           createAlert(session, "alertNoData",
             message="Try another combination.",
-            title="Missing Map Data", type="warning", block=T)
+            title="Missing Map Data", type="warning", block=T, append=F)
           
         } else {
-          g <- gis.web[gis.web$svyCode==svyCode, ]
+          g <- genMap(svyCode, input$selectRes, paste0(input$selectVar, input$selectGender),
+            input$col, input$brks)
           coords <- apply(sp::coordinates(g), 2, mean, na.rm=T)
           m <- map %>%
             setView(coords[1], coords[2], 5) %>%
-            addPolygons(data=g, fillColor=topo.colors(10, alpha=.2), stroke=T)
+            addPolygons(data=g, layerId=g@data$regCode, fillColor=g@data$cl,
+              weight=.6, color="white", fillOpacity=0.7,
+              popup=HTML(g@data$regName))
           output$map <- renderLeaflet(m)
         }
       }, priority=2)
