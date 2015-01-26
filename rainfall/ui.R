@@ -55,7 +55,7 @@ shinyUI(fluidPage(
                 uiOutput("selectg2"),
                 sliderInput("rg", "Limit to Date Range", 1960, 2013, value=c(1960, 2013),
                   step=1, sep="", ticks=F),
-                selectInput("selectMonth", "Limit to Month", mth, selected=0),
+                selectInput("selectMonth", "Limit to Month", mth, selected=0, multiple=T),
                 hr(),
                 selectInput("fileType", "Choose Export Format", choices=c(
                         `ESRI Shapefile`="shp", GeoTiff="tif", netCDF="nc", CSV="csv", STATA="dta"),

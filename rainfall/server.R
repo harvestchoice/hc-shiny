@@ -79,7 +79,7 @@ genStats <- function(dt, cntr, dist, tm, mth) {
   
   # Limit to selected period and month
   dt <- dt[month %between% range(tm)]
-  if (mth>0) dt <- dt[which(month(month)==mth)]
+  if (mth>0) dt <- dt[which(month(month) %in% mth)]
   
   # Compute stats over selected period/month
   dt[, mean := mean(value, na.rm=T)]
@@ -175,6 +175,7 @@ shinyServer(function(input, output, session) {
                 # Pick colors to match map symbology
                 colors=if(var()=="pdsi") c("#FF9900", "#99FF99", "#009900") else c("#53B376", "#DD5A0B", "#2F6FBF")) %>%
               dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
+              dyRoller(rollPeriod=12) %>%
               dyRangeSelector(height=20)
           })
       })
