@@ -50,6 +50,7 @@ shinyUI(fluidPage(
                 p(br()),
                 conditionalPanel(condition="input.btn>0",
                     dygraphOutput("dygraph", width="100%", height="320px"),
+                    br(),
                     dygraphOutput("dygraphAnnual", width="100%", height="320px"),
                     p(br()))
             ),
