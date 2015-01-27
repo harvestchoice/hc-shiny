@@ -169,12 +169,12 @@ shinyServer(function(input, output, session) {
             if (input$btn==0) return()
             # Convert data.table to xts
             dygraph(xts::as.xts(dt[, list(value, mean, meanAnnual, trend)], order.by=dt$month)) %>%
-              if ("1" %in% input$selectSeries) { dySeries("value", label=var()) %>% }
-              if ("2" %in% input$selectSeries) { dySeries("meanAnnual", label="annual mean", fillGraph=F, strokeWidth=2) %>% }
-              if ("3" %in% input$selectSeries) { dySeries("mean", label="period mean") %>% }
-              if ("4" %in% input$selectSeries) { dySeries("trend", label="trend", fillGraph=F, strokeWidth=3, strokePattern="dashed") %>% }
+              if("1" %in% input$selectSeries) dySeries("value", label=var()) %>%
+              if("2" %in% input$selectSeries) dySeries("meanAnnual", label="annual mean", fillGraph=F, strokeWidth=2) %>%
+              if("3" %in% input$selectSeries) dySeries("mean", label="period mean") %>%
+              if("4" %in% input$selectSeries) dySeries("trend", label="trend", fillGraph=F, strokeWidth=3, strokePattern="dashed") %>%
               dyOptions(fillGraph=T, fillAlpha=0.4,
-                colors=if (var()=="pdsi") c("#FF9900", "#99FF99", "#009900", "#F8DE70") else c("#53B376", "#F4EB7E", "#2F6FBF", "#DD5A0B")) %>%
+                colors=if(var()=="pdsi") c("#FF9900", "#99FF99", "#009900", "#F8DE70") else c("#53B376", "#F4EB7E", "#2F6FBF", "#DD5A0B")) %>%
               dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
               dyRangeSelector(height=20)
           })
