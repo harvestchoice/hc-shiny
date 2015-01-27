@@ -171,7 +171,6 @@ shinyServer(function(input, output, session) {
             dygraph(xts::as.xts(dt[, list(value, mean, trend)], order.by=dt$month), group="dy") %>%
               dyOptions(fillGraph=T, fillAlpha=0.4) %>%
               dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
-              dyRangeSelector(height=20) %>%
               dySeries("value", label=var(),
                 color=if(var()=="pdsi") "#FF9900" else "#53B376") %>%
               dySeries("mean", label="period mean",
@@ -183,10 +182,10 @@ shinyServer(function(input, output, session) {
     
     output$dygraphAnnual <- renderDygraph({
         if (is.null(dt2())) return()
-        dt <- dt2()
+        dt <- dt2()[, list(meanAnnual=first(meanAnnual)), by=list(month=year(month))]
         isolate ({
             if (input$btn==0) return()
-            dygraph(xts::as.xts(dt[, list(meanAnnual)], order.by=dt$month), group="dy") %>%
+            dygraph(xts::as.xts(dt[, meanAnnual], order.by=dt$month), group="dy") %>%
               dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
               dyRangeSelector(height=20) %>%
               dySeries("meanAnnual", label="annual mean", 
