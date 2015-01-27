@@ -170,8 +170,8 @@ shinyServer(function(input, output, session) {
             # Convert data.table to xts
             dygraph(xts::as.xts(dt[, list(value, mean, meanAnnual, trend)], order.by=dt$month)) %>%
               if (1 %in% input$select$series) dySeries("value", label=var()) %>%
-              if (2 %in% input$select$series) dySeries("mean", label="period mean") %>%
-              if (3 %in% input$select$series) dySeries("meanAnnual", label="annual mean", fillGraph=F, strokeWidth=2) %>%
+              if (2 %in% input$select$series) dySeries("meanAnnual", label="annual mean", fillGraph=F, strokeWidth=2) %>%
+              if (3 %in% input$select$series) dySeries("mean", label="period mean") %>%
               if (4 %in% input$select$series) dySeries("trend", label="trend", fillGraph=F, strokeWidth=3, strokePattern="dashed") %>%
               dyOptions(fillGraph=T, fillAlpha=0.4,
                 colors=if (var()=="pdsi") c("#FF9900", "#99FF99", "#009900", "#F8DE70") else c("#53B376", "#F4EB7E", "#2F6FBF", "#DD5A0B")) %>%
