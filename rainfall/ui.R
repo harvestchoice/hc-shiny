@@ -38,7 +38,7 @@ shinyUI(fluidPage(
         hr(),
         uiOutput("selectVar"),
         uiOutput("selectg0"),
-        actionButton("btn", "Show Series", icon("globe")),
+        actionButton("btn", "Show Series", icon("globe"), class="btn-primary"),
         hr(),
         includeHTML("../rainfall/www/txtCredits.html"),
         p(br())
@@ -68,7 +68,7 @@ shinyUI(fluidPage(
         selectInput("fileType", "Choose Export Format", choices=c(
             `ESRI Shapefile`="shp", GeoTiff="tif", netCDF="nc", CSV="csv", STATA="dta"),
           selected="csv"),
-        downloadButton("saveData", "Save Layer")
+        downloadLink("saveData", "Save Layer")
       )
     ),
     
