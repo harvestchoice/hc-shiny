@@ -21,7 +21,7 @@ shinyUI(fluidPage(
         theme="bootstrap.css",
 
         # Whole width map
-        absolutePanel(top=0, left=0, width="auto", height="auto",
+        absolutePanel(top=0, left=0, right=0, bottom=0, width="auto", height="auto",
             leafletMap("map", width="100%", height=380,
                 initialTileLayer = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
                 initialTileLayerAttribution = HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>'),
