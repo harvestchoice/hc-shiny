@@ -47,10 +47,13 @@ shinyUI(fluidPage(
       column(7,
         conditionalPanel(condition="input.btn==0",
           includeHTML("../rainfall/www/txtIntro.html")),
-        uiOutput("chartMsg"),
+        uiOutput("selectedMsg"),
         conditionalPanel(condition="input.btn>0",
           h5("Monthly Series"),
           dygraphOutput("dygraph", width="100%", height="320px"),
+          p("The long-term mean is over the selected months and period only (or over the
+              entire year if no month is selected). The trend component is generated through
+              classical seasonal decomposition by moving averages over the entire 1960-2013 period."),
           h5("Annual Series"),
           dygraphOutput("dygraphAnnual", width="100%", height="280px"),
           p(br()))

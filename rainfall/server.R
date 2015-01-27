@@ -193,14 +193,10 @@ shinyServer(function(input, output, session) {
           })
       })    
     
-    output$chartMsg <- renderText({
+    output$selectedMsg <- renderText({
         if (input$btn==0) return()
-        out <- div(
-          h3(names(d)[d==var()], br(), tags$small(tags$mark(dist()), ", ", cntr(), " - Period: ",
-              paste0(format(range(tm()), "%b %Y"), collapse=" - "))),
-          p("The long-term mean is over the selected months and period only (or over the
-              entire year if no month is selected). The trend component is generated through
-              classical seasonal decomposition by moving averages over the entire 1960-2013 period."))
+        out <- h3(names(d)[d==var()], br(), tags$small(tags$mark(dist()), ", ", cntr(), " - Period: ",
+            paste0(format(range(tm()), "%b %Y"), collapse=" - ")))
         return(as.character(out))
       })
     
