@@ -48,6 +48,7 @@ shinyUI(fluidPage(
         conditionalPanel(condition="input.btn==0",
           includeHTML("../rainfall/www/txtIntro.html")),
         uiOutput("selectedMsg"),
+        p(),
         conditionalPanel(condition="input.btn>0",
           dygraphOutput("dygraph", width="100%", height="320px"),
           br(),
