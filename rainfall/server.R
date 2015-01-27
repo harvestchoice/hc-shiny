@@ -163,22 +163,27 @@ shinyServer(function(input, output, session) {
     
     output$dygraph <- renderDygraph({
         if (is.null(dt2())) return()
-        # Isolate from all but dt2()
+        # Isolate from all but dt2() and input$selectSeries
         dt <- dt2()
         sr <- input$selectSeries
         isolate ({
             if (input$btn==0) return()
             # Convert data.table to xts
-            dygraph(xts::as.xts(dt[, list(value, mean, meanAnnual, trend)], order.by=dt$month)) %>%
-              if("1" %in% sr) eval(dySeries("value", label=var()) %>%)
-              if("2" %in% sr) eval(dySeries("meanAnnual", label="annual mean", fillGraph=F, strokeWidth=2) %>%)
-              if("3" %in% srs) eval(dySeries("mean", label="period mean") %>%)
-              if("4" %in% sr) eval(dySeries("trend", label="trend", fillGraph=F, strokeWidth=3, strokePattern="dashed") %>%)
-              dyOptions(fillGraph=T, fillAlpha=0.4,
-                colors=if(var()=="pdsi") c("#FF9900", "#99FF99", "#009900", "#F8DE70") else c("#53B376", "#F4EB7E", "#2F6FBF", "#DD5A0B")) %>%
+            out <- dygraph(xts::as.xts(dt[, list(value, mean, meanAnnual, trend)], order.by=dt$month)) %>%
+              dyOptions(fillGraph=T, fillAlpha=0.4) %>%
               dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
               dyRangeSelector(height=20)
+            
+            if("1" %in% sr) out <- out %>% dySeries("value", label=var(),
+                colors=if(var()=="pdsi") "#FF9900" else "#53B376")
+            if("2" %in% sr) out <- out %>% dySeries("meanAnnual", label="annual mean", 
+                colors=if(var()=="pdsi") "#99FF99" else "#F4EB7E", fillGraph=F, strokeWidth=2)
+            if("3" %in% sr) out <- out %>% dySeries("mean", label="period mean",
+                colors=if(var()=="pdsi") "#009900" else "#2F6FBF")
+            if("4" %in% sr) out <- out %>% dySeries("trend", label="trend",
+                colors=if(var()=="pdsi") "#F8DE70" else "#DD5A0B", fillGraph=F, strokeWidth=3, strokePattern="dashed")
           })
+        return(out)
       })
     
     output$chartMsg <- renderText({
