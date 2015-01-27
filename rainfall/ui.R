@@ -30,6 +30,16 @@ shinyUI(fluidPage(
       )
     ),
     
+    conditionalPanel(condition="input.btn>0",
+      absolutePanel(class="panel panel-default",
+        top=80, right=20, width=220, height="auto",
+        div(class="panel-body",
+          uiOutput("details"),
+          bsAlert("alertNoData")
+        )
+      )
+    ),  
+    
     fluidRow(
       column(9,
         h3("Long-Term Drought and Precipitation", 
@@ -48,8 +58,8 @@ shinyUI(fluidPage(
         conditionalPanel(condition="input.btn>0",
           p(tags$label("Notes"), br(), "The long-term mean is over the selected months and period only (or over the
               entire year if no month is selected). The trend component is generated through
-              classical seasonal decomposition by moving averages over the entire 1960-2013 period.")),        
-        hr(),
+              classical seasonal decomposition by moving averages over the entire 1960-2013 period."),
+          hr()),
         includeHTML("../rainfall/www/txtCredits.html"),
         p(br())
       ),
@@ -76,16 +86,6 @@ shinyUI(fluidPage(
             `ESRI Shapefile`="shp", GeoTiff="tif", netCDF="nc", CSV="csv", STATA="dta"),
           selected="csv"),
         downloadButton("saveData", "Save Layer")
-      )
-    ),
-    
-    conditionalPanel(condition="input.btn>0",
-      absolutePanel(class="panel panel-default",
-        top=20, right=20, width=220, height="auto",
-        div(class="panel-body",
-          uiOutput("details"),
-          bsAlert("alertNoData")
-        )
       )
     )
   )
