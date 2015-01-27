@@ -31,11 +31,14 @@ shinyUI(fluidPage(
     ),
     
     fluidRow(
-      column(12,
+      column(9,
         h3("Long-Term Drought and Precipitation", 
-          tags$small("Monthly sub-national time-series for sub-Saharan Africa")))),
+          tags$small("Monthly sub-national time-series for sub-Saharan Africa"))),
+      column(2, offset=1,
+        img(src="wordmark-HarvestChoice_span2.png"))
+    ),
     
-    fluidRow(style="margin-top: 380px;",
+    fluidRow(style="margin-top: 390px;",
       
       column(3,
         uiOutput("selectVar"),
