@@ -40,6 +40,7 @@ shinyUI(fluidPage(
         uiOutput("selectg0"),
         actionButton("btn", "Show Series", icon("globe"), class="btn-primary"),
         hr(),
+        p(br()),
         includeHTML("../rainfall/www/txtCredits.html"),
         p(br())
       ),
@@ -48,12 +49,12 @@ shinyUI(fluidPage(
         conditionalPanel(condition="input.btn==0",
           includeHTML("../rainfall/www/txtIntro.html")),
         uiOutput("selectedMsg"),
-        p(),
+        p(br()),
         conditionalPanel(condition="input.btn>0",
           dygraphOutput("dygraph", width="100%", height="320px"),
           br(),
           dygraphOutput("dygraphAnnual", width="100%", height="220px"),
-          p())
+          p(br()))
       ),
       
       column(2,
