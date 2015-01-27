@@ -182,7 +182,7 @@ shinyServer(function(input, output, session) {
     
     output$dygraphAnnual <- renderDygraph({
         if (is.null(dt2())) return()
-        dt <- dt2()[, list(meanAnnual=first(meanAnnual)), by=list(month=year(month))]
+        dt <- dt2()[, list(meanAnnual=meanAnnual[1]), by=list(month=year(month))]
         isolate ({
             if (input$btn==0) return()
             dygraph(xts::as.xts(dt[, meanAnnual], order.by=dt$month), group="dy") %>%

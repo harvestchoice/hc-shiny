@@ -17,66 +17,67 @@ names(mth) <- c("All", month.name)
 
 
 shinyUI(fluidPage(
-        title="CRU-TS 3.22 with leaflet",
-        theme="bootstrap.css",
-
-        # Whole width map
-        absolutePanel(top=0, left=0, right=0, bottom=0, width="auto", height="auto",
-            leafletMap("map", width="100%", height=380,
-                initialTileLayer = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
-                initialTileLayerAttribution = HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>'),
-                # Center on Kenya
-                options=list(center=c(1, 41), zoom=6)
-            )
-        ),
-
-        fluidRow(style="margin-top: 380px;",
-
-            column(3,
-                h3("Long-Term Drought and Precipitation", 
-                  tags$small(br(), "Monthly sub-national time-series for sub-Saharan Africa")),
-                uiOutput("selectVar"),
-                uiOutput("selectg0"),
-                actionButton("btn", "Show Series", icon("globe")),
-                hr(),
-                includeHTML("../rainfall/www/txtCredits.html"),
-                p(br())
-            ),
-
-            column(7,
-                conditionalPanel(condition="input.btn==0",
-                    includeHTML("../rainfall/www/txtIntro.html")),
-                uiOutput("chartMsg"),
-                p(br()),
-                conditionalPanel(condition="input.btn>0",
-                    dygraphOutput("dygraph", width="100%", height="320px"),
-                    br(),
-                    dygraphOutput("dygraphAnnual", width="100%", height="320px"),
-                    p(br()))
-            ),
-
-            column(2,
-                p(br()),
-                uiOutput("selectg2"),
-                sliderInput("rg", "Limit to Date Range", 1960, 2013, value=c(1960, 2013),
-                  step=1, sep="", ticks=F),
-                selectInput("selectMonth", "Limit to Month", mth, selected=0, multiple=T),
-                hr(),
-                selectInput("fileType", "Choose Export Format", choices=c(
-                        `ESRI Shapefile`="shp", GeoTiff="tif", netCDF="nc", CSV="csv", STATA="dta"),
-                    selected="csv"),
-                downloadButton("saveData", "Save Layer")
-            )
-        ),
-
+    title="CRU-TS 3.22 with leaflet",
+    theme="bootstrap.css",
+    
+    # Whole width map
+    absolutePanel(top=0, left=0, right=0, bottom=0, width="auto", height="auto",
+      leafletMap("map", width="100%", height=380,
+        initialTileLayer = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+        initialTileLayerAttribution = HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>'),
+        # Center on Kenya
+        options=list(center=c(1, 41), zoom=6)
+      )
+    ),
+    
+    fluidRow(style="margin-top: 380px;",
+      
+      column(3,
+        h3("Long-Term Drought and Precipitation", 
+          tags$small(br(), "Monthly sub-national time-series for sub-Saharan Africa")),
+        uiOutput("selectVar"),
+        uiOutput("selectg0"),
+        actionButton("btn", "Show Series", icon("globe")),
+        hr(),
+        includeHTML("../rainfall/www/txtCredits.html"),
+        p(br())
+      ),
+      
+      column(7,
+        conditionalPanel(condition="input.btn==0",
+          includeHTML("../rainfall/www/txtIntro.html")),
+        uiOutput("chartMsg"),
+        p(br()),
         conditionalPanel(condition="input.btn>0",
-            absolutePanel(class="panel panel-default",
-                top=20, right=20, width=220, height="auto",
-                div(class="panel-body",
-                    uiOutput("details"),
-                    bsAlert("alertNoData")
-                )
-            )
+          p("Monthly Series"),
+          dygraphOutput("dygraph", width="100%", height="320px"),
+          p("Annual Series"),
+          dygraphOutput("dygraphAnnual", width="100%", height="280px"),
+          p(br()))
+      ),
+      
+      column(2,
+        p(br()),
+        uiOutput("selectg2"),
+        sliderInput("rg", "Limit to Date Range", 1960, 2013, value=c(1960, 2013),
+          step=1, sep="", ticks=F),
+        selectInput("selectMonth", "Limit to Month", mth, selected=0, multiple=T),
+        hr(),
+        selectInput("fileType", "Choose Export Format", choices=c(
+            `ESRI Shapefile`="shp", GeoTiff="tif", netCDF="nc", CSV="csv", STATA="dta"),
+          selected="csv"),
+        downloadButton("saveData", "Save Layer")
+      )
+    ),
+    
+    conditionalPanel(condition="input.btn>0",
+      absolutePanel(class="panel panel-default",
+        top=20, right=20, width=220, height="auto",
+        div(class="panel-body",
+          uiOutput("details"),
+          bsAlert("alertNoData")
         )
+      )
     )
+  )
 )
