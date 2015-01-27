@@ -185,7 +185,7 @@ shinyServer(function(input, output, session) {
         dt <- dt2()[, list(meanAnnual=meanAnnual[1]), by=list(month=year(month))]
         isolate ({
             if (input$btn==0) return()
-            dygraph(xts::as.xts(dt[, meanAnnual], order.by=dt$month), group="dy") %>%
+            dygraph(xts::as.xts(dt$meanAnnual, order.by=as.Date(dt$month, "%Y")), group="dy") %>%
               dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
               dyRangeSelector(height=20) %>%
               dySeries("meanAnnual", label="annual mean", 
