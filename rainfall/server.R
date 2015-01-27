@@ -166,6 +166,7 @@ shinyServer(function(input, output, session) {
         # Isolate from all but dt2() and input$selectSeries
         dt <- dt2()
         sr <- input$selectSeries
+        
         isolate ({
             if (input$btn==0) return()
             # Convert data.table to xts
@@ -174,16 +175,16 @@ shinyServer(function(input, output, session) {
               dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
               dyRangeSelector(height=20)
             
-            if("1" %in% sr) out <- out %>% dySeries("value", label=var(),
+            if ("1" %in% sr) out <- out %>% dySeries("value", label=var(),
                 colors=if(var()=="pdsi") "#FF9900" else "#53B376")
-            if("2" %in% sr) out <- out %>% dySeries("meanAnnual", label="annual mean", 
+            if ("2" %in% sr) out <- out %>% dySeries("meanAnnual", label="annual mean", 
                 colors=if(var()=="pdsi") "#99FF99" else "#F4EB7E", fillGraph=F, strokeWidth=2)
-            if("3" %in% sr) out <- out %>% dySeries("mean", label="period mean",
+            if ("3" %in% sr) out <- out %>% dySeries("mean", label="period mean",
                 colors=if(var()=="pdsi") "#009900" else "#2F6FBF")
-            if("4" %in% sr) out <- out %>% dySeries("trend", label="trend",
+            if ("4" %in% sr) out <- out %>% dySeries("trend", label="trend",
                 colors=if(var()=="pdsi") "#F8DE70" else "#DD5A0B", fillGraph=F, strokeWidth=3, strokePattern="dashed")
+            return(out)
           })
-        return(out)
       })
     
     output$chartMsg <- renderText({
@@ -236,10 +237,10 @@ shinyServer(function(input, output, session) {
             hr(),
             h4("1960-2013 ", names(d)[d==var()]),
             p(
-            "Mean: ", strong(evt$properties$mean), br(),
-            "Min: ", strong(evt$properties$min), br(),
-            "Max: ", strong(evt$properties$max), br(),
-            "Sd. Dev.: ", strong(evt$properties$sd)),
+              "Mean: ", strong(evt$properties$mean), br(),
+              "Min: ", strong(evt$properties$min), br(),
+              "Max: ", strong(evt$properties$max), br(),
+              "Sd. Dev.: ", strong(evt$properties$sd)),
             p(em("Click the map to select this district.")))
         }
         return(as.character(out))
