@@ -35,7 +35,7 @@ shinyUI(fluidPage(
         h3("Long-Term Drought and Precipitation", 
           tags$small("Monthly sub-national time-series for sub-Saharan Africa"))),
       column(2, offset=1,
-        p(img(src="wordmark-HarvestChoice_span2.png")))
+        h3(img(src="wordmark-HarvestChoice_span2.png")))
     ),
     
     fluidRow(style="margin-top: 400px;",
