@@ -176,13 +176,13 @@ shinyServer(function(input, output, session) {
               dyRangeSelector(height=20)
             
             if ("1" %in% sr) out <- out %>% dySeries("value", label=var(),
-                colors=if(var()=="pdsi") "#FF9900" else "#53B376")
+                color=if(var()=="pdsi") "#FF9900" else "#53B376")
             if ("2" %in% sr) out <- out %>% dySeries("meanAnnual", label="annual mean", 
-                colors=if(var()=="pdsi") "#99FF99" else "#F4EB7E", fillGraph=F, strokeWidth=2)
+                color=if(var()=="pdsi") "#99FF99" else "#F4EB7E", fillGraph=F, strokeWidth=2)
             if ("3" %in% sr) out <- out %>% dySeries("mean", label="period mean",
-                colors=if(var()=="pdsi") "#009900" else "#2F6FBF")
+                color=if(var()=="pdsi") "#009900" else "#2F6FBF")
             if ("4" %in% sr) out <- out %>% dySeries("trend", label="trend",
-                colors=if(var()=="pdsi") "#F8DE70" else "#DD5A0B", fillGraph=F, strokeWidth=3, strokePattern="dashed")
+                color=if(var()=="pdsi") "#F8DE70" else "#DD5A0B", fillGraph=F, strokeWidth=3, strokePattern="dashed")
             return(out)
           })
       })
