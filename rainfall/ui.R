@@ -6,6 +6,7 @@
 #####################################################################################
 
 library(shiny)
+# Testing 2 versions of leaflet for now, til they merge
 library(leaflet, lib.loc="/home/mbacou/R/x86_64-redhat-linux-gnu-library/3.1")
 library(dygraphs)
 library(shinyBS)
@@ -19,8 +20,9 @@ shinyUI(fluidPage(
         title="CRU-TS 3.22 with leaflet",
         theme="bootstrap.css",
 
-        absolutePanel(top=0, bottom="auto", left=0, right=0, width="auto", height="auto",
-            leafletMap("map", width="100%", height=420,
+        # Whole width map
+        absolutePanel(top=0, left=0, width="auto", height="auto",
+            leafletMap("map", width="100%", height=380,
                 initialTileLayer = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
                 initialTileLayerAttribution = HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>'),
                 # Center on Kenya
@@ -28,11 +30,11 @@ shinyUI(fluidPage(
             )
         ),
 
-        fluidRow(style="margin-top: 420px;",
+        fluidRow(style="margin-top: 380px;",
 
             column(3,
-                h3("Drought and Precipitation", 
-                  tags$small("Monthly sub-National Time-Series for sub-Saharan Africa")),
+                h3("Long-Term Drought and Precipitation", 
+                  tags$small(br(), "monthly sub-national time-series for sub-Saharan Africa")),
                 uiOutput("selectVar"),
                 uiOutput("selectg0"),
                 actionButton("btn", "Show Series", icon("globe")),
