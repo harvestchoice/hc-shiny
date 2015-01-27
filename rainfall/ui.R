@@ -48,7 +48,6 @@ shinyUI(fluidPage(
         conditionalPanel(condition="input.btn==0",
           includeHTML("../rainfall/www/txtIntro.html")),
         uiOutput("chartMsg"),
-        p(br()),
         conditionalPanel(condition="input.btn>0",
           h5("Monthly Series"),
           dygraphOutput("dygraph", width="100%", height="320px"),

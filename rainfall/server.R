@@ -174,18 +174,18 @@ shinyServer(function(input, output, session) {
               dySeries("value", label=var(),
                 color=if(var()=="pdsi") "#FF9900" else "#53B376") %>%
               dySeries("mean", label="period mean",
-                color=if(var()=="pdsi") "#009900" else "#2F6FBF") %>%
+                color=if(var()=="pdsi") "#F8DE70" else "#DD5A0B") %>%
               dySeries("trend", label="trend",
-                color=if(var()=="pdsi") "#F8DE70" else "#DD5A0B", fillGraph=F, strokeWidth=3, strokePattern="dashed")
+                color=if(var()=="pdsi") "#009900" else "#2F6FBF", fillGraph=F, strokeWidth=3, strokePattern="dashed")
           })
       })
     
     output$dygraphAnnual <- renderDygraph({
         if (is.null(dt2())) return()
-        dt <- dt2()[, list(meanAnnual=meanAnnual[1]), by=list(month=year(month))]
+        dt <- dt2()[, list(meanAnnual=mean(value, na.rm=T)), by=list(month=year(month))]
         isolate ({
             if (input$btn==0) return()
-            dygraph(xts::as.xts(dt$meanAnnual, order.by=as.Date(dt$month, "%Y")), group="dy") %>%
+            dygraph(xts::as.xts(dt$meanAnnual, order.by=as.Date(as.character(dt$month), "%Y")), group="dy") %>%
               dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
               dyRangeSelector(height=20) %>%
               dySeries("meanAnnual", label="annual mean", 
