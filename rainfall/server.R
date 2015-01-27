@@ -188,7 +188,7 @@ shinyServer(function(input, output, session) {
             dygraph(xts::as.xts(dt$meanAnnual, order.by=as.Date(as.character(dt$month), "%Y")), group="dy") %>%
               dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
               dyRangeSelector(height=20) %>%
-              dySeries("meanAnnual", label="annual mean", 
+              dySeries("V1", label="annual mean", 
                 color=if(var()=="pdsi") "#99FF99" else "#F4EB7E", fillGraph=F, strokeWidth=2)
           })
       })    
