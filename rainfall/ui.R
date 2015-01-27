@@ -21,7 +21,7 @@ shinyUI(fluidPage(
     theme="bootstrap.css",
     
     # Whole width map
-    absolutePanel(top=40, left=0, right=0, bottom=0, width="auto", height="auto",
+    absolutePanel(top=60, left=0, right=0, bottom=0, width="auto", height="auto",
       leafletMap("map", width="100%", height=380,
         initialTileLayer = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
         initialTileLayerAttribution = HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>'),
@@ -31,8 +31,9 @@ shinyUI(fluidPage(
     ),
     
     fluidRow(
-      h3("Long-Term Drought and Precipitation", 
-        tags$small(br(), "Monthly sub-national time-series for sub-Saharan Africa"))),
+      column(12,
+        h3("Long-Term Drought and Precipitation", 
+          tags$small(br(), "Monthly sub-national time-series for sub-Saharan Africa")))),
     
     fluidRow(style="margin-top: 380px;",
       
