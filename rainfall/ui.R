@@ -34,7 +34,7 @@ shinyUI(fluidPage(
 
             column(3,
                 h3("Long-Term Drought and Precipitation", 
-                  tags$small(br(), "monthly sub-national time-series for sub-Saharan Africa")),
+                  tags$small(br(), "Monthly sub-national time-series for sub-Saharan Africa")),
                 uiOutput("selectVar"),
                 uiOutput("selectg0"),
                 actionButton("btn", "Show Series", icon("globe")),
