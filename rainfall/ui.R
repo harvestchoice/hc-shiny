@@ -14,9 +14,6 @@ library(shinyBS)
 # Month array
 mth <- 0:12
 names(mth) <- c("All", month.name)
-# Data series
-series <- 1:4
-names(series) <- c("mean", "annual mean", "long-term mean", "trend")
 
 
 shinyUI(fluidPage(
@@ -53,6 +50,7 @@ shinyUI(fluidPage(
                 p(br()),
                 conditionalPanel(condition="input.btn>0",
                     dygraphOutput("dygraph", width="100%", height="320px"),
+                    dygraphOutput("dygraphAnnual", width="100%", height="320px"),
                     p(br()))
             ),
 
@@ -62,7 +60,6 @@ shinyUI(fluidPage(
                 sliderInput("rg", "Limit to Date Range", 1960, 2013, value=c(1960, 2013),
                   step=1, sep="", ticks=F),
                 selectInput("selectMonth", "Limit to Month", mth, selected=0, multiple=T),
-                checkboxGroupInput("selectSeries", "Show/hide Series", series, 1:4),
                 hr(),
                 selectInput("fileType", "Choose Export Format", choices=c(
                         `ESRI Shapefile`="shp", GeoTiff="tif", netCDF="nc", CSV="csv", STATA="dta"),

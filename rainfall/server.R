@@ -163,29 +163,36 @@ shinyServer(function(input, output, session) {
     
     output$dygraph <- renderDygraph({
         if (is.null(dt2())) return()
-        # Isolate from all but dt2() and input$selectSeries
+        # Isolate from all but dt2()
         dt <- dt2()
-        sr <- input$selectSeries
-        
         isolate ({
             if (input$btn==0) return()
             # Convert data.table to xts
-            out <- dygraph(xts::as.xts(dt[, list(value, mean, meanAnnual, trend)], order.by=dt$month)) %>%
+            dygraph(xts::as.xts(dt[, list(value, mean, trend)], order.by=dt$month), group="dy") %>%
               dyOptions(fillGraph=T, fillAlpha=0.4) %>%
               dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
-              dyRangeSelector(height=20)
-            
-            if ("1" %in% sr) out <- out %>% dySeries("value", label=var(),
-                color=if(var()=="pdsi") "#FF9900" else "#53B376")
-            if ("2" %in% sr) out <- out %>% dySeries("meanAnnual", label="annual mean", 
-                color=if(var()=="pdsi") "#99FF99" else "#F4EB7E", fillGraph=F, strokeWidth=2)
-            if ("3" %in% sr) out <- out %>% dySeries("mean", label="period mean",
-                color=if(var()=="pdsi") "#009900" else "#2F6FBF")
-            if ("4" %in% sr) out <- out %>% dySeries("trend", label="trend",
+              dyRangeSelector(height=20) %>%
+              dySeries("value", label=var(),
+                color=if(var()=="pdsi") "#FF9900" else "#53B376") %>%
+              dySeries("mean", label="period mean",
+                color=if(var()=="pdsi") "#009900" else "#2F6FBF") %>%
+              dySeries("trend", label="trend",
                 color=if(var()=="pdsi") "#F8DE70" else "#DD5A0B", fillGraph=F, strokeWidth=3, strokePattern="dashed")
-            return(out)
           })
       })
+    
+    output$dygraphAnnual <- renderDygraph({
+        if (is.null(dt2())) return()
+        dt <- dt2()
+        isolate ({
+            if (input$btn==0) return()
+            dygraph(xts::as.xts(dt[, list(meanAnnual)], order.by=dt$month), group="dy") %>%
+              dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140) %>%
+              dyRangeSelector(height=20) %>%
+              dySeries("meanAnnual", label="annual mean", 
+                color=if(var()=="pdsi") "#99FF99" else "#F4EB7E", fillGraph=F, strokeWidth=2)
+          })
+      })    
     
     output$chartMsg <- renderText({
         if (input$btn==0) return()
@@ -246,9 +253,9 @@ shinyServer(function(input, output, session) {
         return(as.character(out))
       })
     
+    
     # Update district on map click
-    observe({
-        evt <- input$map_geojson_click
+    observeEvent({evt <- input$map_geojson_click}, {
         if (is.null(evt)) return()
         updateSelectInput(session, "selectg2", selected=evt$properties$ADM2_NAME)
       })
