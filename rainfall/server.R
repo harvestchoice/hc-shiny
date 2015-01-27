@@ -250,10 +250,9 @@ shinyServer(function(input, output, session) {
     
     
     # Update district on map click
-    observeEvent({evt <- input$map_geojson_click}, {
-        if (is.null(evt)) return()
-        updateSelectInput(session, "selectg2", selected=evt$properties$ADM2_NAME)
-      })
+    observeEvent(input$map_geojson_click,
+      updateSelectInput(session, "selectg2",
+        selected=input$map_geojson_click$properties$ADM2_NAME))
     
     
     output$saveData <- downloadHandler(function() {

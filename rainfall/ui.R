@@ -54,7 +54,8 @@ shinyUI(fluidPage(
               classical seasonal decomposition by moving averages over the entire 1960-2013 period."),
           dygraphOutput("dygraph", width="100%", height="320px"),
           br(),
-          dygraphOutput("dygraphAnnual", width="100%", height="220px"))
+          dygraphOutput("dygraphAnnual", width="100%", height="220px"),
+          p())
       ),
       
       column(2,
