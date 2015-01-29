@@ -284,3 +284,17 @@ tmp[, sum(diff)]
 # [1] 398 missing districts
 
 
+
+#####################################################################################
+# 2015.01.29 Update
+#####################################################################################
+
+# Switch to latest FAO GAUL 2015 boundaries
+# Switch to rstudio/leaflet R package allowing binding leaflet to sp objects (no need
+# to pre-process json lists)
+# We only need to pre-process the raster summaries across all districts `d2`
+
+
+
+
+
