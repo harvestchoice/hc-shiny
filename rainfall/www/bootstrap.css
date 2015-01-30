@@ -6346,5 +6346,14 @@ h1,h2,h3,h4,h5 {
  font-family: 'Droid Serif', serif;
 }
 
+div.hc-header {
+  background-color: #3C3A2E;
+}
+
+.hc-header h3 {
+  color: #ffffff;
+}
+
+
 
 

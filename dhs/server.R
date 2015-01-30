@@ -43,13 +43,13 @@ genMap <- function(svy, res, var, col, brks) {
   m <- gis.web[gis.web$svyCode==svy, ]
   dt <- dt[J(m$regCode)]
   rg <- range(dt$var, na.rm=T)
-  
+
   # Try equal interval breaks
   cv <- try(classInt::classIntervals(dt$var, n=min(brks, dt[, length(unique(var))], na.rm=T))$brks)
-  
+
   if (class(cv)=="try-error") {
     return(class(cv))
-    
+
   } else {
     # Symbolize
     dt[, cl := cut(var, unique(c(rg[1]-1, cv, rg[2]+1)), cutlabels=F, ordered_result=T)]
@@ -62,41 +62,41 @@ genMap <- function(svy, res, var, col, brks) {
 
 
 shinyServer(function(input, output, session) {
-    
+
     # Init map
     map <- leaflet() %>%
       addTiles("http://{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
         attribution=HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>')) %>%
       setView(8, 8, 6)
-    
+
     # Reactive controls
     output$map <- renderLeaflet(map)
-    
+
     output$selectCat <- renderUI({
         selectInput("selectCat", "Choose a Category", dhs.lbl[, unique(varCat)],
           selected="wealth index")
       })
-    
+
     output$selectVar <- renderUI({
         var <- dhs.lbl[varCat==input$selectCat, varCode]
         names(var) <- dhs.lbl[varCat==input$selectCat, varLabel]
         selectInput("selectVar", "Choose an Indicator", var, selected=var[1])
       })
-    
+
     output$selectISO <- renderUI({
         selectInput("selectISO", "Choose a Country", iso, selected="GH")
       })
-    
+
     output$col <- renderUI({
         selectInput("col", "Color palette", row.names(brewer.pal.info),
           selected="RdBu")
       })
-    
+
     output$svydt <- renderTable(digits=1, include.rownames=F, dt1())
-    
+
     # Reactive values
-    init <- reactive(input$btn+input$btnUpdate) 
-    
+    init <- reactive(input$btn+input$btnUpdate)
+
     # Reactive data tables
     dt1 <- eventReactive(input$btn, {
         var <- names(dhs)[names(dhs) %like% input$selectVar]
@@ -108,10 +108,10 @@ shinyServer(function(input, output, session) {
         setnames(dt, 1, c("Region"))
         return(dt)
       })
-    
+
     dt2 <- reactive({
       })
-    
+
     observeEvent(input$btn, {
         # Update year
         y <- svyYear[[input$selectISO]]
@@ -123,18 +123,18 @@ shinyServer(function(input, output, session) {
           updateRadioButtons(session, "selectGender", choices=c(`n/a`=""), selected="")
         }
       }, priority=3)
-    
-    
-    # Update map    
-    observeEvent({input$btn+input$btnUpdate}, {       
+
+
+    # Update map
+    observeEvent(input$btn+input$btnUpdate, {
         svyCode <- paste0(input$selectISO, input$selectYear)
-        
+
         if (!svyCode %in% unique(gis.web@data$svyCode)) {
           # File is missing for that country
           createAlert(session, "alertNoData",
             message="Try another combination.",
             title="Missing Map Data", type="warning", block=T, append=F)
-          
+
         } else {
           g <- genMap(svyCode, input$selectRes, paste0(input$selectVar, input$selectGender),
             input$col, input$brks)
@@ -149,18 +149,18 @@ shinyServer(function(input, output, session) {
           output$map <- renderLeaflet(m)
         }
       }, priority=2)
-    
-    
+
+
     # Show selected
     output$details <- renderText({
         my_iso <- input$selectISO
         my_iso <- names(iso)[iso==my_iso]
-        my_var <- input$selectVar 
+        my_var <- input$selectVar
         my_var <- dhs.lbl[varCode==my_var, varLabel]
         out <- h3(my_iso, br(), tags$small(my_var))
         return(as.character(out))
       })
-    
+
     # Show admin details on click
     output$tips <- renderText({
         evt <- input$map_geojson_mouseclick
@@ -173,29 +173,29 @@ shinyServer(function(input, output, session) {
               "Value: ", strong(evt$properties$value)))
         }
         return(as.character(out))
-      })    
-    
-    
+      })
+
+
     # Plot #1
     output$plot1 <- renderPlot({
         if(input$btn==0) return()
       })
-    
-    
+
+
     # Plot #2
     output$plot2 <- renderPlot({
         if(input$btn==0) return()
       })
-    
-    
+
+
     # Brewer color palettes
     output$plotBrewer <- renderPlot(height=500, {
         if(input$btnShowBrewer==0) return()
         par(mar=c(0,3,0,0))
         display.brewer.all()
       })
-    
-    
+
+
     # Download
     output$saveData <- downloadHandler(function() {
         t <- input$fileType
@@ -210,7 +210,7 @@ shinyServer(function(input, output, session) {
       }, function(file) {
         t <- input$fileType
         f <- paste0(input$selectISO, "-", input$selectVar, ".", t)
-        
+
         switch(t,
           csv = write.csv(dt1(), file, row.names=F, na=""),
           dta = foreign::write.dta(dt1(), file, version=9L),
@@ -221,5 +221,5 @@ shinyServer(function(input, output, session) {
             writeZip(g, file, f, "ESRI Shapefile")
           })
       })
-    
+
   })

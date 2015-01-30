@@ -290,9 +290,30 @@ tmp[, sum(diff)]
 #####################################################################################
 
 # Switch to latest FAO GAUL 2015 boundaries
+# http://www.fao.org/geonetwork/srv/en/resources.get?id=12691&fname=g2015_2014_2.zip
 # Switch to rstudio/leaflet R package allowing binding leaflet to sp objects (no need
 # to pre-process json lists)
 # We only need to pre-process the raster summaries across all districts `d2`
+
+library(rgeos)
+library(rgdal)
+library(data.table)
+
+setwd("/home/projects/shiny")
+
+# GAUL 2014 (2015 eds) was converted and simplified on local using QGIS, load here
+# Used QGIS gSimpliy()
+g2 <- readRDS("../cell5m/rdb/g2_2014v15.rds")
+g2.web <- readRDS("../cell5m/rdb/g2_2014v15.web.rds")
+
+
+
+
+
+
+
+
+
 
 
 
