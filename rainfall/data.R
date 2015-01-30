@@ -297,14 +297,40 @@ tmp[, sum(diff)]
 
 library(rgeos)
 library(rgdal)
+library(maptools)
 library(data.table)
+memory.limit(6000)
 
 setwd("/home/projects/shiny")
+setwd("~/Projects/hc-shiny")
 
 # GAUL 2014 (2015 eds) was converted and simplified on local using QGIS, load here
 # Used QGIS gSimpliy()
-g2 <- readRDS("../cell5m/rdb/g2_2014v15.rds")
-g2.web <- readRDS("../cell5m/rdb/g2_2014v15.web.rds")
+g2 <- readOGR("../../Maps/admin/g2015_2014_2", "g2015_2014_2")
+plot(g2[g2$ADM0_NAME=="Ghana",])
+
+# Merge all features by admin codes
+g2.dt <- data.table(g2@data)
+g2.dt[, rn := row.names(g2)]
+setkey(g2.dt, ADM0_CODE, ADM1_CODE, ADM2_CODE)
+g2.dt <- unique(g2.dt)
+
+# Check for uniqueness
+setkey(g2.dt, ADM2_CODE)
+g2.dt[duplicated(g2.dt)]
+
+# Merge features
+g2 <- unionSpatialPolygons(g2, g2@data$ADM2_CODE)
+
+
+
+# Get list of SSA ISO3 codes
+load
+
+
+# Save
+readRDS(g2, "../hc-cell5m/rdb/g2_2014v15.rds")
+readRDS(g2.web, "../hc-cell5m/rdb/g2_2014v15.web.rds")
 
 
 
