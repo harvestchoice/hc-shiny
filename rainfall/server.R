@@ -18,7 +18,7 @@ setwd("/home/projects/shiny/tmp")
 d <- c("cld", "dtr", "frs", "pet", "pre", "tmn", "tmp", "tmx", "vap", "wet", "pdsi", "eratp")
 names(d) <- c("Cloud Cover (%)", "dtr", "frs", "pet", "Precipitation (mm)", "tmn",
   "Temperature (C)", "tmx", "vap", "wet", "Palmer Drought Severity Index (-10, 10)",
-  "ERA Synoptic Monthly Mean Precipitation")
+  "ERA Synoptic Monthly Mean Precipitation (mm/day)")
 
 # CRU 3.22 precipitation time series (from 1901 onwards)
 path.pre <- "../rainfall/data/cru_ts3.22.1901.2013.tmp.dat.nc"
@@ -104,7 +104,7 @@ shinyServer(function(input, output, session) {
 
   # Create reactive controls
   output$selectVar <- renderUI({
-    selectInput("selectVar", "Choose a Variable", d[c(5,11,12)], selected="pre")
+    selectInput("selectVar", "Choose a Variable", d[c(5,11)], selected="pre")
   })
 
   output$selectg0 <- renderUI({
