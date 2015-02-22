@@ -58,7 +58,10 @@ shinyUI(fluidPage(
         hr(),
         p(tags$label("Notes"), br(), "The long-term mean is over the selected months and period only (or over the
               entire year if no month is selected). The trend component is generated through
-              classical seasonal decomposition by moving averages over the entire 1960-2013 period."))
+              classical seasonal decomposition by moving averages over the entire 1960-2013 period.")),
+      hr(),
+      includeHTML("../rainfall/www/txtCredits.html"),
+      p(br())
     ),
 
     column(7,
@@ -76,20 +79,13 @@ shinyUI(fluidPage(
     column(2,
       p(br()),
       uiOutput("selectg2"),
-      sliderInput("rg", "Limit to Date Range", 1960, 2013, value=c(1960, 2013),
-        step=1, sep="", ticks=F),
+      uiOutput("rg"),
       selectInput("selectMonth", "Limit to Month(s)", mth, selected=0, multiple=T),
       hr(),
       selectInput("fileType", "Choose Export Format", choices=c(
         `ESRI Shapefile`="shp", GeoTiff="tif", netCDF="nc", CSV="csv", STATA="dta"),
         selected="csv"),
       downloadButton("saveData", "Save Layer")
-    ),
-
-    column(3,
-      hr(),
-      includeHTML("../rainfall/www/txtCredits.html"),
-      p(br())
     )
   )
 )

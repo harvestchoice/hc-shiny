@@ -16,32 +16,34 @@ shinyUI(fluidPage(
 
   fluidRow(class="hc-header",
     column(9,
-      h3("Health and Nutrition", tags$small("sub-national indicators"))),
+      h3("Health and Nutrition", tags$small(" sub-national indicators"))),
     column(2, offset=1,
       h5(a(href="http://harvestchoice.org/", title="Home",
         img(src="global_logo.png", alt="Home"))))
   ),
 
   fluidRow(style="position: relative;",
-    leafletOutput("map", width="100%", height=480),
+    leafletOutput("map", width="100%", height=380),
 
-    absolutePanel(right=10, bottom=20, width=400, draggable=T,
-      div(class="panel panel-primary",
-        div(class="panel-heading", p(class="panel-title", tags$small("Map Options"))),
-        div(class="panel-body",
-          column(7,
-            radioButtons("selectYear", "Survey Year", c("2003", "2008"), "2008", inline=T),
-            radioButtons("selectRes", "Residence", c("rural", "urban"), "rural", inline=T),
-            radioButtons("selectGender", "Gender", c(`n/a`=""), "", inline=T)
+    conditionalPanel("input.btn>0",
+      absolutePanel(right=10, bottom=20, width=380,
+        div(class="panel panel-primary",
+          div(class="panel-heading", uiOutput("txtHead"), uiOutput("tips")),
+          div(class="panel-body",
+            column(7,
+              radioButtons("selectYear", "Survey Year", c("2003", "2008"), "2008", inline=F),
+              radioButtons("selectRes", "Residence", c("rural", "urban"), "rural", inline=T),
+              radioButtons("selectGender", "Gender", c(`n/a`=""), "", inline=T)
+            ),
+            column(5,
+              uiOutput("col"),
+              sliderInput("brks", "Legend breaks", 2, 8, 5, ticks=F, sep=""),
+              tags$small(actionLink("btnShowBrewer", "Show color palettes"),
+                `data-toggle`="modal", `data-target`="#brew")
+            )
           ),
-          column(5,
-            uiOutput("col"),
-            sliderInput("brks", "Legend breaks", 2, 8, 5, ticks=F, sep=""),
-            tags$small(actionLink("btnShowBrewer", "Show color palettes"),
-              `data-toggle`="modal", `data-target`="#brew")
-          )
-        ),
-        div(class="panel-footer", actionLink("btnUpdate", "Update Map", icon("globe")))
+          div(class="panel-footer", actionLink("btnUpdate", "Update Map", icon("globe")))
+        )
       )
     )
   ),
@@ -52,37 +54,33 @@ shinyUI(fluidPage(
       includeHTML("../dhs/www/txtIntro.html")),
     column(3, offset=1,
       uiOutput("selectCat"),
-      uiOutput("selectVar"),
-      bsAlert("alertNoData")),
+      uiOutput("selectVar")),
     column(3,
       uiOutput("selectISO"),
-      actionButton("btn", "Show Indicator", icon("bar-chart"), class="btn-primary")
-    )
-  ),
+      actionButton("btn", "Show Indicator", icon("bar-chart"), class="btn-primary")),
 
+    conditionalPanel("input.btn>0",
+      column(12, hr()),
+      column(8,
+        h3(uiOutput("txtTitle")),
+        bsAlert("alertNoData")),
 
-  tabsetPanel(type="tabs", postion="right",
-    tabPanel("Data",
-      column(10,
-        conditionalPanel(condition="input.btn>0",
-          uiOutput("details"),
-          tableOutput("svydt"),
-          column(6, plotOutput("plot1")),
-          column(6, plotOutput("plot2")))
-      ),
-      column(2,
+      column(2, offset=2,
         p(br()),
         selectInput("fileType", "Choose Export Format",
           choices=c(`ESRI Shapefile`="shp", CSV="csv", STATA="dta"),
           selected="csv"),
-        downloadButton("saveData", "Save Layer")
-      )
+        downloadButton("saveData", "Save Layer")),
+
+      column(5, plotOutput("plot1")),
+      column(5, plotOutput("plot2")),
+
+      column(5, tableOutput("svydt1")),
+      column(5, tableOutput("svydt2")),
+      column(5, tableOutput("svydt3")),
+      column(5, tableOutput("svydt4"))
     ),
 
-    tabPanel("Graphs")
-  ),
-
-  fluidRow(
     column(12,
       hr(),
       includeHTML("../dhs/www/txtCredits.html")

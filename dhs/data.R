@@ -14,6 +14,7 @@ library(rgdal)
 library(leaflet)
 
 setwd("~/Projects/hc-shiny/dhs")
+setwd("/home/projects/shiny/dhs")
 load("./data/dhsMap.2014.10.16.RData")
 
 # Load metadata from Joe Green at
@@ -70,13 +71,11 @@ dt <- gis.web[gis.web$svyCode=="GH2008", ]
 coords <- apply(sp::coordinates(dt), 2, mean, na.rm=T)
 plot(dt)
 
-m = leaflet() %>%
+leaflet() %>%
   addTiles("http://{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
     attribution=HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>')) %>%
   setView(coords[2], coords[1], 6) %>%
   addPolygons(data=dt, fillColor=topo.colors(10, alpha=.2)[dt@data$regCode], stroke=T)
-
-m
 
 
 # Test print::xtable on `dhs`
@@ -88,5 +87,51 @@ dt[, variable := factor(variable, labels=c("female", "male"))]
 dt <- tabular(Heading("Region")*factor(hv024_name)~Heading()*factor(year)*Heading()*factor(hv025)*Heading()*variable*Heading()*value*Heading()*mean, dt)
 
 
-rm(tmp, i, f, var, gis.dt, dhs.svy, dt)
+# Merge in region names from `gis` into `dhs` by survey
+tmp <- lapply(gis, function(x) x@data[, c("svyCode", "regCode", "regName")])
+tmp <- do.call(rbind, tmp)
+tmp <- data.table(tmp)
+setkey(tmp, svyCode, regCode)
+setkey(dhs, svyCode, hv024)
+dhs$regName <- tmp[dhs][, regName]
+dhs[is.na(regName), .N, by=svyCode]
+#    svyCode  N
+# 1:  BO2003  4
+# 2:  EG2000  2
+# 3:  EG2005  2
+# 4:  EG2008  2
+# 5:  HN2011  4
+# 6:  HT2005  2
+# 7:  HT2012  4
+# 8:  ID2002 51
+# 9:  KH2000 11
+# 10:  PE2003  3
+# 11:  PE2009  3
+# 12:  PE2010  3
+# 13:  PE2011  3
+# 14:  SN2012 20
+# 15:  TD2004  1
+# 16:  TZ1999 39
+
+
+rm(tmp, i, f, var, gis.dt, dhs.svy, dt, coords)
 save.image("./data/dhsMap.2014.10.16.RData")
+
+
+#####################################################################################
+# 2015.01.31 Update: Improved DHS boundaries
+#####################################################################################
+
+rm(list=ls())
+setwd("/home/projects/shiny")
+load("./data/dhsMap.2014.10.16.RData")
+
+# Simplified boundaries using http://mapshaper.org/, load here
+gis.web <- readOGR("./data", "MEASURE_DHS_Regions_2014")
+proj4string(gis.web) <- CRS("+init=epsg:4326")
+# [1] "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+
+
+
+
+
