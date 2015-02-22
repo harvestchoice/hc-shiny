@@ -312,19 +312,15 @@ plot(g2[g2$ADM0_NAME=="Ghana",])
 # Merge all features by admin codes
 g2.dt <- data.table(g2@data)
 g2.dt[, rn := row.names(g2)]
-setkey(g2.dt, ADM0_CODE, ADM1_CODE, ADM2_CODE)
+setkey(g2.dt, ADM2_CODE)
 g2.dt <- unique(g2.dt)
 
-# Check for uniqueness
-setkey(g2.dt, ADM2_CODE)
-g2.dt[duplicated(g2.dt)]
-
 # Merge features
-g2 <- unionSpatialPolygons(g2, g2@data$ADM2_CODE)
-
-
+g2.union <- unionSpatialPolygons(g2, g2@data$ADM2_CODE)
+g2.dt <- g2.dt[J(g2@data$ADM2_CODE)]
 
 # Get list of SSA ISO3 codes
+ssa <- c()
 load
 
 
