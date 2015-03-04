@@ -12,6 +12,7 @@
 library(data.table)
 library(rgdal)
 library(leaflet)
+library(shiny)
 
 setwd("~/Projects/hc-shiny/dhs")
 setwd("/home/projects/shiny/dhs")
