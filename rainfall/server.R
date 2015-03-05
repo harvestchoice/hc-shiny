@@ -35,7 +35,7 @@ path.eratp <- "../rainfall/data/era-interim.monthly.pre.water.1979-2014.nc"
 tm.eratp <- seq(as.Date("1979-01-01"), as.Date("2014-12-01"), "month")
 col.eratp <- c("#FFFFD9", "#EDF8B1", "#C7E9B4", "#7FCDBB", "#41B6C4", "#1D91C0", "#225EA8", "#253494", "#081D58")
 
-# Load GAUL district boundaries (full version)
+# Load GAUL 2014 district boundaries (full version)
 g2 <- readRDS("../../cell5m/rdb/g2_2014v15.rds")
 g2.dt <- data.table(g2@data)[, .N, by=list(ADM0_CODE, ADM0_NAME)]
 setkey(g2.dt, ADM0_NAME)
@@ -113,7 +113,7 @@ shinyServer(function(input, output, session) {
 
   output$selectg2 <- renderUI({
     selectizeInput("selectg2", "Limit to District",
-      choices=c("Entire Country", g2.list[[cntr()]]), selected="Entire Country")
+      choices=cbind("Entire Country", g2.list[[cntr()]]), selected="Entire Country")
   })
 
   output$rg <- renderUI({
@@ -132,7 +132,7 @@ shinyServer(function(input, output, session) {
   })
 
   dist <- reactive({
-    if(length(input$selectg2)>0) input$selectg2 else "Entire Country"
+    if(length(input$selectg2)>0 & !input$selectg2 %in% c(" ", "") ) input$selectg2 else "Entire Country"
   })
 
   tm <- reactive({
