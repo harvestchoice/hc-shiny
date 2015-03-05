@@ -115,7 +115,7 @@ shinyServer(function(input, output, session) {
 
   output$selectg2 <- renderUI({
     selectizeInput("selectg2", "Limit to District",
-      choices=cbind(`Entire Country`="Entire Country", g2.list[[cntr()]]),
+      choices=c(`Entire Country`="Entire Country", g2.list[[cntr()]]),
       selected="Entire Country")
   })
 
