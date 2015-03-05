@@ -104,16 +104,19 @@ shinyServer(function(input, output, session) {
 
   # Create reactive controls
   output$selectVar <- renderUI({
-    selectInput("selectVar", "Choose a Variable", d[c(5,11)], selected="pre")
+    selectInput("selectVar", "Choose a Variable", d[c(5,11)],
+      selected="pre")
   })
 
   output$selectg0 <- renderUI({
-    selectInput("selectg0", "Choose a Country", names(g2.list), selected="Kenya")
+    selectInput("selectg0", "Choose a Country", names(g2.list),
+      selected="Kenya")
   })
 
   output$selectg2 <- renderUI({
     selectizeInput("selectg2", "Limit to District",
-      choices=cbind("Entire Country", g2.list[[cntr()]]), selected="Entire Country")
+      choices=cbind(`Entire Country`="Entire Country", g2.list[[cntr()]]),
+      selected="Entire Country")
   })
 
   output$rg <- renderUI({
