@@ -5,16 +5,6 @@
 # Authors: Bacou, Melanie <mel@mbacou.com>
 #####################################################################################
 
-library(shiny)
-# Testing 2 versions of leaflet for now, til they merge
-library(leaflet, lib.loc="/home/mbacou/R/x86_64-redhat-linux-gnu-library/3.1")
-library(dygraphs)
-library(shinyBS)
-
-# Month array
-mth <- 0:12
-names(mth) <- c("All", month.name)
-
 
 shinyUI(fluidPage(
   title="CRU-TS 3.22 with leaflet",
@@ -41,8 +31,7 @@ shinyUI(fluidPage(
       absolutePanel(class="panel panel-default",
         bottom=20, right=20, width=220, height="auto",
         div(class="panel-body",
-          uiOutput("details"),
-          bsAlert("alertNoData")
+          uiOutput("details")
         )
       )
     )
@@ -51,8 +40,8 @@ shinyUI(fluidPage(
   fluidRow(
     column(3,
       p(br()),
-      uiOutput("selectVar"),
-      uiOutput("selectg0"),
+      selectInput("var", "Choose a Variable", d[c(5, 11)], selected="pre"),
+      selectInput("selectg0", "Choose a Country", names(g2.list), selected="Kenya"),
       actionButton("btn", "Show Series", icon("globe"), class="btn-primary"),
       conditionalPanel(condition="input.btn>0",
         hr(),
@@ -64,28 +53,36 @@ shinyUI(fluidPage(
       p(br())
     ),
 
-    column(7,
-      conditionalPanel(condition="input.btn==0",
-        includeHTML("../rainfall/www/txtIntro.html")),
-      conditionalPanel(condition="input.btn>0",
+
+    conditionalPanel(condition="input.btn==0",
+      column(9,
+        includeHTML("../rainfall/www/txtIntro.html"))
+    ),
+
+    conditionalPanel(condition="input.btn>0",
+      column(7,
         uiOutput("selectedMsg"),
+        bsAlert("alertNoData"),
         p(br()),
         dygraphOutput("dygraph", width="100%", height="320px"),
         p(br()),
         dygraphOutput("dygraphAnnual", width="100%", height="220px"),
-        p(br()))
-    ),
+        p(br())
+      ),
 
-    column(2,
-      p(br()),
-      uiOutput("selectg2"),
-      uiOutput("rg"),
-      selectInput("selectMonth", "Limit to Month(s)", mth, selected=0, multiple=T),
-      hr(),
-      selectInput("fileType", "Choose Export Format", choices=c(
-        `ESRI Shapefile`="shp", GeoTiff="tif", netCDF="nc", CSV="csv", STATA="dta"),
-        selected="csv"),
-      downloadButton("saveData", "Save Layer")
+      column(2,
+        p(br()),
+        selectInput("selectg2", "Limit to District",
+          choices=c(`Entire Country`="Entire Country", g2.list[["Kenya"]]), selected="Entire Country", selectize=T),
+        sliderInput("rg", "Limit to Date Range", 1960, 2013, value=c(1960, 2013), step=1, sep="", ticks=F),
+        sliderInput("selectMonth", "Limit to Season (Jan-Dec)", 1, 12, value=c(1,12), step=1),
+        hr(),
+
+        selectInput("fileType", "Choose Export Format", choices=c(
+          `ESRI Shapefile`="shp", GeoTiff="tif", netCDF="nc", CSV="csv", STATA="dta"),
+          selected="csv"),
+        downloadButton("saveData", "Save Layer")
+      )
     )
   )
 )
