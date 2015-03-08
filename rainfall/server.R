@@ -95,22 +95,24 @@ shinyServer(function(input, output, session) {
       # File is missing for that country
       createAlert(session, "alertNoData",
         message="Try another combination.",
-        title="Missing Data", type="warning", block=T)
+        title="Missing Data", type="warning")
+
+    } else {
+
+      # Get country boundaries
+      g <- g2[g2$ADM0_NAME==input$selectg0,]
+
+      # Re-center map to selected country centroid
+      map$clearGeoJSON()
+      coords <- apply(sp::coordinates(g), 2, mean, na.rm=T)
+      map$setView(coords[2], coords[1]+5, 6)
+      map$addGeoJSON(m)
+
+      # Export
+      values$m <- m
+      values$g <- g
+      values$dt1 <- dt
     }
-
-    # Get country boundaries
-    g <- g2[g2$ADM0_NAME==input$selectg0,]
-
-    # Re-center map to selected country centroid
-    map$clearGeoJSON()
-    coords <- apply(sp::coordinates(g), 2, mean, na.rm=T)
-    map$setView(coords[2], coords[1]+5, 6)
-    map$addGeoJSON(m)
-
-    # Export
-    values$m <- m
-    values$g <- g
-    values$dt1 <- dt
   })
 
 
@@ -141,7 +143,7 @@ shinyServer(function(input, output, session) {
   # Update title text
   output$selectedMsg <- renderText({
     # React to dt2() only
-    if(is.null(dt2())) return()
+    if (is.null(dt2())) return()
 
     isolate({
       mth <- paste0(" (", paste0(substr(unique(month.name[input$selectMonth]), 1, 3), collapse="-"), ")")
@@ -157,7 +159,7 @@ shinyServer(function(input, output, session) {
   # Render monthly time-series
   output$dygraph <- renderDygraph({
     # React to dt2() only
-    if(is.null(dt2())) return()
+    if (is.null(dt2())) return()
 
     isolate({
       dt <- dt2()

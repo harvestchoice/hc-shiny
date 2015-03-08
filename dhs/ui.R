@@ -4,11 +4,7 @@
 # Project: HarvestChoice for A4NH
 # Authors: Bacou, Melanie <mel@mbacou.com>
 #####################################################################################
-
-library(shiny)
-library(shinyBS)
-library(leaflet, lib.loc="/usr/lib64/R/library")
-
+library(rCharts)
 
 shinyUI(fluidPage(
   title="DHS - Subnational Nutrition and Health Statistics",
@@ -28,7 +24,7 @@ shinyUI(fluidPage(
     conditionalPanel("input.btn>0",
       absolutePanel(right=10, bottom=20, width=380,
         div(class="panel panel-primary",
-          div(class="panel-heading", uiOutput("txtHead"), uiOutput("tips")),
+          div(class="panel-heading", uiOutput("txtHead")),
           div(class="panel-body",
             column(7,
               radioButtons("selectYear", "Survey Year", c("2003", "2008"), "2008", inline=F),
@@ -36,7 +32,7 @@ shinyUI(fluidPage(
               radioButtons("selectGender", "Gender", c(`n/a`=""), "", inline=T)
             ),
             column(5,
-              uiOutput("col"),
+              selectInput("col", "Color palette", row.names(brewer.pal.info), selected="RdBu"),
               sliderInput("brks", "Legend breaks", 2, 8, 5, ticks=F, sep=""),
               tags$small(actionLink("btnShowBrewer", "Show color palettes"),
                 `data-toggle`="modal", `data-target`="#brew")
@@ -50,41 +46,39 @@ shinyUI(fluidPage(
 
   fluidRow(
     p(br()),
+
     column(5,
       includeHTML("../dhs/www/txtIntro.html")),
     column(3, offset=1,
-      uiOutput("selectCat"),
+      selectInput("selectCat", "Choose a Theme", dhs.lbl[, unique(varCat)], selected="wealth index"),
       uiOutput("selectVar")),
     column(3,
-      uiOutput("selectISO"),
+      selectInput("selectISO", "Choose a Country", iso, selected="GH"),
       actionButton("btn", "Show Indicator", icon("bar-chart"), class="btn-primary")),
 
     conditionalPanel("input.btn>0",
       column(12, hr()),
-      column(8,
+      column(9,
         h3(uiOutput("txtTitle")),
-        bsAlert("alertNoData")),
+        bsAlert("alertNoData"),
+        tableOutput("svydt")),
 
-      column(2, offset=2,
-        p(br()),
+      column(3,
         selectInput("fileType", "Choose Export Format",
           choices=c(`ESRI Shapefile`="shp", CSV="csv", STATA="dta"),
           selected="csv"),
         downloadButton("saveData", "Save Layer")),
 
-      column(5, plotOutput("plot1")),
-      column(5, plotOutput("plot2")),
-
-      column(5, tableOutput("svydt1")),
-      column(5, tableOutput("svydt2")),
-      column(5, tableOutput("svydt3")),
-      column(5, tableOutput("svydt4"))
-    ),
-
-    column(12,
-      hr(),
-      includeHTML("../dhs/www/txtCredits.html")
+      column(12, plotOutput("mapplot"))
     )
+  ),
+
+  fluidRow(
+    column(12, hr()),
+    column(5,
+      includeHTML("../dhs/www/txtCredits.html")
+    ),
+    column(6, offset=1)
   ),
 
   # Modal color palette (a bit code heavy)

@@ -5,20 +5,6 @@
 # Authors: Bacou, Melanie <mel@mbacou.com>
 #####################################################################################
 
-library(shiny)
-library(shinyBS)
-library(data.table)
-library(reshape2)
-library(leaflet, lib.loc="/usr/lib64/R/library")
-library(RColorBrewer)
-
-if (.Platform$OS.type=="windows") {
-  setwd("~/Projects/hc-shiny/tmp")
-} else {
-  setwd("/home/projects/shiny/tmp")
-}
-
-
 load("../dhs/data/dhsMap.2014.10.16.RData")
 
 # Helper - Archive spatial formats for download
@@ -35,13 +21,13 @@ writeZip <- function(x, file, filename, format, ...) {
 }
 
 
-# Helper - Merge attributes and symbolize
-genMap <- function(svy, res, var, col, brks) {
-  dt <- dhs[svyCode==svy & hv025==res, .SD, .SDcols=c("hv024", var)]
+# Helper - Merge attributes and symbolize (all years at once)
+genMap <- function(iso, res, var, col, brks) {
+  dt <- dhs[country_code==iso & hv025==res, .SD, .SDcols=c("svyCode", "hv024", var)]
   setnames(dt, var, "var")
-  setkey(dt, hv024)
-  m <- gis.web[gis.web$svyCode==svy, ]
-  dt <- dt[J(m$regCode)]
+  m <- gis.web[gis.web$iso==iso, ]
+  setkey(dt, svyCode, hv024)
+  dt <- dt[J(m$svyCode, m$regCode)]
   rg <- range(dt$var, na.rm=T)
 
   # Try equal interval breaks
@@ -62,152 +48,143 @@ genMap <- function(svy, res, var, col, brks) {
 
 shinyServer(function(input, output, session) {
 
-  # Helper - reload map features
-  updateMap <- function(svyCode, ...) {
-    closeAlert(session, "noData")
-    closeAlert(session, "noInd")
-
-    if (!svyCode %in% unique(gis.web@data$svyCode)) {
-      # Data is missing for that year/country
-      createAlert(session, "alertNoData", alertId="noData",
-        message="Try another year and country combination.",
-        title="Missing Data", type="warning", append=F)
-
-    } else {
-      # Symbolize features
-      g <<- genMap(svyCode, ...)
-
-      if (class(g)=="character") {
-        # Data is either missing or classInt failed
-        createAlert(session, "alertNoData", alertId="noInd",
-          message="Sorry, no data for this indicator.",
-          title="Missing Data", type="warning", append=F)
-
-      } else {
-        # Map it
-        coords <- apply(sp::coordinates(g), 2, mean, na.rm=T)
-        m <- map %>%
-          setView(coords[1]+3, coords[2], 6) %>%
-          addPolygons(data=g, layerId=row.names(g), fillColor=g@data$cl,
-            weight=.6, color="white", fillOpacity=0.7,
-            popup=paste0(
-              "<small>Region</small><strong><br/>", g@data$regName, "</strong><br/>",
-              "<small>Value</small><strong><br/>", round(g@data$var, 2), "</strong>"))
-        output$map <- renderLeaflet(m)
-      }
-    }
-  }
-
-
   # Init map
   map <- leaflet() %>%
     addTiles("http://{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
       attribution=HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>')) %>%
     setView(8, 8, 6)
 
-  # Reactive controls
+  # Render map
   output$map <- renderLeaflet(map)
 
-  output$selectCat <- renderUI({
-    selectInput("selectCat", "Choose a Theme", dhs.lbl[, unique(varCat)],
-      selected="wealth index")
-  })
-
+  # List of indicators
   output$selectVar <- renderUI({
     var <- dhs.lbl[varCat==input$selectCat, varCode]
     names(var) <- dhs.lbl[varCat==input$selectCat, varLabel]
     selectInput("selectVar", "Choose an Indicator", var, selected=var[1])
   })
 
-  output$selectISO <- renderUI({
-    selectInput("selectISO", "Choose a Country", iso, selected="GH")
-  })
-
-  output$col <- renderUI({
-    selectInput("col", "Color palette", row.names(brewer.pal.info),
-      selected="RdBu")
-  })
-
-  init <- reactive({
-    if (is.null(input$btn)) return(NULL)
-    if (is.null(input$btnUpdate)) return(input$btn)
-    return(input$btn+input$btnUpdate)
-  })
+  # Init values
+  values <- reactiveValues()
 
 
-  # Update map controls
-  observeEvent(input$btn, {
+  # Primary observer
+  observeEvent(input$btn, priority=1, {
+
+    s_iso <- input$selectISO
+    s_var <- input$selectVar
+
+    # Get all country surveys
+    vars <- names(dhs)[names(dhs) %like% s_var]
+    dt <- dhs[country_code==s_iso, .SD, .SDcols=c("year", "hv025", "hv024", "regName", vars)]
+    if (dim(dt)[2]>5) setnames(dt, 5:6, c("Female", "Male")) else setnames(dt, 5, "mean")
+    dt <- melt(dt, id.vars=c("year", "hv025", "hv024", "regName"))
+    setnames(dt, 1:4, c("year", "residence", "regCode", "regName"))
+    values$dt1 <- dt
+
+    # Update title
+    output$txtTitle <- renderText({
+      out <- h3(names(iso)[iso==s_iso], br(),
+        tags$small(dhs.lbl[varCode==s_var, varLabel]))
+      return(as.character(out))
+    })
+
+    # Update details
+    output$txtHead <- renderText({
+      out <- span(strong(toupper(names(iso)[iso==s_iso])), br(), dhs.lbl[varCode==s_var, varLabel])
+      return(as.character(out))
+    })
+
     # Update year
-    y <- svyYear[[input$selectISO]]
-    updateRadioButtons(session, "selectYear", choices=y, selected=tail(y,1))
+    values$y <- svyYear[[s_iso]]
+    updateRadioButtons(session, "selectYear", choices=values$y, selected=tail(values$y, 1))
+
     # Update gender
-    if (dhs.lbl[varCode==input$selectVar, gender]==T) {
+    if (dhs.lbl[varCode==s_var, gender]==T) {
       updateRadioButtons(session, "selectGender", choices=c(male="_m", female="_f"), selected="_f")
     } else {
       updateRadioButtons(session, "selectGender", choices=c(`n/a`=""), selected="")
     }
-  }, priority=3)
 
-  # Update map
-  observeEvent(input$btn,
-    updateMap(paste0(input$selectISO, input$selectYear), input$selectRes,
-      paste0(input$selectVar, input$selectGender), input$col, input$brks),
-    priority=2)
-
-
-  # Update map
-  observeEvent(input$btnUpdate,
-    updateMap(paste0(input$selectISO, input$selectYear), input$selectRes,
-      paste0(input$selectVar, input$selectGender), input$col, input$brks),
-    priority=1)
-
-
-  # Reactive data tables
-  dt1 <- eventReactive(input$btn, {
-    var <- names(dhs)[names(dhs) %like% input$selectVar]
-    dt <- dhs[country_code==input$selectISO, .SD, .SDcols=c("year", "hv025", "hv024", "regName", var)]
-    if (dim(dt)[2]>5) setnames(dt, 5:6, c("Female", "Male")) else setnames(dt, 5, "mean")
-    dt <- melt(dt, id.vars=c("year", "hv025", "hv024", "regName"))
-    setnames(dt, 1:4, c("year", "residence", "regCode", "regName"))
-    return(dt)
+    # Export
+    values$iso <- s_iso
   })
 
-  dt2 <- reactive({
-    dt <- dt1()
-    dt <- split(dt, dt$year)
-    dt <- lapply(dt, function(x) dcast.data.table(x, regCode+regName~year+residence+variable))
-    dt <- lapply(dt, function(x) setnames(x, gsub("_", " ", names(x), fixed=T)))
-    dt <- lapply(dt, setnames, 1:2, c("Code", "Region"))
-    return(dt)
-  })
 
-  output$svydt1 <- renderTable(digits=1, include.rownames=F,
-    if(length(dt2())>0) dt2()[[1]])
-  output$svydt2 <- renderTable(digits=1, include.rownames=F,
-    if(length(dt2())>1) dt2()[[2]])
-  output$svydt3 <- renderTable(digits=1, include.rownames=F,
-    if(length(dt2())>2) dt2()[[3]])
-  output$svydt4 <- renderTable(digits=1, include.rownames=F,
-    if(length(dt2())>3) dt2()[[4]])
+  # Secondary observer
+  observeEvent({
+    input$btn
+    input$btnUpdate}, priority=0, {
 
+      # Clear any alert
+      closeAlert(session, "noData")
+      closeAlert(session, "noInd")
 
-  # Update details
-  output$txtTitle <- renderText({
-    if (input$btn==0) return()
-    isolate({
-      my_iso <- input$selectISO
-      my_iso <- names(iso)[iso==my_iso]
-      my_var <- input$selectVar
-      my_var <- dhs.lbl[varCode==my_var, varLabel]
-      out <- h3(my_iso, br(), tags$small(my_var))
-      return(as.character(out))
+      svyCode <- paste0(input$selectISO, input$selectYear)
+
+      # Validate choices
+      if (!svyCode %in% unique(gis.web@data$svyCode)) {
+        # Data is missing for that survey
+        createAlert(session, "alertNoData", alertId="noData",
+          message="Try another country year combination.",
+          title="Missing Data", type="warning", append=F)
+
+      } else {
+
+        # Symbolize features
+        g <- genMap(input$selectISO, input$selectRes,
+          paste0(input$selectVar, input$selectGender),
+          input$col, input$brks)
+
+        if (class(g)=="character") {
+          # Data is either missing or classInt failed
+          createAlert(session, "alertNoData", alertId="noInd",
+            message="Sorry, no data for this indicator.",
+            title="Missing Data", type="warning", append=F)
+
+        } else {
+
+          # Map it
+          s_g <- g[g$svyCode==svyCode,]
+          coords <- apply(sp::coordinates(s_g), 2, mean, na.rm=T)
+          m <- map %>%
+            setView(coords[1]+3, coords[2], 6) %>%
+            addPolygons(data=s_g, layerId=row.names(s_g), fillColor=s_g@data$cl,
+              weight=.6, color="white", fillOpacity=0.7,
+              popup=paste0(
+                "<small>Region</small><strong><br/>", s_g@data$regName, "</strong><br/>",
+                "<small>Value</small><strong><br/>", round(s_g@data$var, 2), "</strong>"))
+          output$map <- renderLeaflet(m)
+
+          # Export
+          values$g <- g
+          values$s_g <- s_g
+        }
+      }
     })
-  })
 
-  output$txtHead <- renderText({
-    if (input$btn==0) return()
-    isolate(dhs.lbl[varCode==input$selectVar, varLabel])
-  })
+
+    # List of survey tables
+  output$svydt <- renderTable(digits=1, include.rownames=F, {
+      if (is.null(values$dt1)) return()
+      isolate({
+        dt <- values$dt1
+        dt <- dcast.data.table(dt, regCode+regName~year+residence+variable)
+        dt <- setnames(dt, gsub("_", "\n", names(dt), fixed=T))
+        dt <- setnames(dt, 1:2, c("Code", "Region"))
+        return(dt)
+      })
+    })
+
+
+  #   output$svydt1 <- renderTable(digits=1, include.rownames=F,
+  #     if(length(dt2())>0) dt2()[[1]])
+  #   output$svydt2 <- renderTable(digits=1, include.rownames=F,
+  #     if(length(dt2())>1) dt2()[[2]])
+  #   output$svydt3 <- renderTable(digits=1, include.rownames=F,
+  #     if(length(dt2())>2) dt2()[[3]])
+  #   output$svydt4 <- renderTable(digits=1, include.rownames=F,
+  #     if(length(dt2())>3) dt2()[[4]])
 
 
   # Show admin details on mouseover
@@ -224,16 +201,40 @@ shinyServer(function(input, output, session) {
   })
 
 
-  # Plot #1
-  output$plot1 <- renderPlot({
-    if(input$btn==0) return()
+  # Plot maps
+  output$mapplot <- renderPlot({
+    if (is.null(values$g)) return()
+    isolate({
+      g <- values$g
+      par(fg="#444444", bty="n", family="Helvetica-Narrow", cex.axis=.7, font.main=1, adj=0)
+      switch(as.character(length(values$y)),
+        `2`=layout(matrix(1:3, 1, 3, byrow=T), widths=c(3,3,1)),
+        `3`=layout(matrix(1:4, 1, 4, byrow=T), widths=c(3,3,3,1)),
+        `4`=layout(matrix(c(1,2,5,3,4,5), 2, 3, byrow=T), widths=c(3,3,1)))
+      for (i in values$y) {
+        j <- g[g$svyYear==i,]
+        plot(j, col=j@data$cl, border="#ffffff", main=paste0("Year: ", i))
+        axis(1, tck=1, lty=3, lwd=.5, col="gray")
+        axis(2, tck=1, lty=3, lwd=.5, col="gray")
+        text(coordinates(j), labels=j@data$regName, col="#444444", cex=.8, font=1)
+      }
+      plot(0:1, 0:1, type="n", xlab="", ylab="", axes=F)
+      legend("left", title="Legend", xpd=NA,
+        bty="n", lty=-1, pch=15, cex=1.6, pt.cex=3.2,
+        legend=c("High", rep("", input$brks-2), "Low"),
+        col=rev(brewer.pal(input$brks, input$col)))
+    })
   })
 
 
-  # Plot #2
-  output$plot2 <- renderPlot({
-    if(input$btn==0) return()
-  })
+#   # Time serie plot
+#   output$tsplot <- renderChart({
+#     if (is.null(values$dt1)) return()
+#     dt <- values$dt1
+#     p <- rPlot(value~year|residence, data=dt, color="regName", type="line")
+#     p$set(dom="tsplot")
+#     return(p)
+#   })
 
 
   # Brewer color palettes
@@ -256,15 +257,16 @@ shinyServer(function(input, output, session) {
       paste0(year(), "-", f, ".", t, ".zip")
     }
   }, function(file) {
+
     t <- input$fileType
     f <- paste0(input$selectISO, "-", input$selectVar, ".", t)
 
     switch(t,
-      csv = write.csv(dt1(), file, row.names=F, na=""),
-      dta = foreign::write.dta(dt1(), file, version=9L),
+      csv = write.csv(values$dt1, file, row.names=F, na=""),
+      dta = foreign::write.dta(values$dt1, file, version=9L),
       shp = {
         # TODO Use original boundaries for download
-        writeZip(g, file, f, "ESRI Shapefile")
+        writeZip(values$s_g, file, f, "ESRI Shapefile")
       })
   })
 
