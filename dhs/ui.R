@@ -18,67 +18,77 @@ shinyUI(fluidPage(
         img(src="global_logo.png", alt="Home"))))
   ),
 
-  fluidRow(style="position: relative;",
-    leafletOutput("map", width="100%", height=380),
+  #   fluidRow(style="position: relative;",
+  #     leafletOutput("map", width="100%", height=380)
+  #   ),
 
-    conditionalPanel("input.btn>0",
-      absolutePanel(right=10, bottom=20, width=380,
-        div(class="panel panel-primary",
-          div(class="panel-heading", uiOutput("txtHead")),
-          div(class="panel-body",
-            column(7,
-              radioButtons("selectYear", "Survey Year", c("2003", "2008"), "2008", inline=F),
+  fluidRow(
+
+    column(4,
+      includeHTML("../dhs/www/txtIntro.html")),
+
+    column(3, offset=1,
+      p(br()),
+      selectInput("selectISO", "Choose a Country", iso, selected="GH"),
+      selectInput("selectCat", "Choose a Theme", dhs.lbl[, unique(varCat)],
+        selected="wealth index", size=7, selectize=F)),
+
+    column(4,
+      p(br()),
+      uiOutput("selectVar")),
+
+    column(7, offset=5,
+      actionButton("btn", "Show Indicator", icon("bar-chart"), class="btn-primary"))
+  ),
+
+  fluidRow(
+    column(12,
+      tabsetPanel(position="above",
+        tabPanel("Maps",
+
+          sidebarLayout(position="right",
+            sidebarPanel(width=3, style="margin-top:20px;",
+              radioButtons("selectYear", "Survey Year", c("2003", "2008"), "2008", inline=T),
               radioButtons("selectRes", "Residence", c("rural", "urban"), "rural", inline=T),
-              radioButtons("selectGender", "Gender", c(`n/a`=""), "", inline=T)
-            ),
-            column(5,
+              radioButtons("selectGender", "Gender", c(`n/a`=""), "", inline=T),
               selectInput("col", "Color palette", row.names(brewer.pal.info), selected="RdBu"),
-              sliderInput("brks", "Legend breaks", 2, 8, 5, ticks=F, sep=""),
               tags$small(actionLink("btnShowBrewer", "Show color palettes"),
-                `data-toggle`="modal", `data-target`="#brew")
-            )
-          ),
-          div(class="panel-footer", actionLink("btnUpdate", "Update Map", icon("globe")))
+                `data-toggle`="modal", `data-target`="#brew"),
+              checkboxInput("revcol", "Reverse colors", value=F),
+              sliderInput("brks", "Legend breaks", 2, 8, 5, ticks=F, sep=""),
+              actionButton("btnUpdate", "Update Map", icon("globe"))
+            ),
+
+            mainPanel(width=9,
+              h3(uiOutput("txtTitle")),
+              bsAlert("alertNoData"),
+              plotOutput("mapplot", height="auto", clickId="mplot"))
+          )
+        ),
+
+        tabPanel("Data",
+
+          sidebarLayout(position="left",
+            sidebarPanel(width=3, style="margin-top:20px;",
+              p(br()),
+              selectInput("fileType", "Choose Export Format",
+                choices=c(`ESRI Shapefile`="shp", CSV="csv", STATA="dta"),
+                selected="csv"),
+              downloadButton("saveData", "Save Layer")
+            ),
+
+            mainPanel(width=9,
+              h3(uiOutput("txtSubTitle")),
+              p(br()),
+              tableOutput("svydt"))
+          )
         )
       )
-    )
-  ),
-
-  fluidRow(
-    p(br()),
-
-    column(5,
-      includeHTML("../dhs/www/txtIntro.html")),
-    column(3, offset=1,
-      selectInput("selectCat", "Choose a Theme", dhs.lbl[, unique(varCat)], selected="wealth index"),
-      uiOutput("selectVar")),
-    column(3,
-      selectInput("selectISO", "Choose a Country", iso, selected="GH"),
-      actionButton("btn", "Show Indicator", icon("bar-chart"), class="btn-primary")),
-
-    conditionalPanel("input.btn>0",
-      column(12, hr()),
-      column(9,
-        h3(uiOutput("txtTitle")),
-        bsAlert("alertNoData"),
-        tableOutput("svydt")),
-
-      column(3,
-        selectInput("fileType", "Choose Export Format",
-          choices=c(`ESRI Shapefile`="shp", CSV="csv", STATA="dta"),
-          selected="csv"),
-        downloadButton("saveData", "Save Layer")),
-
-      column(12, plotOutput("mapplot"))
-    )
-  ),
-
-  fluidRow(
-    column(12, hr()),
-    column(5,
-      includeHTML("../dhs/www/txtCredits.html")
     ),
-    column(6, offset=1)
+
+    column(12,
+      hr(),
+      includeHTML("../dhs/www/txtCredits.html"))
   ),
 
   # Modal color palette (a bit code heavy)

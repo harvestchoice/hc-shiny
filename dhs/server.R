@@ -49,24 +49,27 @@ genMap <- function(iso, res, var, col, brks) {
 shinyServer(function(input, output, session) {
 
   # Init map
-  map <- leaflet() %>%
-    addTiles("http://{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
-      attribution=HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>')) %>%
-    setView(8, 8, 6)
+  #   map <- leaflet() %>%
+  #     addTiles("http://{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+  #       attribution=HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>')) %>%
+  #     setView(8, 8, 6)
 
   # Render map
-  output$map <- renderLeaflet(map)
+  #  output$map <- renderLeaflet(map)
 
   # List of indicators
   output$selectVar <- renderUI({
     var <- dhs.lbl[varCat==input$selectCat, varCode]
     names(var) <- dhs.lbl[varCat==input$selectCat, varLabel]
-    selectInput("selectVar", "Choose an Indicator", var, selected=var[1])
+    selectInput("selectVar", "Choose an Indicator", var,
+      selected=var[1], size=11, width="100%", selectize=F)
   })
 
   # Init values
-  values <- reactiveValues()
-
+  values <- reactiveValues(
+    var="i101_hv271_wealth_index",
+    y=c("2003", "2008"),
+    g=genMap("GH", "rural", "i101_hv271_wealth_index", "RdBu", 5))
 
   # Primary observer
   observeEvent(input$btn, priority=1, {
@@ -82,9 +85,9 @@ shinyServer(function(input, output, session) {
     setnames(dt, 1:4, c("year", "residence", "regCode", "regName"))
     values$dt1 <- dt
 
-    # Update title
-    output$txtTitle <- renderText({
-      out <- h3(names(iso)[iso==s_iso], br(),
+    # Update other title
+    output$txtSubTitle <- renderText({
+      out <- h3("Sub-National Series", br(),
         tags$small(dhs.lbl[varCode==s_var, varLabel]))
       return(as.character(out))
     })
@@ -112,129 +115,135 @@ shinyServer(function(input, output, session) {
 
 
   # Secondary observer
-  observeEvent({
-    input$btn
-    input$btnUpdate}, priority=0, {
+  observeEvent({input$btn+input$btnUpdate}, priority=-1, {
 
-      # Clear any alert
-      closeAlert(session, "noData")
-      closeAlert(session, "noInd")
+    # Clear any alert
+    closeAlert(session, "noData")
+    closeAlert(session, "noInd")
 
-      svyCode <- paste0(input$selectISO, input$selectYear)
+    svyCode <- paste0(input$selectISO, input$selectYear)
 
-      # Validate choices
-      if (!svyCode %in% unique(gis.web@data$svyCode)) {
-        # Data is missing for that survey
-        createAlert(session, "alertNoData", alertId="noData",
-          message="Try another country year combination.",
+    # Validate choices
+    if (!svyCode %in% unique(gis.web@data$svyCode)) {
+      # Data is missing for that survey
+      createAlert(session, "alertNoData", alertId="noData",
+        message="Try another country year combination.",
+        title="Missing Data", type="warning", append=F)
+
+    } else {
+
+      # Symbolize features
+      var <- paste0(input$selectVar, input$selectGender)
+      g <- genMap(input$selectISO, input$selectRes, var,
+        input$col, input$brks)
+
+      if (class(g)=="character") {
+        # Data is either missing or classInt failed
+        createAlert(session, "alertNoData", alertId="noInd",
+          message="Sorry, no data for this indicator.",
           title="Missing Data", type="warning", append=F)
 
       } else {
 
-        # Symbolize features
-        g <- genMap(input$selectISO, input$selectRes,
-          paste0(input$selectVar, input$selectGender),
-          input$col, input$brks)
+        # Map it
+        s_g <- g[g$svyCode==svyCode,]
+        # Export
+        values$var <- var
+        values$g <- g
+        values$s_g <- s_g
 
-        if (class(g)=="character") {
-          # Data is either missing or classInt failed
-          createAlert(session, "alertNoData", alertId="noInd",
-            message="Sorry, no data for this indicator.",
-            title="Missing Data", type="warning", append=F)
+        #           coords <- apply(sp::coordinates(s_g), 2, mean, na.rm=T)
+        #           m <- map %>%
+        #             setView(coords[1]+3, coords[2], 6) %>%
+        #             addPolygons(data=s_g, layerId=row.names(s_g), fillColor=s_g@data$cl,
+        #               weight=.6, color="white", fillOpacity=0.7,
+        #               popup=paste0(
+        #                 "<small>Region</small><strong><br/>", s_g@data$regName, "</strong><br/>",
+        #                 "<small>Value</small><strong><br/>", round(s_g@data$var, 2), "</strong>"))
+        #           output$map <- renderLeaflet(m)
 
-        } else {
-
-          # Map it
-          s_g <- g[g$svyCode==svyCode,]
-          coords <- apply(sp::coordinates(s_g), 2, mean, na.rm=T)
-          m <- map %>%
-            setView(coords[1]+3, coords[2], 6) %>%
-            addPolygons(data=s_g, layerId=row.names(s_g), fillColor=s_g@data$cl,
-              weight=.6, color="white", fillOpacity=0.7,
-              popup=paste0(
-                "<small>Region</small><strong><br/>", s_g@data$regName, "</strong><br/>",
-                "<small>Value</small><strong><br/>", round(s_g@data$var, 2), "</strong>"))
-          output$map <- renderLeaflet(m)
-
-          # Export
-          values$g <- g
-          values$s_g <- s_g
-        }
       }
-    })
-
-
-    # List of survey tables
-  output$svydt <- renderTable(digits=1, include.rownames=F, {
-      if (is.null(values$dt1)) return()
-      isolate({
-        dt <- values$dt1
-        dt <- dcast.data.table(dt, regCode+regName~year+residence+variable)
-        dt <- setnames(dt, gsub("_", "\n", names(dt), fixed=T))
-        dt <- setnames(dt, 1:2, c("Code", "Region"))
-        return(dt)
-      })
-    })
-
-
-  #   output$svydt1 <- renderTable(digits=1, include.rownames=F,
-  #     if(length(dt2())>0) dt2()[[1]])
-  #   output$svydt2 <- renderTable(digits=1, include.rownames=F,
-  #     if(length(dt2())>1) dt2()[[2]])
-  #   output$svydt3 <- renderTable(digits=1, include.rownames=F,
-  #     if(length(dt2())>2) dt2()[[3]])
-  #   output$svydt4 <- renderTable(digits=1, include.rownames=F,
-  #     if(length(dt2())>3) dt2()[[4]])
-
-
-  # Show admin details on mouseover
-  output$tips <- renderText({
-    evt <- input$map_mouseover
-    if (!is.null(evt)) {
-      evt <- g@data[evt,]
-      out <- p(
-        evt$regName, " (code: ", evt$regCode, ")", br(),
-        "Year: ", strong(evt$year), br(),
-        "Value: ", strong(evt$value))
     }
-    return(as.character(out))
+  })
+
+
+  # List of survey tables
+  output$svydt <- renderTable(digits=1, include.rownames=F, {
+    if (is.null(values$dt1)) return()
+    isolate({
+      dt <- values$dt1
+      dt <- dcast.data.table(dt, regCode+regName~year+residence+variable)
+      dt <- setnames(dt, gsub("_", "\n", names(dt), fixed=T))
+      dt <- setnames(dt, 1:2, c("Code", "Region"))
+      return(dt)
+    })
+  })
+
+
+  # Update title
+  output$txtTitle <- renderText({
+    if (is.null(values$g)) return()
+    isolate({
+      out <- h3(names(iso)[iso==input$selectISO], " - ", input$selectRes, br(),
+        tags$small(dhs.lbl[varCode==values$var, varLabel]))
+      return(as.character(out))
+    })
   })
 
 
   # Plot maps
-  output$mapplot <- renderPlot({
-    if (is.null(values$g)) return()
-    isolate({
-      g <- values$g
-      par(fg="#444444", bty="n", family="Helvetica-Narrow", cex.axis=.7, font.main=1, adj=0)
-      switch(as.character(length(values$y)),
-        `2`=layout(matrix(1:3, 1, 3, byrow=T), widths=c(3,3,1)),
-        `3`=layout(matrix(1:4, 1, 4, byrow=T), widths=c(3,3,3,1)),
-        `4`=layout(matrix(c(1,2,5,3,4,5), 2, 3, byrow=T), widths=c(3,3,1)))
-      for (i in values$y) {
-        j <- g[g$svyYear==i,]
-        plot(j, col=j@data$cl, border="#ffffff", main=paste0("Year: ", i))
-        axis(1, tck=1, lty=3, lwd=.5, col="gray")
-        axis(2, tck=1, lty=3, lwd=.5, col="gray")
-        text(coordinates(j), labels=j@data$regName, col="#444444", cex=.8, font=1)
-      }
-      plot(0:1, 0:1, type="n", xlab="", ylab="", axes=F)
-      legend("left", title="Legend", xpd=NA,
-        bty="n", lty=-1, pch=15, cex=1.6, pt.cex=3.2,
-        legend=c("High", rep("", input$brks-2), "Low"),
-        col=rev(brewer.pal(input$brks, input$col)))
+  output$mapplot <- renderPlot(
+    height=function() {if(length(values$y)>2) 800 else 400}, {
+      if (is.null(values$g)) return()
+      isolate({
+        g <- values$g
+        par(fg="#444444", bty="n", family="Helvetica-Narrow",
+          cex.main=1.6, cex.axis=.7, font.main=1, adj=0)
+
+        switch(as.character(length(values$y)),
+          `2`=layout(matrix(1:3, 1, 3, byrow=T), widths=c(3,3,1)),
+          `3`=layout(matrix(1:4, 2, 2, byrow=T), widths=c(1,1)),
+          `4`=layout(matrix(c(1,2,5,3,4,5), 2, 3, byrow=T), widths=c(3,3,1)))
+
+        for (i in values$y) {
+          j <- g[g$svyYear==i,]
+          plot(j, col=j@data$cl, border="#ffffff", main=paste0("Survey Year: ", i))
+          axis(1, tck=1, lty=3, lwd=.5, col="gray")
+          axis(2, tck=1, lty=3, lwd=.5, col="gray")
+          text(coordinates(j), labels=j@data$regName, col="#444444", cex=.8, font=1)
+        }
+
+        plot(0:1, 0:1, type="n", xlab="", ylab="", axes=F)
+        legend("left", title="Legend", xpd=NA,
+          bty="n", lty=-1, pch=15, cex=1.6, pt.cex=3.2,
+          legend=c("High", rep("", input$brks-2), "Low"),
+          col=rev(brewer.pal(input$brks, input$col)))
+      })
     })
-  })
 
 
-#   # Time serie plot
-#   output$tsplot <- renderChart({
-#     if (is.null(values$dt1)) return()
-#     dt <- values$dt1
-#     p <- rPlot(value~year|residence, data=dt, color="regName", type="line")
-#     p$set(dom="tsplot")
-#     return(p)
-#   })
+  #   # Time serie plot
+  #   output$tsplot <- renderChart({
+  #     if (is.null(values$dt1)) return()
+  #     dt <- values$dt1
+  #     p <- rPlot(value~year|residence, data=dt, color="regName", type="line")
+  #     p$set(dom="tsplot")
+  #     return(p)
+  #   })
+
+
+  # Show admin details on mouseover
+  #   output$tips <- renderText({
+  #     evt <- input$map_mouseover
+  #     if (!is.null(evt)) {
+  #       evt <- g@data[evt,]
+  #       out <- p(
+  #         evt$regName, " (code: ", evt$regCode, ")", br(),
+  #         "Year: ", strong(evt$year), br(),
+  #         "Value: ", strong(evt$value))
+  #     }
+  #     return(as.character(out))
+  #   })
 
 
   # Brewer color palettes
