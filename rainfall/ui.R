@@ -43,46 +43,50 @@ shinyUI(fluidPage(
       selectInput("var", "Choose a Variable", d[c(5, 11)], selected="pre"),
       selectInput("selectg0", "Choose a Country", names(g2.list), selected="Kenya"),
       actionButton("btn", "Show Series", icon("globe"), class="btn-primary"),
-      conditionalPanel(condition="input.btn>0",
-        hr(),
-        p(tags$label("Notes"), br(), "The long-term mean is over the selected months and period only (or over the
-              entire year if no month is selected). The trend component is generated through
-              classical seasonal decomposition by moving averages over the entire 1960-2013 period.")),
       hr(),
-      includeHTML("../rainfall/www/txtCredits.html"),
+      p("The ", strong("long-term mean"), " is over the selected season
+          and years only (or over the entire year if no specific season is selected).
+          The ", strong("trend component"), " is generated through classical seasonal decomposition
+          by moving averages over the entire 1960-2013 period. The " , strong("annual mean"), " at
+          the bottom is over the selected season."),
+      p("You may use your mouse to zoom into
+          any specific time period or use the range selectors below the chart.
+          Double-click to reset the chart to its full length."),
+      hr(),
+      includeHTML("../rainfall/www/txtCredits.html")
+    ),
+
+    column(7,
+      conditionalPanel(condition="input.btn==0",
+        includeHTML("../rainfall/www/txtIntro.html")),
+      uiOutput("selectedMsg"),
+      bsAlert("alertNoData"),
+      p(br()),
+      dygraphOutput("dygraph", width="100%", height="320px"),
+      p(br()),
+      dygraphOutput("dygraphAnnual", width="100%", height="240px"),
+      #hr(),
+      #h3("Top/Bottom Five Districts"),
+      #plotOutput("distBarPlot", width="100%", height="320px"),
       p(br())
     ),
 
+    column(2,
+      p(br()),
+      selectInput("selectg2", "Limit to District",
+        choices=c(`Entire Country`="Entire Country", g2.list[["Kenya"]]), selected="Entire Country", selectize=T),
+      sliderInput("selectMonth", "Limit to Season (Jan-Dec)", 1, 12, value=c(1,12), step=1),
+      sliderInput("rg", "Limit to Date Range", 1960, 2013, value=c(1960, 2013), step=1, sep="", ticks=F),
+      hr(),
 
-    conditionalPanel(condition="input.btn==0",
-      column(9,
-        includeHTML("../rainfall/www/txtIntro.html"))
-    ),
-
-    conditionalPanel(condition="input.btn>0",
-      column(7,
-        uiOutput("selectedMsg"),
-        bsAlert("alertNoData"),
-        p(br()),
-        dygraphOutput("dygraph", width="100%", height="320px"),
-        p(br()),
-        dygraphOutput("dygraphAnnual", width="100%", height="220px"),
-        p(br())
-      ),
-
-      column(2,
-        p(br()),
-        selectInput("selectg2", "Limit to District",
-          choices=c(`Entire Country`="Entire Country", g2.list[["Kenya"]]), selected="Entire Country", selectize=T),
-        sliderInput("rg", "Limit to Date Range", 1960, 2013, value=c(1960, 2013), step=1, sep="", ticks=F),
-        sliderInput("selectMonth", "Limit to Season (Jan-Dec)", 1, 12, value=c(1,12), step=1),
-        hr(),
-
-        selectInput("fileType", "Choose Export Format", choices=c(
-          `ESRI Shapefile`="shp", GeoTiff="tif", netCDF="nc", CSV="csv", STATA="dta"),
-          selected="csv"),
-        downloadButton("saveData", "Save Layer")
-      )
+      selectInput("fileType", "Choose Export Format", choices=c(
+        `ESRI Shapefile`="shp", GeoTIFF="tif", netCDF="nc", CSV="csv", STATA="dta"),
+        selected="csv"),
+      downloadButton("saveData", "Save Layer"),
+      p(br(), tags$label("Export formats"), br(), "NetCDF and GeoTIFF produce monthly
+        multi-band rasters over the 1960-2013 period. ESRI Shapefile returns district
+        means over the entire period. CSV and STATA formats return a table of monthly
+        statistics for the selected country or district.")
     )
   )
 )

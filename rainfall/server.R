@@ -67,9 +67,8 @@ shinyServer(function(input, output, session) {
   # Init
   values <- reactiveValues()
 
-
   # Primary observer
-  dt1 <- eventReactive(input$btn, {
+  observeEvent(input$btn, priority=1, {
 
     # Update district list
     updateSelectInput(session, "selectg2",
@@ -113,7 +112,7 @@ shinyServer(function(input, output, session) {
 
     values$m <- m
     values$g <- g
-    return(dt)
+    values$dt1 <- dt
   })
 
 
@@ -124,13 +123,14 @@ shinyServer(function(input, output, session) {
     input$rg
     input$selectMonth
   }, {
+
     if (input$btn==0) return()
     closeAlert(session, "alertNoData")
     values$tm <- seq(as.Date(paste0(input$rg[1], "-01-01")), as.Date(paste0(input$rg[2], "-12-31")), "month")
     mth <- as.integer(seq(input$selectMonth[1], input$selectMonth[2], 1))
 
     # Generate monthly statistics
-    dt <- try(genStats(dt1(), input$selectg0, input$selectg2, values$tm, mth))
+    dt <- try(genStats(values$dt1, input$selectg0, input$selectg2, values$tm, mth))
     if (class(dt)[1]=="try-error") {
       # Data missing for that district
       createAlert(session, "alertNoData", "alertNoData",
@@ -146,159 +146,170 @@ shinyServer(function(input, output, session) {
     if(is.null(dt2())) return()
     isolate({
       mth <- paste0(" (", paste0(substr(unique(month.name[input$selectMonth]), 1, 3), collapse="-"), ")")
+      dist <- if(input$selectg0==input$selectg2) "Entire Country" else input$selectg2
       out <- h3(names(d)[d==input$var], br(),
-        tags$small(tags$mark(paste0(unique(input$selectg2, input$selectg0), sep=", ")),
-          " - Period: ", paste0(format(range(values$tm), "%b %Y"), collapse=" - "), mth))
-        return(as.character(out))
+        tags$small(tags$mark(dist,", ", input$selectg0), " Period: ",
+          paste0(format(range(values$tm), "%b %Y"), collapse=" - "), mth))
+      return(as.character(out))
     })
   })
 
 
-    # Render monthly time-series
-    output$dygraph <- renderDygraph({
-      if(is.null(dt2())) return()
-      isolate({
-        dt <- dt2()
-        dygraph(xts::as.xts(dt[, list(value, mean, trend)], order.by=dt$month), group="dy") %>%
-          dySeries("value", label=input$var) %>%
-          dySeries("mean", label="period mean") %>%
-          dySeries("trend", label="trend", fillGraph=F, strokeWidth=3, strokePattern="dashed") %>%
-          dyOptions(fillGraph=T, fillAlpha=0.4,
-            colors=switch(input$var,
-              pre=c("#84C796", "#CA6943", "#428BCA"),
-              pdsi=c("#8DDE88", "#F8DE70", "#F8AE41"),
-              eratp=c("#1D91C0", "#EDF8B1", "#081D58"))) %>%
-          dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140)
-      })
+  # Render monthly time-series
+  output$dygraph <- renderDygraph({
+    if(is.null(dt2())) return()
+    isolate({
+      dt <- dt2()
+      dygraph(xts::as.xts(dt[, list(value, mean, trend)], order.by=dt$month), group="dy") %>%
+        dySeries("value", label=input$var) %>%
+        dySeries("mean", label="period mean") %>%
+        dySeries("trend", label="trend", fillGraph=F, strokeWidth=3, strokePattern="dashed") %>%
+        dyOptions(fillGraph=T, fillAlpha=0.4,
+          colors=switch(input$var,
+            pre=c("#84C796", "#CA6943", "#428BCA"),
+            pdsi=c("#8DDE88", "#F8DE70", "#F8AE41"),
+            eratp=c("#1D91C0", "#EDF8B1", "#081D58"))) %>%
+        dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140)
     })
+  })
 
 
-    # Render annual time-series
-    output$dygraphAnnual <- renderDygraph({
-      if(is.null(dt2())) return()
-      isolate({
-        dt <- dt2()[, list(meanAnnual=mean(value, na.rm=T)), by=list(month=year(month))]
-        mth <- paste0(substr(unique(month.name[input$selectMonth]), 1, 3), collapse="-")
-        dygraph(xts::as.xts(dt$meanAnnual, order.by=as.Date(as.character(dt$month), "%Y")), group="dy") %>%
-          dySeries("V1", label=paste0(mth, " mean")) %>%
-          dyOptions(fillGraph=F, strokeWidth=2,
-            colors=switch(input$var, pre="#84C796", pdsi="#8DDE88", aritp="#1D91C0")) %>%
-          dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=180) %>%
-          dyRangeSelector(height=20)
-      })
+  # Render annual time-series
+  output$dygraphAnnual <- renderDygraph({
+    if(is.null(dt2())) return()
+    isolate({
+      dt <- dt2()[, list(meanAnnual=mean(value, na.rm=T)), by=list(month=year(month))]
+      mth <- paste0(substr(unique(month.name[input$selectMonth]), 1, 3), collapse="-")
+      dygraph(xts::as.xts(dt$meanAnnual, order.by=as.Date(as.character(dt$month), "%Y")), group="dy") %>%
+        dySeries("V1", label=paste0(mth, " mean")) %>%
+        dyOptions(fillGraph=F, strokeWidth=2,
+          colors=switch(input$var, pre="#84C796", pdsi="#8DDE88", aritp="#1D91C0")) %>%
+        dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=180) %>%
+        dyRangeSelector(height=20)
     })
+  })
 
 
-    # Highlight selected polygon
-    observeEvent(input$selectg2, priority=-5, {
-      dist <- input$selectg2
-      if (dist=="Entire Country") return()
-      m <- values$m
-      i <- which(sapply(m$features, function(x) x$properties$ADM2_NAME==dist))
-      m$features <- m$features[i]
-      m$features[[1]]$style <- list(fillColor="gray", weight=.6, color="white", fillOpacity=0.7)
-      map$addGeoJSON(m, 0)
-    })
+  # Highlight selected polygon
+  observeEvent(input$selectg2, priority=-5, {
+    if (input$btn==0) return()
+    dist <- input$selectg2
+    if (dist==input$selectg0 | dist=="Entire Country") return()
+    m <- values$m
+    i <- which(sapply(m$features, function(x) x$properties$ADM2_NAME==dist))
+    m$features <- m$features[i]
+    m$features[[1]]$style <- list(fillColor="gray", weight=.6, color="white", fillOpacity=0.7)
+    map$addGeoJSON(m, 0)
+  })
 
 
-    # Update district on map click
-    observeEvent(input$map_geojson_click,
-      updateSelectInput(session, "selectg2",
-        selected=input$map_geojson_click$properties$ADM2_NAME))
+  # Update district on map click
+  observeEvent(input$map_geojson_click,
+    updateSelectInput(session, "selectg2",
+      selected=input$map_geojson_click$properties$ADM2_NAME))
 
 
-    # Show district details on mouseover
-    output$details <- renderText({
-      evt <- input$map_geojson_mouseover
-      isolate({
-        if (is.null(evt)) {
-          out <- div(h3(input$selectg0), p("Mouse over districts to view details."))
-        } else {
-          out <- div(
-            h3(input$selectg0, br(), tags$small(evt$properties$ADM2_NAME, ", ", evt$properties$ADM1_NAME)),
-            hr(),
-            h4(names(d)[d==input$var]),
-            p(
-              "Mean: ", strong(evt$properties$mean), br(),
-              "85th perc.: ", strong(evt$properties$`85th`), br(),
-              "Max: ", strong(evt$properties$max), br(),
-              "Sd. Dev.: ", strong(evt$properties$sd)),
-            p(em("Click the map to select this district.")))
-        }
-      })
-      return(as.character(out))
-    })
-
-
-    # Download handler
-    output$saveData <- downloadHandler(function() {
-      f <- paste0(input$selectg0, "-", input$var)
-
-      if (input$fileType %in% c("csv", "dta")) {
-        # Complete file path
-        paste0(f, "-", input$selectg2, "-", paste(range(values$tm), collapse="-"), ".", input$fileType)
+  # Show district details on mouseover
+  output$details <- renderText({
+    evt <- input$map_geojson_mouseover
+    isolate({
+      if (is.null(evt)) {
+        out <- div(h3(input$selectg0), p("Mouse over districts to view details."))
       } else {
-        # File path with `.zip`
-        paste0(f, ".", input$fileType, ".zip")
+        out <- div(
+          h3(input$selectg0, br(), tags$small(evt$properties$ADM2_NAME, ", ", evt$properties$ADM1_NAME)),
+          hr(),
+          h4(names(d)[d==input$var]),
+          p(
+            "Mean: ", strong(evt$properties$mean), br(),
+            "85th perc.: ", strong(evt$properties$`85th`), br(),
+            "Max: ", strong(evt$properties$max), br(),
+            "Sd. Dev.: ", strong(evt$properties$sd)),
+          p(em("Click the map to select this district.")))
       }
-    }, function(file) {
-
-      var <- input$var
-      f <- paste0(input$selectg0, "-", var, ".", input$fileType)
-
-      if (input$fileType %in% c("tif", "nc")) {
-        # Crop raster to selected country extent
-        require(raster)
-        r <- brick(get(paste0("path.", var)))
-        r <- crop(r, values$g)
-        # Define z dimension (time)
-        r <- setZ(r, get(paste0("tm.", var)), "month")
-      }
-
-      switch(input$fileType,
-        tif = writeRasterZip(r, file, f, "GTiff", options="INTERLEAVE=BAND"),
-        nc = writeRasterZip(r, file, f, "CDF"),
-        csv = write.csv(dt2(), file, row.names=F, na=""),
-        dta = foreign::write.dta(dt2(), file, version=9L),
-        shp = {
-          # Combine mean attributes with GAUL 2008 boundaries
-          dt <- dt1()[, list(
-            mean=mean(value, na.rm=T),
-            min=min(value, na.rm=T),
-            max=max(value, na.rm=T),
-            sd=sd(value, na.rm=T),
-            mad=mad(value, na.rm=T)), by=ADM2_CODE]
-          g <- values$g
-          tmp <- data.table(g@data)
-          tmp[, rn := row.names(g)]
-          setkey(tmp, ADM2_CODE)
-          setkey(dt, ADM2_CODE)
-          tmp <- dt[tmp]
-          setkey(tmp, rn)
-          g@data <- tmp[row.names(g)]
-          writeRasterZip(g, file, f, "ESRI Shapefile")
-        })
     })
+    return(as.character(out))
+  })
 
 
-    #   # Rank districts on barchart
-    #   output$barPlot <- renderPlot({
-    #     if(input$btn==0) return()
-    #     dt <- dt1()
-    #     dt <- dt[, list(value=mean(value, na.rm=T)), by=list(ADM2_NAME)]
-    #     dt <- dt[order(value, decreasing=T)]
-    #     dt <- rbind(head(dt,4), data.table(ADM2_NAME="[ ... ]", value=0), tail(dt,4))
-    #     par(las=1, mar=c(3.1,5,0,0.1), fg="#444444" )
-    #     barplot(dt$value, names.arg=dt$ADM2_NAME, horiz=T,
-    #       col="#2F6FBF", border="white", xlab=NULL, ylab=NULL, main=NULL)
-    #   })
-    #
-    #
-    #   # Show country raster plot
-    #   output$rasterPlot <- renderPlot({
-    #     if(input$btn==0) return()
-    #     spplot(stats(), col.regions=colorRampPalette(if(var()=="pdsi") col.pdsi else col.pre)(20))
-    #     #plot(g(), add=T)
-    #   })
+  # Download handler
+  output$saveData <- downloadHandler(function() {
+    f <- paste0(input$selectg0, "-", input$var)
+
+    if (input$fileType %in% c("csv", "dta")) {
+      # Complete file path
+      paste0(f, "-", input$selectg2, "-", paste(range(values$tm), collapse="-"), ".", input$fileType)
+    } else {
+      # File path with `.zip`
+      paste0(f, ".", input$fileType, ".zip")
+    }
+  }, function(file) {
+
+    var <- input$var
+    f <- paste0(input$selectg0, "-", var, ".", input$fileType)
+
+    if (input$fileType %in% c("tif", "nc")) {
+      # Crop raster to selected country extent
+      require(raster)
+      r <- brick(get(paste0("path.", var)))
+      r <- crop(r, values$g)
+      # Define z dimension (time)
+      proj4string(r) <- CRS("+init=epsg:4326")
+      r <- setZ(r, as.character(get(paste0("tm.", var))))
+      names(r) <- as.character(get(paste0("tm.", var)))
+    }
+
+    switch(input$fileType,
+      tif = writeRasterZip(r, file, f, "GTiff", options=c("TFW=YES", "INTERLEAVE=BAND")),
+      nc = writeRasterZip(r, file, f, "CDF",
+        varname=input$var, varunit="mm", zname="month", zunit="month",
+        options=c("COMPRESS=DEFLATE", "WRITE_GDAL_TAGS=YES")),
+      csv = write.csv(dt2(), file, row.names=F, na=""),
+      dta = foreign::write.dta(dt2(), file, version=9L),
+      shp = {
+        # Combine mean attributes with GAUL 2008 boundaries
+        dt <- values$dt1[, list(
+          mean=mean(value, na.rm=T),
+          min=min(value, na.rm=T),
+          max=max(value, na.rm=T),
+          sd=sd(value, na.rm=T),
+          mad=mad(value, na.rm=T)), by=ADM2_CODE]
+        g <- values$g
+        tmp <- data.table(g@data)
+        tmp[, rn := row.names(g)]
+        setkey(tmp, ADM2_CODE)
+        setkey(dt, ADM2_CODE)
+        tmp <- dt[tmp]
+        setkey(tmp, rn)
+        g@data <- tmp[row.names(g)]
+        writeRasterZip(g, file, f, "ESRI Shapefile")
+      })
+  })
+
+
+#   # Rank districts on barchart
+#   output$distBarPlot <- renderPlot({
+#     if (is.null(values$dt1)) return()
+#     isolate ({
+#       dt <- values$dt1
+#       dt <- dt[, list(value=mean(value, na.rm=T)), by=list(ADM2_NAME)]
+#       dt <- dt[order(value, decreasing=T)]
+#       dt <- rbind(head(dt,4), data.table(ADM2_NAME="[ ... ]", value=0), tail(dt,4))
+#       dt[, ADM2_NAME := factor(ADM2_NAME, levels=ADM2_NAME, ordered=T)]
+#       par(las=1, mar=c(0, 10, 4.1, 0), fg="#444444")
+#       asTheEconomist(
+#         barchart(ADM2_NAME~value, dt,
+#           main=names(d)[d==input$var],
+#           col="#2F6FBF", border="#ffffff", alpha=.8, horizontal=T))
+#     })
+#   })
+
+  #
+  #   # Show country raster plot
+  #   output$rasterPlot <- renderPlot({
+  #     if(input$btn==0) return()
+  #     spplot(stats(), col.regions=colorRampPalette(if(var()=="pdsi") col.pdsi else col.pre)(20))
+  #     #plot(g(), add=T)
+  #   })
 
 })

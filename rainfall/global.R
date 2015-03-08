@@ -12,6 +12,7 @@ library(sp)
 library(reshape2)
 library(leaflet, lib.loc="/home/mbacou/R/x86_64-redhat-linux-gnu-library/3.1")
 library(dygraphs)
+library(latticeExtra)
 
 options(shiny.trace=TRUE)
 
