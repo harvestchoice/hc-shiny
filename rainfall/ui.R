@@ -7,7 +7,7 @@
 
 
 shinyUI(fluidPage(
-  title="CRU-TS 3.22 with leaflet",
+  title="HarvestChoice | Monthly Time-Series fo SSA",
   theme="bootstrap.css",
 
   fluidRow(class="hc-header",

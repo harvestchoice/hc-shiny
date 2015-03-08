@@ -8,11 +8,13 @@
 
 # Helper - Archive spatial formats for download
 writeRasterZip <- function(x, file, filename, format, ...) {
+
   if (format=="ESRI Shapefile") {
     rgdal::writeOGR(x, "./", filename, format, overwrite_layer=T, check_exists=T)
   } else {
     writeRaster(x, filename, format, bylayer=F, overwrite=T, ...)
   }
+
   f <- list.files(pattern=paste0(strsplit(filename, ".", fixed=T)[[1]][1], ".*"))
   zip(paste0(filename, ".zip"), f, flags="-9Xjm", zip="zip")
   file.copy(paste0(filename, ".zip"), file)
@@ -22,6 +24,7 @@ writeRasterZip <- function(x, file, filename, format, ...) {
 
 # Helper - Generate time series stats
 genStats <- function(dt, cntr, dist, tm, mth) {
+
   if (dist==cntr) {
     # Collapse district records to entire country by month
     dt <- dt[, list(
@@ -33,6 +36,7 @@ genStats <- function(dt, cntr, dist, tm, mth) {
       ADM2_NAME="Entire Country",
       ID=0,
       value=mean(value, na.rm=T)), by=month]
+
   } else {
     # Limit to selected district
     dt <- dt[ADM2_NAME==dist]
@@ -81,20 +85,13 @@ shinyServer(function(input, output, session) {
       pdsi=updateSliderInput(session, "rg", min=1960, max=2012, value=c(1960, 2012)),
       aritp=updateSliderInput(session, "rg", min=1979, max=2014, value=c(1979, 2014)))
 
-    # Read district X month records from disk (see pre-process steps in `data.R`)
+    # Read monthly district records from disk (see pre-process steps in `data.R`)
     dt <- try(readRDS(paste0("../rainfall/data/rds/", input$var, g2.dt[input$selectg0][, ADM0_CODE], ".rds")))
-
-    if (class(dt)[1]=="try-error") {
-      # File is missing for that country
-      createAlert(session, "alertNoData",
-        message="Try another combination.",
-        title="Missing Data", type="warning", block=T, append=F)
-    }
 
     # Read country GeoJSON from disk (pre-processed in `data.R` to .rds files)
     m <- try(readRDS(paste0("../rainfall/data/rds/", input$var, g2.dt[input$selectg0][, ADM0_CODE], ".json.rds")))
 
-    if (class(m)=="try-error") {
+    if (class(dt)[1]=="try-error" | class(m)[1]=="try-error") {
       # File is missing for that country
       createAlert(session, "alertNoData",
         message="Try another combination.",
@@ -104,12 +101,13 @@ shinyServer(function(input, output, session) {
     # Get country boundaries
     g <- g2[g2$ADM0_NAME==input$selectg0,]
 
-    # Center map to selected country centroid
+    # Re-center map to selected country centroid
     map$clearGeoJSON()
     coords <- apply(sp::coordinates(g), 2, mean, na.rm=T)
     map$setView(coords[2], coords[1]+5, 6)
     map$addGeoJSON(m)
 
+    # Export
     values$m <- m
     values$g <- g
     values$dt1 <- dt
@@ -121,29 +119,30 @@ shinyServer(function(input, output, session) {
     # React on 3 events
     input$selectg2
     input$rg
-    input$selectMonth
-  }, {
+    input$selectMonth }, {
 
-    if (input$btn==0) return()
-    closeAlert(session, "alertNoData")
-    values$tm <- seq(as.Date(paste0(input$rg[1], "-01-01")), as.Date(paste0(input$rg[2], "-12-31")), "month")
-    mth <- as.integer(seq(input$selectMonth[1], input$selectMonth[2], 1))
+      if (input$btn==0) return()
+      closeAlert(session, "alertNoData")
+      values$tm <- seq(as.Date(paste0(input$rg[1], "-01-01")), as.Date(paste0(input$rg[2], "-12-31")), "month")
+      mth <- as.integer(seq(input$selectMonth[1], input$selectMonth[2], 1))
 
-    # Generate monthly statistics
-    dt <- try(genStats(values$dt1, input$selectg0, input$selectg2, values$tm, mth))
-    if (class(dt)[1]=="try-error") {
-      # Data missing for that district
-      createAlert(session, "alertNoData", "alertNoData",
-        message="Try another district.",
-        title="Missing Data", type="warning", block=T, append=F)
-    }
-    return(dt)
-  })
+      # Generate monthly statistics
+      dt <- try(genStats(values$dt1, input$selectg0, input$selectg2, values$tm, mth))
+      if (class(dt)[1]=="try-error") {
+        # Data missing for that district
+        createAlert(session, "alertNoData", "alertNoData",
+          message="Try another district.",
+          title="Missing Data", type="warning", block=T, append=F)
+      }
+      return(dt)
+    })
 
 
   # Update title text
   output$selectedMsg <- renderText({
+    # React to dt2() only
     if(is.null(dt2())) return()
+
     isolate({
       mth <- paste0(" (", paste0(substr(unique(month.name[input$selectMonth]), 1, 3), collapse="-"), ")")
       dist <- if(input$selectg0==input$selectg2) "Entire Country" else input$selectg2
@@ -157,7 +156,9 @@ shinyServer(function(input, output, session) {
 
   # Render monthly time-series
   output$dygraph <- renderDygraph({
+    # React to dt2() only
     if(is.null(dt2())) return()
+
     isolate({
       dt <- dt2()
       dygraph(xts::as.xts(dt[, list(value, mean, trend)], order.by=dt$month), group="dy") %>%
@@ -176,7 +177,9 @@ shinyServer(function(input, output, session) {
 
   # Render annual time-series
   output$dygraphAnnual <- renderDygraph({
+    # React to dt2() only
     if(is.null(dt2())) return()
+
     isolate({
       dt <- dt2()[, list(meanAnnual=mean(value, na.rm=T)), by=list(month=year(month))]
       mth <- paste0(substr(unique(month.name[input$selectMonth]), 1, 3), collapse="-")
@@ -287,22 +290,22 @@ shinyServer(function(input, output, session) {
   })
 
 
-#   # Rank districts on barchart
-#   output$distBarPlot <- renderPlot({
-#     if (is.null(values$dt1)) return()
-#     isolate ({
-#       dt <- values$dt1
-#       dt <- dt[, list(value=mean(value, na.rm=T)), by=list(ADM2_NAME)]
-#       dt <- dt[order(value, decreasing=T)]
-#       dt <- rbind(head(dt,4), data.table(ADM2_NAME="[ ... ]", value=0), tail(dt,4))
-#       dt[, ADM2_NAME := factor(ADM2_NAME, levels=ADM2_NAME, ordered=T)]
-#       par(las=1, mar=c(0, 10, 4.1, 0), fg="#444444")
-#       asTheEconomist(
-#         barchart(ADM2_NAME~value, dt,
-#           main=names(d)[d==input$var],
-#           col="#2F6FBF", border="#ffffff", alpha=.8, horizontal=T))
-#     })
-#   })
+  #   # Rank districts on barchart
+  #   output$distBarPlot <- renderPlot({
+  #     if (is.null(values$dt1)) return()
+  #     isolate ({
+  #       dt <- values$dt1
+  #       dt <- dt[, list(value=mean(value, na.rm=T)), by=list(ADM2_NAME)]
+  #       dt <- dt[order(value, decreasing=T)]
+  #       dt <- rbind(head(dt,4), data.table(ADM2_NAME="[ ... ]", value=0), tail(dt,4))
+  #       dt[, ADM2_NAME := factor(ADM2_NAME, levels=ADM2_NAME, ordered=T)]
+  #       par(las=1, mar=c(0, 10, 4.1, 0), fg="#444444")
+  #       asTheEconomist(
+  #         barchart(ADM2_NAME~value, dt,
+  #           main=names(d)[d==input$var],
+  #           col="#2F6FBF", border="#ffffff", alpha=.8, horizontal=T))
+  #     })
+  #   })
 
   #
   #   # Show country raster plot
