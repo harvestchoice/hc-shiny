@@ -55,6 +55,7 @@ genStats <- function(dt, cntr, dist, tm, mth) {
 
   # Compute stats over selected period/month
   dt[, mean := mean(value, na.rm=T)]
+  dt[, total := sum(value, na.rm=T)]
   dt[, meanAnnual := mean(value, na.rm=T), by=year(month)]
   dt[, sd := sd(value, na.rm=T)]
   dt[, mad := mad(value, na.rm=T)]
@@ -183,10 +184,17 @@ shinyServer(function(input, output, session) {
     if(is.null(dt2())) return()
 
     isolate({
-      dt <- dt2()[, list(meanAnnual=mean(value, na.rm=T)), by=list(month=year(month))]
-      mth <- paste0(substr(unique(month.name[input$selectMonth]), 1, 3), collapse="-")
-      dygraph(xts::as.xts(dt$meanAnnual, order.by=as.Date(as.character(dt$month), "%Y")), group="dy") %>%
-        dySeries("V1", label=paste0(mth, " mean")) %>%
+      if (input$var=="pre") {
+        dt <- dt2()[, list(sumAnnual=sum(value, na.rm=T)), by=list(month=year(month))]
+        mth <- paste0(substr(unique(month.name[input$selectMonth]), 1, 3), collapse="-")
+        txt <- paste0(mth, " total")
+      } else {
+        dt <- dt2()[, list(sumAnnual=mean(value, na.rm=T)), by=list(month=year(month))]
+        mth <- paste0(substr(unique(month.name[input$selectMonth]), 1, 3), collapse="-")
+        txt <- paste0(mth, " mean")
+      }
+      dygraph(xts::as.xts(dt$sumAnnual, order.by=as.Date(as.character(dt$month), "%Y")), group="dy") %>%
+        dySeries("V1", label=txt) %>%
         dyOptions(fillGraph=F, strokeWidth=2,
           colors=switch(input$var, pre="#84C796", pdsi="#8DDE88", aritp="#1D91C0")) %>%
         dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=180) %>%

@@ -12,5 +12,6 @@
 .project
 
 /rainfall/data/*
+!/rainfall/data/g2*
 !/rainfall/data/rds
 !/rainfall/data/rds/*

@@ -47,7 +47,7 @@ shinyUI(fluidPage(
       p("The ", strong("long-term mean"), " is over the selected season
           and years only (or over the entire year if no specific season is selected).
           The ", strong("trend component"), " is generated through classical seasonal decomposition
-          by moving averages over the entire 1960-2013 period. The " , strong("annual mean"), " at
+          by moving averages over the entire 1960-2013 period. ", strong("Total precipitation"), " at
           the bottom is over the selected season."),
       p("You may use your mouse to zoom into
           any specific time period or use the range selectors below the chart.
