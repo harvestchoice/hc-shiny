@@ -184,15 +184,16 @@ shinyServer(function(input, output, session) {
     if(is.null(dt2())) return()
 
     isolate({
+      mth <- paste0(substr(unique(month.name[input$selectMonth]), 1, 3), collapse="-")
+
       if (input$var=="pre") {
         dt <- dt2()[, list(sumAnnual=sum(value, na.rm=T)), by=list(month=year(month))]
-        mth <- paste0(substr(unique(month.name[input$selectMonth]), 1, 3), collapse="-")
         txt <- paste0(mth, " total")
       } else {
         dt <- dt2()[, list(sumAnnual=mean(value, na.rm=T)), by=list(month=year(month))]
-        mth <- paste0(substr(unique(month.name[input$selectMonth]), 1, 3), collapse="-")
         txt <- paste0(mth, " mean")
       }
+
       dygraph(xts::as.xts(dt$sumAnnual, order.by=as.Date(as.character(dt$month), "%Y")), group="dy") %>%
         dySeries("V1", label=txt) %>%
         dyOptions(fillGraph=F, strokeWidth=2,
