@@ -532,7 +532,7 @@ write.csv(dt.year, "./data/CRU.SSA.1901-2013.csv", na="", row.names=F)
 
 
 #####################################################################################
-# TODO 2015.03.18 Update: Add CRU monthly temperatures
+# 2015.03.18 Update: Add CRU monthly temperatures
 #####################################################################################
 
 rm(list=ls())
