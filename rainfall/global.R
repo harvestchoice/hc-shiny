@@ -21,9 +21,15 @@ names(d) <- c("Cloud Cover (%)", "dtr", "frs", "pet", "Precipitation (mm)", "tmn
   "ERA Synoptic Monthly Mean Precipitation (mm/day)")
 
 # CRU 3.22 precipitation time series (from 1901 onwards)
-path.pre <- "./data/cru_ts3.22.1901.2013.tmp.dat.nc"
+path.pre <- "./data/cru_ts3.22.1901.2013.pre.dat.nc"
 tm.pre <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
 col.pre <- rev(c("#2F6FBF", "#69DB4D", "#F9EF58", "#DC5207", "#830000"))
+
+# CRU 3.22 temperatures time series (from 1901 onwards)
+path.tmp <- "./data/cru_ts3.22.1901.2013.tmp.dat.nc"
+tm.tmp <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+col.tmp <- c("#801FEF", "#0000FF", "#4169E1", "#1C90FF", "#00BFFF", "#8CCDEF", "#FFFFC8",
+  "#FFE131", "#FFAA00", "#FF6E00", "#FF0000", "#C80000", "#FFB1B1")
 
 # PDSI (from 1850 onwards)
 path.pdsi <- "./data/pdsisc.monthly.maps.1850-2012.nc"

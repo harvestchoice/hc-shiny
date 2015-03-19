@@ -146,6 +146,7 @@ stats.cntr <- function(x, y) {
   saveRDS(dt, file=paste0("./data/rds/", y, x, ".rds"), compress=T)
 }
 
+
 # Helper - symbolize GeoJSON
 json.cntr <- function(x, y, col) {
   # Load pre-processed district X month records
@@ -500,9 +501,103 @@ for(j in var) {
     for (x in 1:length(m$features)) {
       m$features[[x]]$style <- list(fillColor=g@data[x, cl], weight=.6, color="white", fillOpacity=0.7)
     }
-    saveRDS(m, paste0("./data/rds/", j, i, ".json.rds"))
+    saveRDS(m, paste0("./data/rds/", j, i, ".json.rds"), compress=T)
     saveRDS(t, file=paste0("./data/rds/", j, i, ".rds"), compress=T)
   }
 }
+
+
+#####################################################################################
+# 2015.03.18 Update: Africa-wide yearly stats for Julia Collins
+#####################################################################################
+
+library(maptools)
+setwd("/home/projects/shiny/rainfall")
+
+load("../../cell5m/rdb/g0.rda")
+pre <- brick("./data/cru_ts3.22.1901.2013.pre.dat.nc")
+plot(g0)
+ssa <- unionSpatialPolygons(g0, g0$CONTINENT)
+
+dt <- extract(pre, ssa, fun=mean, na.rm=T, df=T, small=T)
+dt <- data.table(dt)
+dt <- melt(dt, id.vars="ID", variable.name="month", variable.factor=F)
+dt[, month := as.Date(gsub("X", "", month, fixed=T), "%Y.%m.%d")]
+
+# Yearly mean
+dt.year <- dt[, list(
+  monthly.mean=mean(value, na.rm=T),
+  year.total=sum(value, na.rm=T)), by=year(month)]
+write.csv(dt.year, "./data/CRU.SSA.1901-2013.csv", na="", row.names=F)
+
+
+#####################################################################################
+# TODO 2015.03.18 Update: Add CRU monthly temperatures
+#####################################################################################
+
+rm(list=ls())
+load("./data/rainfall_2014v15.RData")
+
+##  Pre-process district summaries for speed
+# Country code list
+cntr <- unique(g2.web@data$ADM0_CODE)
+
+# Pre-process `tmp`
+tmp <- brick("./data/cru_ts3.22.1901.2013.tmp.dat.nc")
+tm <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+tmp <- setZ(tmp, tm, "month")
+col <- c("#801FEF", "#0000FF", "#4169E1", "#1C90FF", "#00BFFF", "#8CCDEF", "#FFFFC8",
+  "#FFE131", "#FFAA00", "#FF6E00", "#FF0000", "#C80000", "#FFB1B1")
+dt2.tmp <- genStats("tmp")
+dt2.tmp.web <- genSymbol(dt2.tmp, col)
+saveRDS(dt2.tmp, "./data/dt2.tmp.rds")
+
+# Save all
+save(d2, g2, g2.web,
+  dt2.pre, dt2.pdsi, dt2.eratp, dt2.tmp,
+  dt2.pre.web, dt2.pdsi.web, dt2.eratp.web, dt2.tmp.web,
+  file="./data/rainfall_2014v15.RData", compress=T)
+
+# Save country .rds
+for (i in cntr) {
+  dt <- dt2.tmp.web[ADM0_CODE==i]
+  dt[is.nan(mean) | is.infinite(mean), mean := NA]
+  dt[is.nan(min) | is.infinite(min), min := NA]
+  dt[is.nan(max) | is.infinite(max), max := NA]
+  dt[is.nan(`85th`) | is.infinite(`85th`), `85th` := NA]
+  dt[is.nan(sd) | is.infinite(sd), sd := NA]
+
+  dt[, mean := round(mean, 1)]
+  dt[, min := round(min, 1)]
+  dt[, max := round(max, 1)]
+  dt[, `85th` := round(`85th`, 1)]
+  dt[, sd := round(sd, 1)]
+
+  # Add admin names
+  t <- dt2.tmp[ADM0_CODE==i]
+  setkey(dt, ADM1_CODE, ADM2_CODE)
+  setkey(t, ADM1_CODE, ADM2_CODE)
+  temp <- unique(t)
+  dt <- temp[, .SD, .SDcols=1:6][dt]
+
+  g <- g2.web[g2.web$ADM0_CODE==i,]
+  g@data <- dt[J(g$ADM1_CODE, g$ADM2_CODE)]
+  f <- paste0("./data/json/tmp", i)
+  writeOGR(g, f, g$ADM2_CODE, "GeoJSON", overwrite_layer=T)
+
+  m <- jsonlite::fromJSON(f, simplifyVector=F)
+  for (x in 1:length(m$features)) {
+    m$features[[x]]$style <- list(fillColor=g@data[x, cl], weight=.6, color="white", fillOpacity=0.7)
+  }
+  saveRDS(m, paste0("./data/rds/tmp", i, ".json.rds"), compress=T)
+  saveRDS(t, file=paste0("./data/rds/tmp", i, ".rds"), compress=T)
+}
+
+
+#####################################################################################
+# TODO 2015.03.18 Update: Use SEAS package for normal and departure statistics
+#####################################################################################
+
+library(seas)
 
 

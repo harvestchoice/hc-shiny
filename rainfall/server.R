@@ -171,6 +171,7 @@ shinyServer(function(input, output, session) {
         dyOptions(fillGraph=T, fillAlpha=0.4,
           colors=switch(input$var,
             pre=c("#84C796", "#CA6943", "#428BCA"),
+            tmp=c("#1C90FF", "#FFE131 ", "#FF0000"),
             pdsi=c("#8DDE88", "#F8DE70", "#F8AE41"),
             eratp=c("#1D91C0", "#EDF8B1", "#081D58"))) %>%
         dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140)
@@ -197,7 +198,7 @@ shinyServer(function(input, output, session) {
       dygraph(xts::as.xts(dt$sumAnnual, order.by=as.Date(as.character(dt$month), "%Y")), group="dy") %>%
         dySeries("V1", label=txt) %>%
         dyOptions(fillGraph=F, strokeWidth=2,
-          colors=switch(input$var, pre="#84C796", pdsi="#8DDE88", aritp="#1D91C0")) %>%
+          colors=switch(input$var, pre="#84C796", tmp="#1C90FF", pdsi="#8DDE88", aritp="#1D91C0")) %>%
         dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=180) %>%
         dyRangeSelector(height=20)
     })
