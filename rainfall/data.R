@@ -601,3 +601,90 @@ for (i in cntr) {
 library(seas)
 
 
+#####################################################################################
+# TODO 2015.03.24 Update: Add new indicators
+#####################################################################################
+# total annual precipitation
+# precipitation on the days of heavy rain
+# maximum number of consecutive dry days in the year
+# annual mean maximum and mean minimum temperatures
+# Suggested in http://file.scirp.org/Html/7-2360181_50081.htm
+
+
+#####################################################################################
+# 2015.04.09 Generate Climate Stats for Costa Rica
+#####################################################################################
+# For Eduardo WB
+
+setwd("/home/projects/shiny/rainfall")
+library(rgdal)
+library(raster)
+library(data.table)
+library(reshape2)
+
+# Helper - summarize raster over districts
+genStats <- function(x, var) {
+  dt <- extract(get(var), x, fun=mean, na.rm=T, df=T, small=T)
+  dt <- cbind(x@data, dt)
+  dt <- data.table(dt)
+  setnames(dt, 21:dim(dt)[2], format(tm, "%Y-%m-%d"))
+  dt <- melt(dt, id.vars=c(names(x), "ID"), variable.name="month", variable.factor=F)
+  dt[, month := as.Date(month)]
+  # Limit to 1960 onwards
+  dt <- dt[month>=as.Date("1960-01-01")]
+  return(dt)
+}
+
+cri <- readOGR("./data/", "district471")
+
+# Process `pre`
+pre <- brick("./data/cru_ts3.22.1901.2013.pre.dat.nc")
+tm <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+pre <- setZ(pre, tm, "month")
+dt <- genStats(cri, "pre")
+
+cri.pre <- dt[, list(
+  pre_mean=mean(value, na.rm=T),
+  pre_min=min(value, na.rm=T),
+  pre_85=quantile(value, 0.85, na.rm=T),
+  pre_max=max(value, na.rm=T),
+  pre_sd=sd(value, na.rm=T)), keyby=list(ADM1_CODE, ADM2_CODE, ADM3_CODE)]
+
+
+# Process `pdsi`
+pdsi <- brick("./data/pdsisc.monthly.maps.1850-2012.nc")
+tm <- seq(as.Date("1850-01-01"), as.Date("2012-12-31"), "month")
+pdsi <- setZ(pdsi, tm, "month")
+dt <- genStats(cri, "pdsi")
+
+cri.pdsi <- dt[, list(
+  pdsi_mean=mean(value, na.rm=T),
+  pdsi_min=min(value, na.rm=T),
+  pdsi_85=quantile(value, 0.85, na.rm=T),
+  pdsi_max=max(value, na.rm=T),
+  pdsi_sd=sd(value, na.rm=T)), keyby=list(ADM1_CODE, ADM2_CODE, ADM3_CODE)]
+
+
+# Process `tmp`
+tmp <- brick("./data/cru_ts3.22.1901.2013.tmp.dat.nc")
+tm <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+tmp <- setZ(tmp, tm, "month")
+dt <- genStats(cri, "tmp")
+
+cri.tmp <- dt[, list(
+  tmp_mean=mean(value, na.rm=T),
+  tmp_min=min(value, na.rm=T),
+  tmp_85=quantile(value, 0.85, na.rm=T),
+  tmp_max=max(value, na.rm=T),
+  tmp_sd=sd(value, na.rm=T)), keyby=list(ADM1_CODE, ADM2_CODE, ADM3_CODE)]
+
+dt <- cri.tmp[cri.pdsi][cri.pre]
+cri.dt <- data.table(cri@data)
+cri.dt[, rn := row.names(cri)]
+setkey(cri.dt, ADM1_CODE, ADM2_CODE, ADM3_CODE)
+setkey(dt, ADM1_CODE, ADM2_CODE, ADM3_CODE)
+dt <- cri.dt[, .SD, .SDcols=c(1:7,16)][dt]
+setkey(dt, rn)
+cri@data <- dt[row.names(cri)]
+writeOGR(cri, "./data/", "cri_adm3_climate", "ESRI Shapefile")
+

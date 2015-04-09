@@ -82,9 +82,9 @@ shinyServer(function(input, output, session) {
 
     # Update time slider
     switch(input$var,
-      pre=updateSliderInput(session, "rg", min=1960, max=2013, value=c(1960, 2013)),
-      pdsi=updateSliderInput(session, "rg", min=1960, max=2012, value=c(1960, 2012)),
-      aritp=updateSliderInput(session, "rg", min=1979, max=2014, value=c(1979, 2014)))
+      pre=updateSliderInput(session, "rg", min=1960, max=2013, value=c(1990, 2013)),
+      pdsi=updateSliderInput(session, "rg", min=1960, max=2012, value=c(1990, 2012)),
+      aritp=updateSliderInput(session, "rg", min=1979, max=2014, value=c(1990, 2014)))
 
     # Read monthly district records from disk (see pre-process steps in `data.R`)
     dt <- try(readRDS(paste0("../rainfall/data/rds/", input$var, g2.dt[input$selectg0][, ADM0_CODE], ".rds")))

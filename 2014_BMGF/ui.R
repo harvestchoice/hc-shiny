@@ -1,9 +1,9 @@
 library(shiny)
 
 # Define UI for random distribution application 
-shinyUI(fluidPage(title="Ethiopia Segmentation",
-        
-        tags$head(tags$link(rel='stylesheet', type='text/css', href='style.css')),       
+shinyUI(fluidPage(
+    title="Ethiopia Segmentation",
+    theme="style.css",      
         
         # Application title
         titlePanel("Ethiopia Segmentation, 2014"),
