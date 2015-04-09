@@ -83,6 +83,7 @@ shinyServer(function(input, output, session) {
     # Update time slider
     switch(input$var,
       pre=updateSliderInput(session, "rg", min=1960, max=2013, value=c(1990, 2013)),
+      tmp=updateSliderInput(session, "rg", min=1960, max=2013, value=c(1990, 2013)),
       pdsi=updateSliderInput(session, "rg", min=1960, max=2012, value=c(1990, 2012)),
       aritp=updateSliderInput(session, "rg", min=1979, max=2014, value=c(1990, 2014)))
 

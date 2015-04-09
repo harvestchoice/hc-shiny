@@ -98,7 +98,7 @@ dt <- extract(pdsi, g, fun=mean, na.rm=T, df=T, small=T)
 dt <- cbind(g@data, dt)
 dt <- data.table(dt)
 setnames(dt, 8:dim(dt)[2], format(tm, "%Y-%m-%d"))
-dt <- melt(dt, id.vars=c(names(g) "ID"), variable.name="month", variable.factor=F)
+dt <- melt(dt, id.vars=c(names(g), "ID"), variable.name="month", variable.factor=F)
 dt[, month := as.Date(month)]
 # Limit to 1960 onwards
 dt <- dt[month>=as.Date("1960-01-01")]
@@ -592,6 +592,18 @@ for (i in cntr) {
   saveRDS(m, paste0("./data/rds/tmp", i, ".json.rds"), compress=T)
   saveRDS(t, file=paste0("./data/rds/tmp", i, ".rds"), compress=T)
 }
+
+
+#####################################################################################
+# TODO 2015.03.20 Migrate to rstudio/leaflet
+#####################################################################################
+
+
+
+
+
+
+
 
 
 #####################################################################################
