@@ -38,7 +38,7 @@ stats <- function(x) {
 }
 
 
-# Helper - Return layer as data.table and add colors
+# Helper - Return layer as data.table and add color legend
 getIndicator <- function(var="PN05_TOT", iso3="GHA", ...) {
   # Query hcapi3
   tmp <- getLayer(var, iso3, ...)
@@ -98,6 +98,7 @@ shinyServer(function(input, output, session) {
 
   # Update indicator menu
   observeEvent(input$selectCat, priority=3, {
+
     # Toggle panel
     shinyjs::show(id="panelInd", anim=T)
 
@@ -112,7 +113,7 @@ shinyServer(function(input, output, session) {
   })
 
 
-  # Update selected layer panel
+  # TODO Update selected layer panel
 
 
   # Main observer
@@ -131,7 +132,7 @@ shinyServer(function(input, output, session) {
     selected$iso3 <- input$selectISO3
     selected$varTitle <- vi[selected$var][, varTitle]
 
-    # Update history
+    # Update session history
     session$iso3 <- c(session$iso3, selected$iso3)
     session$var <- c(session$iso3, selected$var)
     session$varTitle <- c(session$iso3, selected$varTitle)
@@ -229,7 +230,7 @@ shinyServer(function(input, output, session) {
   )
 
 
-  # When map is clicked, show a popup with layer info
+  # When features are clicked, show details in panelDetails
   observeEvent(input$map_shape_click, priority=3, {
     e <- input$map_shape_click
     selected$event <- selected$dt[CELL5M==e$id]
