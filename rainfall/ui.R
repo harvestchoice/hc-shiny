@@ -12,7 +12,7 @@ shinyUI(fluidPage(
 
   fluidRow(class="hc-header",
     column(9,
-      h3("Long-Term Climate Trends and Variations",
+      h3("Long-Term Climate Trends",
         tags$small("Monthly sub-national time-series for sub-Saharan Africa"))),
     column(2, offset=1,
       h5(a(href="http://harvestchoice.org/", title="Home",

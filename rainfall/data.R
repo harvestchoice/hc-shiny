@@ -24,10 +24,10 @@ f <- "cru_ts3.22.1901.2013.cld.dat.nc.gz"
 f <- str_replace(f, "cld", d)
 f <- str_replace(f, "cru_ts", paste0(d, "/cru_ts"))
 
-# Retrieve netCDF files one variable at a time
+# Retrieve netCDF files one variable at a time (pre, tmp, tmn, tmx)
 baseurl <- "http://www.cru.uea.ac.uk/cru/data/hrg/cru_ts_3.22/cruts.1406251334.v3.22/"
 
-for (i in 5) {
+for (i in 8) {
   download.file(paste0(baseurl, f[i]), paste0("./data/", basename(f[i])), mode="wb")
   system(paste0("gzip -d ./data/", basename(f[i])))
   assign(d[i], brick(paste0("./data/", str_replace(basename(f[i]), ".gz", ""))))
@@ -115,6 +115,7 @@ plot(dt.ts)
 dt.ts <- dt.ts$trend
 dt.ts <- data.table(trend=dt.ts)
 dt <- cbind(dt, dt.ts)
+
 
 
 #####################################################################################
@@ -601,11 +602,6 @@ for (i in cntr) {
 
 
 
-
-
-
-
-
 #####################################################################################
 # TODO 2015.03.18 Update: Use SEAS package for normal and departure statistics
 #####################################################################################
@@ -700,3 +696,128 @@ setkey(dt, rn)
 cri@data <- dt[row.names(cri)]
 writeOGR(cri, "./data/", "cri_adm3_climate", "ESRI Shapefile")
 
+# Let's reprocess but keep all years so we can then generate the bio18 variables
+# We need `tmn` an `tmx` instead of `tmp`
+tmn <- brick("./data/cru_ts3.22.1901.2013.tmn.dat.nc")
+tm <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+tmn <- setZ(tmn, tm, "month")
+
+tmx <- brick("./data/cru_ts3.22.1901.2013.tmx.dat.nc")
+tm <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+tmx <- setZ(tmx, tm, "month")
+
+cri <- spTransform(cri, proj4string(pre))
+pre <- crop(pre, cri)
+tmp <- crop(tmp, cri)
+tmn <- crop(tmn, cri)
+tmx <- crop(tmx, cri)
+
+# Save
+save(pre, tmp, tmn, tmx, file="./data/cri_bioclim.RData")
+
+
+#####################################################################################
+# 2015.04.13 Generate Annual Mean and CV for CELL5M
+#####################################################################################
+# Need to extract and summarize `pre` values over CELL5M SSA grid
+library(hcapi3)
+
+grid <- getLayer("ADM0_NAME")
+grid <- SpatialPointsDataFrame(grid[, list(X, Y)], data.frame(CELL5M=grid[["CELL5M"]]),
+  proj4string=CRS("+init=epsg:4326"))
+
+pre <- brick("./data/cru_ts3.22.1901.2013.pre.dat.nc")
+tm <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+pre <- setZ(pre, tm, "month")
+
+pre_grid <- extract(pre, grid, fun="mean", na.rm=T)
+pre_grid <- cbind(grid@data, pre_grid)
+pre_grid <- data.table(pre_grid)
+setnames(pre_grid, 2:dim(pre_grid)[2], format(tm, "%Y-%m-%d"))
+# Limit to 1960 onwards
+pre_grid <- pre_grid[, .SD, .SDcols=c(1, 710:1357)]
+pre <- melt(pre_grid, id.vars="CELL5M", variable.name="month", variable.factor=F)
+pre[, year := as.integer(substr(month, 1, 4))]
+
+# Annual total rainfall
+pre <- pre[, list(value=sum(value, na.rm=T)), by=list(CELL5M, year)]
+pre[, CELL5M := as.integer(CELL5M)]
+saveRDS(pre, "./data/cell5m_pre_cru3.22.rds", compress=T)
+
+
+
+#####################################################################################
+# 2015.06.07 Update: Add CRU monthly temperatures min/max
+#####################################################################################
+library(dismo)
+
+rm(list=ls())
+load("./data/rainfall_2014v15.RData")
+
+# These are needed to generate bioclimatic variables
+tm <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+tmn <- brick("./data/cru_ts3.22.1901.2013.tmn.dat.nc")
+tmn <- setZ(tmn, tm, "month")
+tmx <- brick("./data/cru_ts3.22.1901.2013.tmx.dat.nc")
+tmx <- setZ(tmx, tm, "month")
+
+# Helper - summarize rasters over districts
+genStats <- function(var) {
+  dt <- extract(get(var), g2.web, fun=mean, na.rm=T, df=T, small=T)
+  dt <- cbind(g2.web@data, dt)
+  dt <- data.table(dt)
+  setnames(dt, 8:dim(dt)[2], format(tm, "%Y-%m-%d"))
+  dt <- melt(dt, id.vars=c(names(g2.web), "ID"), variable.name="month", variable.factor=F)
+  dt[, month := as.Date(month)]
+  # Limit to 1960 onwards
+  dt <- dt[month>=as.Date("1960-01-01")]
+  return(dt)
+}
+
+dt2.bio <- genStats("tmx")
+dt2.tmn <- genStats("tmn")
+setnames(dt2.bio, "value", "tmx")
+
+setkey(dt2.bio, ADM0_CODE, ADM1_CODE, ADM2_CODE, month)
+setkey(dt2.tmn, ADM0_CODE, ADM1_CODE, ADM2_CODE, month)
+setkey(dt2.pre, ADM0_CODE, ADM1_CODE, ADM2_CODE, month)
+dt2.bio$tmn <- dt2.tmn[dt2.bio][, value]
+dt2.bio$pre <- dt2.pre[dt2.bio][, value]
+rm(dt2.tmn, dt2.pre)
+
+# The bio indicators need 12 consecutive months (no season allowed), so let's
+# pre-process all the years across districts
+dt2.bio[, .N, by=list(ADM0_CODE, ADM1_CODE, ADM2_CODE, year(month))][N!=12]
+# Empty data.table (0 rows) of 5 cols: ADM0_CODE,ADM1_CODE,ADM2_CODE,year,N
+
+dt2.bio[, sum(is.na(pre)), by=list(ADM0_CODE, ADM1_CODE, ADM2_CODE, year(month))][V1==12]
+#     ADM0_CODE ADM1_CODE ADM2_CODE year V1
+#  1:        76      1198     15828 1960 12
+#  2:        76      1198     15828 1961 12
+#  3:        76      1198     15828 1962 12
+#  4:        76      1198     15828 1963 12
+#  5:        76      1198     15828 1964 12
+#  6:        76      1198     15828 1965 12
+# ...
+
+# What country is that?
+g2.dt <- data.table(g2.web@data)
+g2.dt[ADM0_CODE==76, unique(ADM0_NAME)]
+# [1] Equatorial Guinea
+
+bio <- dt2.bio[ADM0_CODE!=76, biovars(pre, tmn, tmx),
+  by=list(ADM0_CODE, ADM1_CODE, ADM2_CODE, year(month))]
+
+# Let's also process country-level biovars
+bio.g0 <- dt2.bio[, list(), by=list(ADM0_CODE, month)]
+
+
+# Save for re-use
+saveRDS(bio, file="./data/ts_yearly_biovars_g2.rds")
+
+# Also create time series of other cli
+
+# Save all
+rm(dt2.eratp, dt2.pdsi, dt2.tmp)
+rm(g2, dt2.tmn, dt2.tmx, genStats, cntr, baseurl, tm, tmn, tmx, pre)
+save.image("./data/rainfall_2014v15.RData")

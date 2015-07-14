@@ -3,9 +3,10 @@
  * Copyright 2011-2014 Twitter, Inc.
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
  */
- 
- @import url(//fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600);
- 
+
+ @import url(http://fonts.googleapis.com/css?family=PT+Sans:300,400,600);
+ @import url(http://fonts.googleapis.com/css?family=Droid+Serif);
+
 /*! normalize.css v3.0.2 | MIT License | git.io/normalize */
 html {
   font-family: sans-serif;
@@ -6334,34 +6335,25 @@ button.close {
 /* sourceMappingURL=bootstrap.css.map */
 
 
-/* Custom properties */
+/* Custom properties to match HC website */
 
 body {
-  font-family: Source Sans Pro;
+  font-family: 'Pt Sans', Arial, Helvetica, sans-serif;
   color: #444;
-  font-weight: 300;
 }
 
-.container-fluid {
-  padding: 0;
-  height: 100%;
+h1,h2,h3,h4,h5 {
+ font-family: 'Droid Serif', serif;
 }
 
-.modal-content {
-  padding: 0 20px;
-  opacity: 0.8;
+div.hc-header {
+  background-color: #3C3A2E;
 }
 
-.modal-content:hover {
-  opacity: 2;
+.hc-header h3 {
+  color: #ffffff;
 }
 
-#map {
-  position: fixed;
-  width: auto;
-  height: 100%;
-}
 
-#cite {
-  font-size: .9em;
-}
+
+

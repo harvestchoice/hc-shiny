@@ -10,7 +10,7 @@ library(shinyBS)
 library(data.table)
 library(sp)
 library(reshape2)
-library(leaflet)
+library(leaflet, lib.loc="/usr/lib64/R/library")
 library(dygraphs)
 #options(shiny.trace=TRUE)
 

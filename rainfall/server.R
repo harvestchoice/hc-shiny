@@ -42,7 +42,7 @@ genStats <- function(dt, cntr, dist, tm, mth) {
     dt <- dt[ADM2_NAME==dist]
   }
 
-  # Add trend component for the 1960-2013 period
+  # Add trend component over 1960-2013 period
   dt <- dt[order(month)]
   dt.ts <- ts(dt$value, start=c(dt[, min(year(month))], 1), frequency=12)
   dt.ts <- decompose(zoo::na.StructTS(dt.ts))
@@ -69,10 +69,10 @@ shinyServer(function(input, output, session) {
   # Create the map
   map <- createLeafletMap(session, "map")
 
-  # Init
+  # Init reactive values
   values <- reactiveValues()
 
-  # Primary observer
+  # Primary observer (react to main button)
   observeEvent(input$btn, priority=1, {
 
     # Update district list
@@ -90,7 +90,7 @@ shinyServer(function(input, output, session) {
     # Read monthly district records from disk (see pre-process steps in `data.R`)
     dt <- try(readRDS(paste0("../rainfall/data/rds/", input$var, g2.dt[input$selectg0][, ADM0_CODE], ".rds")))
 
-    # Read country GeoJSON from disk (pre-processed in `data.R` to .rds files)
+    # Read country GeoJSON and symbology from disk (pre-processed in `data.R`)
     m <- try(readRDS(paste0("../rainfall/data/rds/", input$var, g2.dt[input$selectg0][, ADM0_CODE], ".json.rds")))
 
     if (class(dt)[1]=="try-error" | class(m)[1]=="try-error") {
@@ -100,7 +100,6 @@ shinyServer(function(input, output, session) {
         title="Missing Data", type="warning")
 
     } else {
-
       # Get country boundaries
       g <- g2[g2$ADM0_NAME==input$selectg0,]
 

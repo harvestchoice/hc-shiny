@@ -1,105 +1,161 @@
-library(shiny)
-library(shinyBS)
-library(leaflet)
+#####################################################################################
+# Title:   HarvestChoice Data API with leaflet
+# Date:    July 2015
+# Project: HarvestChoice/IFPRI
+# Authors: Bacou, Melanie <mel@mbacou.com>
+#####################################################################################
 
-shinyUI(fluidPage(
-  title="Map overlays with leaflet",
-  theme="bootstrap.css",
 
-  leafletMap("map", width="100%", height="100%",
-    initialTileLayer = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
-    initialTileLayerAttribution = HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>'),
-    # Center on Ghana
-    options=list(center=c(7.79167, -1.20833 ), zoom=6)
+header <- dashboardHeader(title="HarvestChoice")
+
+#   navbarMenu("Analysis", icon=icon("cog"),
+#     tabPanel("Explore",
+#       "Over 800 high-resolution indicators for sub-Saharan Africa ",
+#       icon=icon("angle-right")),
+#     tabPanel("Summarize",
+#       "Retrieve summary statistics across geographic domains",
+#       icon=icon("angle-right")),
+#     tabPanel("Homologues",
+#       "Identify and target similar areas",
+#       icon=icon("angle-right")),
+#     tabPanel("About",
+#       "Learn more about HarvestChoice",
+#       icon=icon("angle-right"))
+
+
+
+sidebar <- dashboardSidebar(
+  selectInput("selectISO3", "Choose a Country", iso[order(iso)], selected="GHA"),
+  hr(),
+
+  sidebarMenu(id="selectCat",
+    menuItem(names(catlst)[1], icon=icon("leaf"), catlst[[1]]),
+    menuItem(names(catlst)[2], icon=icon("tree"), catlst[[2]]),
+    menuItem(names(catlst)[3], icon=icon("male"), catlst[[3]]),
+    menuItem(names(catlst)[4], icon=icon("road"), catlst[[4]])
   ),
 
-  absolutePanel(id="results", fixed=F, draggable=T,
-    top=20, left="auto", right=20, bottom="auto",
-    width=260, height="auto", cursor="move",
+  hr(),
 
-    div(class="modal-content",
-      h3("Map Layers"),
-      bsAlert("alertNoData"),
-      uiOutput("selectISO3"),
-      uiOutput("selectCat"),
-      uiOutput("selectVar"),
-      #h4("Province Summary"),
-      #tableOutput("tableVar"),
-      actionButton("btnLayer", "Show Layer", icon("globe")),
-      hr(),
-      uiOutput("selectFilter"),
-      hr(),
-      selectInput("fileType", "Choose Export Format",
-        choices=c(`ASCII Raster`="asc", GeoTIFF="tif", STATA="dta", RData="rds"),
-        selected="asc"),
-      downloadButton("saveData", "Save Layer"),
-      p(br())
-    )
-  ),
+  sidebarMenu(id="selectTool",
+    menuItem("Analysis", icon=icon("cog", lib="glyphicon"),
+      menuSubItem("Explore", tabName="Overview", icon=icon("angle-right")),
+      menuSubItem("Summarize", tabName="Summarize", icon=icon("angle-right")),
+      menuSubItem("Homologues", tabName="Homologues", icon=icon("angle-right"))
+    ),
+    menuItem("About", tabName="About", icon=icon("info-sign", lib="glyphicon"), selected=T)
+  )
 
-  absolutePanel(id="filter", fixed=F, draggable=T,
-    top=50, left=40, right="auto", bottom="auto",
-    width=560, height="auto", cursor="move",
+)
 
-    div(class="modal-content", style="height:580px",
+body <- dashboardBody(
+  useShinyjs(),
 
-      h3(htmlOutput("varTitle")),
-      p("Click map to show pixel data."),
-      tabsetPanel(position="left", selected="Overview",
+  fluidRow(style="position:relative;margin-top:-15px;",
 
-        tabPanel(title="Overview",
-          column(6,
-            h4("Histogram"),
-            plotOutput("plotHist", height="100%"),
-            p(br(), "Showing frequencies for visible pixels.")),
-          column(6,
-            h4("Layer Statistics"),
-            tableOutput("tableSum")
-          )
-        ),
+    # Map
+    leafletOutput("map", height=450),
 
-        tabPanel(title="Summarize",
-          column(5,
-            p(),
-            uiOutput("selectDomain"),
-            p("Showing a random list of 10 domains to summarize by."),
-            actionButton("btnDomain", "Summarize", icon("cog")),
-            p(br(), "Click to summary and map.")
-          ),
-          column(7,
-            h4("Domain Summary"),
-            tableOutput("tableDomain")
-          )
-        ),
+    # Details
+    hidden(
+      absolutePanel(id="panelDetails", class="panel panel-default",
+        bottom=20, right=20, width=220, height="auto",
+        htmlOutput("details", class="panel-body")
+      )
+    ),
 
-        tabPanel(title="Homologue Finder",
-          column(5,
-            p(br(), "Use the Layer choices on the right to select up to 5 layers."),
-            p(htmlOutput("selectRank")),
-            p(actionLink("btnAddRank", "Add Layer", icon("plus"))),
-            p("Then select a district on the map (mouse over and click."),
-            uiOutput("showRank"),
-            actionButton("btnRank", "Rank all districts", icon("cog")),
-            hr(),
-            actionLink("btnClearRank", "Clear All", icon("refresh"))
-          ),
-          column(7,
-            h4("District Comparison"),
-            tableOutput("tableRank")
-          )
+    # Indicator menu (hidden initially)
+    hidden(
+      absolutePanel(id="panelInd", class="panel panel-default",
+        top=-4, left=-4, width=280,
+        div(class="panel-body", style="height:500px;overflow-y:auto;",
+          uiOutput("selectVar")),
+        div(class="panel-footer",
+          actionButton("btnLayer", "Show Layer", icon("globe"))
         )
       )
     )
   ),
 
-  absolutePanel(id="cite", fixed=F, draggable=F,
-    top="auto", left=10, right="auto", bottom=0,
-    width="auto", height="auto",
-    p("IFPRI/HarvestChoice, 2014. Source code on ",
-      a("Github", href="https://github.com/harvestchoice/hc-shiny"), ".")
 
+  # Tools tabs
+  tabItems(
+
+    tabItem("About",
+      includeMarkdown("../cell5m/www/txtIntro.md")),
+
+    tabItem("Overview",
+      bsAlert("alertNoData"),
+      h3(textOutput("varTitle")),
+      p("Click map to show pixel data."),
+
+      box(width=6,
+        h4("Histogram"),
+        plotOutput("plotHist", height="100%"),
+        p(br(), "Showing frequencies for visible pixels.")),
+
+      box(width=6,
+        h4("Layer Statistics"),
+        tableOutput("tableSum")
+      ),
+
+      box(width=2,
+        conditionalPanel(condition="input.btnLayer>0",
+          p(),
+          sliderInput("selectFilter", "Filter layer to Min/Max", 0, 1, c(0,1)),
+          actionButton("btnFilter", "Update Layer", icon("globe")),
+          hr(),
+          selectInput("fileType", "Choose Export Format",
+            choices=c(`Comma-separated`="csv", `ASCII Raster`="asc", GeoTIFF="tif", STATA="dta", RData="rds"),
+            selected="asc"),
+          downloadButton("saveData", "Save Layer")
+        )
+      )
+    ),
+
+    tabItem("Summarize",
+
+      box(width=5,
+        p(),
+        uiOutput("selectDomain"),
+        p("Showing a random list of 10 domains to summarize by."),
+        actionButton("btnDomain", "Summarize", icon("cog")),
+        p(br(), "Click to summary and map.")
+      ),
+
+      box(width=7,
+        h4("Domain Summary"),
+        tableOutput("tableDomain")
+      )
+    ),
+
+    tabItem("Homologues",
+
+      box(width=5,
+        p(br(), "Use the Layer choices on the right to select up to 5 layers."),
+        p(htmlOutput("selectRank")),
+        p(actionLink("btnAddRank", "Add Layer", icon("plus"))),
+        p("Then select a district on the map (mouse over and click."),
+        uiOutput("showRank"),
+        actionButton("btnRank", "Rank all districts", icon("cog")),
+        hr(),
+        actionLink("btnClearRank", "Clear All", icon("refresh"))
+      ),
+
+      box(width=7,
+        h4("District Comparison"),
+        tableOutput("tableRank")
+      )
+    )
+  ),
+
+  fluidRow(
+    column(12,
+      hr(),
+      includeMarkdown("../cell5m/www/txtCredits.md")
+    )
   )
 )
-)
 
 
+dashboardPage(header, sidebar, body)
