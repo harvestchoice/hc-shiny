@@ -7,14 +7,14 @@
 
 library(data.table)
 library(hcapi3)
-library(leaflet, lib.loc="/home/mbacou/R/x86_64-redhat-linux-gnu-library/3.2")
+library(leaflet)
 library(classInt)
 library(sp)
 library(raster)
 library(shiny)
 library(shinydashboard)
 library(shinyBS)
-library(shinyjs)
+#library(shinyjs)
 
 setwd("/home/projects/shiny/tmp")
 

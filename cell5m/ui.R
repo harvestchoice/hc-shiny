@@ -49,7 +49,7 @@ sidebar <- dashboardSidebar(
 )
 
 body <- dashboardBody(
-  useShinyjs(),
+  #useShinyjs(),
 
   fluidRow(style="position:relative;margin-top:-15px;",
 
@@ -57,15 +57,15 @@ body <- dashboardBody(
     leafletOutput("map", height=450),
 
     # Details
-    hidden(
-      absolutePanel(id="panelDetails", class="panel panel-default",
-        bottom=20, right=20, width=220, height="auto",
-        htmlOutput("details", class="panel-body")
-      )
-    ),
+#     #hidden(
+#       absolutePanel(id="panelDetails", class="panel panel-default",
+#         bottom=20, right=20, width=220, height="auto",
+#         htmlOutput("details", class="panel-body")
+#       #)
+#     ),
 
     # Indicator menu (hidden initially)
-    hidden(
+    #hidden(
       absolutePanel(id="panelInd", class="panel panel-default",
         top=-4, left=-4, width=280,
         div(class="panel-body", style="height:500px;overflow-y:auto;",
@@ -74,7 +74,7 @@ body <- dashboardBody(
           actionButton("btnLayer", "Show Layer", icon("globe"))
         )
       )
-    )
+    #)
   ),
 
 
@@ -86,6 +86,7 @@ body <- dashboardBody(
 
     tabItem("Overview",
       bsAlert("alertNoData"),
+      p(),p(),
       h3(textOutput("varTitle")),
       p("Click map to show pixel data."),
 

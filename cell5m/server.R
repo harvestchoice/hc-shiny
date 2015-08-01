@@ -8,10 +8,10 @@
 
 # Helper - construct list of variables per category
 varlst <- function(cat="Population") {
-  tmp <- vi[genRaster==T & type=="continuous" & cat2==cat, varCode, by=cat3]
+  tmp <- vi[genRaster==T & cat2==cat, varCode, by=cat3]
   tmp <- split(tmp, tmp$cat3, drop=T)
   tmp <- lapply(tmp, function(x) x$varCode)
-  for (i in 1:length(tmp)) names(tmp[[i]]) <- vi[J(tmp[[i]])][, varLabel]
+  for (i in 1:length(tmp)) names(tmp[[i]]) <- vi[tmp[[i]]][, varLabel]
   return(tmp)
 }
 
@@ -97,10 +97,10 @@ shinyServer(function(input, output, session) {
 
 
   # Update indicator menu
-  observeEvent(input$selectCat, priority=3, {
+  observeEvent(input$selectCat, priority=0, {
 
     # Toggle panel
-    shinyjs::show(id="panelInd", anim=T)
+    #shinyjs::show(id="panelInd", anim=T)
 
     selected$cat <- gsub("-", " ", input$selectCat, fixed=T)
 
@@ -120,8 +120,8 @@ shinyServer(function(input, output, session) {
   observeEvent(input$btnLayer, priority=2, {
 
     # Toggle panels
-    show(id="panelDetails", anim=T)
-    hide(id="panelInd", anim=T)
+    #show(id="panelDetails", anim=T)
+    #hide(id="panelInd", anim=T)
 
     # Hide layer
     leafletProxy("map") %>%
@@ -130,12 +130,12 @@ shinyServer(function(input, output, session) {
     # Update input values
     selected$var <- input$selectVar
     selected$iso3 <- input$selectISO3
-    selected$varTitle <- vi[selected$var][, varTitle]
+    selected$varTitle <- vi[input$selectVar][, varTitle]
 
     # Update session history
     session$iso3 <- c(session$iso3, selected$iso3)
-    session$var <- c(session$iso3, selected$var)
-    session$varTitle <- c(session$iso3, selected$varTitle)
+    session$var <- c(session$var, selected$var)
+    session$varTitle <- c(session$varTitle, selected$varTitle)
 
     # Query layer stats
     tmp <- getIndicator(selected$var, selected$iso3)
@@ -165,7 +165,7 @@ shinyServer(function(input, output, session) {
       # Recenter map if country has changed
       setView(mean(tmp$X+2, na.rm=T), mean(tmp$Y, na.rm=T), 6) %>%
       # Add raster
-      addRasterImage(r, group=selected$varTitle, opacity=0.8, maxBytes=20*1024*1024,
+      addRasterImage(r, opacity=0.8, maxBytes=20*1024*1024,
         colors=cc)
 
     # Add clickable gridcells as circles
@@ -175,6 +175,9 @@ shinyServer(function(input, output, session) {
           group=paste0(selected$iso3, " 10km grid"),
           lng=~X, lat=~Y, radius=5000, stroke=F, fillColor=F)
     }
+
+    # Update title
+    output$varTitle <- renderText({selected$varTitle})
 
 
   })
@@ -207,9 +210,6 @@ shinyServer(function(input, output, session) {
 
   })
 
-
-  # Update title
-  output$varTitle <- renderText({selected$varTitle})
 
   # Update popup details
   output$details <- renderText({

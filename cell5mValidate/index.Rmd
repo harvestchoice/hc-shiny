@@ -1,0 +1,182 @@
+---
+title: "HarvestChoice - CELL5M Data Validity Tests"
+author: "Bacou, Melanie"
+date: "7/31/2015"
+runtime: shiny
+output: 
+html_document: 
+toc: true
+fig_height: 6
+fig_width: 6
+---
+
+A sample of data validation tests for HarvestChoice 5-arc minute spatial layers for sub-Sharan Africa (documented at http://harvestchoice.org/data). These are meant to catch more obvious processing errors, not so much to proof the quality of the original sources. These tests are re-ran every time this page is loaded.
+
+```{r, results='hide'}
+setwd("/home/projects/cell5m")
+
+# Load libraries
+library(data.table)
+library(raster)
+library(hcapi3)
+library(tmap)
+library(stringr)
+library(leaflet)
+library(shiny)
+
+```
+
+## Administrative Classification
+
+Verify countries, admin-1, and admin-2 classification across SSA grid. For now this classification should be consistent with FAO GAUL 2008 (2009 eds), aside from Kenya for which we use the 2013 47-county classification. We can load GAUL at level-2 and compare with CELL5M.
+
+```{r, results='hide'}
+# Load GAUL admin-2
+g2 <- readRDS("/home/projects/cell5m/rdb/g2_2008v09.web.rds")
+names(g2)
+g2.dt <- data.table(g2@data)
+g2.dt[, rn := row.names(g2)]
+
+```
+
+```{r}
+# Check wich version of Kenya this is
+g2.dt[ADM0_NAME=="Kenya", .N]
+g2.dt[ADM0_NAME=="Kenya", .N, keyby=ADM1_NAME]
+
+# Compare against Kenya boundaries found in CELL5M
+# Get the needed variables from CELL5M
+dt <- getLayer(c("ADM0_CODE", "ADM1_CODE_ALT", "ADM2_CODE_ALT", "AREA_TOTAL"))
+names(dt)
+dt[ADM0_NAME=="Kenya", .N]
+ken <- dt[ADM0_NAME=="Kenya", list(ADM2_NAME=unique(ADM2_NAME_ALT)), keyby=ADM1_NAME_ALT]
+ken
+nrow(ken[ADM1_NAME_ALT!="buffer gridcell"])
+```
+
+47 counties are shown for Kenya as opposed to 86 in the official GAUL 2008 (2009) release. This is normal. We can verify all other country classification similarly.
+
+### Look for Missing Admin Units
+
+```{r}
+# For every country summarize the number of districts across provinces in GAUL and in CELL5M, and compare. We remove all "buffer gridcells" from the CELL5M summary.
+g2.admin <- g2.dt[, list(ADM0_NAME, ADM1_NAME, ADM2_NAME), 
+  keyby=list(ADM0_CODE, ADM1_CODE, ADM2_CODE)]
+dt.admin <- dt[ADM1_NAME_ALT!="buffer gridcell", .N, 
+  keyby=list(ADM0_CODE, ADM1_CODE_ALT, ADM2_CODE_ALT)]
+
+# Combine and look for any unmatched districts
+g2.admin$match <- dt.admin[g2.admin][, N]
+summary(g2.admin$match)
+unmatched <- g2.admin[is.na(match) & ADM0_NAME != "Kenya", .N, 
+  by=list(ADM0_NAME, ADM1_CODE, ADM1_NAME, ADM2_NAME, ADM2_CODE)]
+
+unmatched[, unique(ADM0_NAME)]
+
+```
+
+`r nrow(unmatched)` GAUL districts were not found in CELL5M across `r unmatched[, unique(ADM0_NAME)]` countries. We can map them.
+
+```{r, fig.width=3, fig.height=3, warning=F}
+# Plot missing units in each country
+p <- lapply(unique(unmatched$ADM0_NAME), function(i) {
+  u <- unmatched[ADM0_NAME==i, ADM2_CODE]
+  cntr <- g2[g2$ADM0_NAME==i,]
+  cntr$col <- ifelse(cntr$ADM2_CODE %in% u, T, F)
+  
+  # Zoom in towards the missing units (they can be very small)
+  b <- extent(cntr[cntr$ADM2_CODE %in% u,])+c(-3,3,-3,3)
+  
+  tm_shape(cntr, bbox=bbox(b)) +
+    tm_polygons(col="col", border.col="white", palette=c("grey90", "red"),
+      labels=c("matched", "unmatched"), title=i) +
+    tm_layout(title.size=.8,
+      title=str_wrap(
+        paste(unmatched[ADM2_CODE %in% u, ADM2_NAME], collapse=", "), width=30))
+})
+
+for (i in p) print(i)
+
+```
+
+
+In all instances these seem to correspond to city limits that were too small to intersect with CELL5M grid. We could correct those manually to make sure they are accounted for.
+
+Because we keyed and matched GAUL and CELL5M on a combination of `ADM0_CODE`, `ADM1_CODE` and `ADM2_CODE` the unmatched table would also return districts that might be classified within the wrong provinces and/or countries. No such record was returned though, so seems correct (e.g. there is no case of districts in Lesotho showing as belonging to South Africa).
+
+Another way to check visually is to print all districts as a color-coded raster by country. We can display these layers in a Leaflet widget.
+
+```{r, results="hide"}
+# Raster needs all character variables categorized into factors first
+dt[, `:=`(
+  ADM0_NAME=factor(ADM0_NAME),
+  ADM1_NAME_ALT=factor(ADM1_NAME_ALT),
+  ADM2_NAME_ALT=factor(ADM2_NAME_ALT),
+  ISO3=factor(ISO3))]
+```
+
+```{r, warning=F}
+# Convert CELL5M variables to a raster brick (multi-layer raster object)
+r <- SpatialPixelsDataFrame(dt[, list(X,Y)], data.frame(dt),
+  proj4string=CRS("+init=epsg:4326"),  tolerance=0.0036002)
+r <- brick(r)
+names(r)
+
+# Reproject layers to epsg:3857 to speed up leaflet
+r <- projectRaster(r, crs=CRS("+init=epsg:3857"))
+g2 <- spTransform(g2, CRS("+init=epsg:3857"))
+
+```
+
+
+```{r}
+# Create leaflet widget
+m <- renderLeaflet({
+  # Crop extent to selected country
+  d <- crop(r, g2[g2$ADM0_NAME==input$selectADM0,])
+  p <- dt[ADM0_NAME==input$selectADM0, list(X=mean(X), Y=mean(Y)),
+    by=list(ADM0_CODE, ADM1_CODE_ALT, ADM2_NAME_ALT)]
+  
+  # Update map
+  leaflet() %>%
+    setView(mean(p$X), mean(p$Y), 4) %>%
+    addTiles(urlTemplate="http://{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png") %>%
+    addRasterImage(raster(d, "ADM0_NAME"), opacity=.6, project=F, group="Country") %>%
+    addRasterImage(raster(d, "ADM1_NAME_ALT"), opacity=.6, project=F, group="Provinces") %>%
+    addRasterImage(raster(d, "ADM2_NAME_ALT"), opacity=.6, project=F, group="Districts") %>%
+    addMarkers(data=p, lng=~X, lat=~Y, popup=~ADM2_NAME_ALT, 
+      clusterOptions=markerClusterOptions(),
+      options=markerOptions(riseOnHover=T)) %>%
+    hideGroup(c("Provinces", "Districts")) %>%
+    addLayersControl(overlayGroups=c("Country", "Provinces", "Districts"),
+      options=layersControlOptions(collapsed=F))
+})
+
+# Render user input
+selectInput("selectADM0", "Select a Country", choices=levels(dt$ADM0_NAME), selected="Ghana")
+
+```
+
+```{r, echo=F}
+m
+```
+
+
+## Published Layers and Metadata Completeness
+
+Another batch of quality tests is to look for missing metadata in the Variable Inventory table `vi`. This tables is also part of the HC Data API and was loaded above with `library(hcapi3)`.
+
+Look for possibly misformed raster legends.
+
+
+## Analytical Features
+
+### Domain Summaries
+
+### Top/bottom Ranking
+
+
+
+
+
+

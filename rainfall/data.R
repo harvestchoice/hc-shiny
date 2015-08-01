@@ -756,6 +756,8 @@ load("./data/rainfall_2014v15.RData")
 
 # These are needed to generate bioclimatic variables
 tm <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+pre <- brick("./data/cru_ts3.22.1901.2013.pre.dat.nc")
+pre <- setZ(pre, tm, "month")
 tmn <- brick("./data/cru_ts3.22.1901.2013.tmn.dat.nc")
 tmn <- setZ(tmn, tm, "month")
 tmx <- brick("./data/cru_ts3.22.1901.2013.tmx.dat.nc")
@@ -815,9 +817,275 @@ bio.g0 <- dt2.bio[, list(), by=list(ADM0_CODE, month)]
 # Save for re-use
 saveRDS(bio, file="./data/ts_yearly_biovars_g2.rds")
 
-# Also create time series of other cli
+
+
+#####################################################################################
+# 2015.07.28 Update: Process biovars across Ghana districts
+#####################################################################################
+
+library(dismo)
+library(raster)
+library(data.table)
+library(rgdal)
+library(hcapi3)
+
+setwd("/home/projects/shiny/rainfall")
+load("./data/rainfall_2014v15.RData")
+
+gha <- getData(country="GHA", level=2)
+# => 137 districts, try GAUL 2008 instead
+
+g2.dt <- data.table(g2.web@data)
+g2.dt[, rn := row.names(g2.web)]
+g2.dt[ADM0_NAME=="Ghana", length(unique(ADM2_CODE))]
+# => 216 districts (since 2008), was 170 in 2008
+# Found one with 173 district at GeoCommons
+# http://geocommons.com/overlays/201941.zip
+download.file("http://geocommons.com/overlays/201941.zip", "./data/GHA_adm2_170.zip")
+unzip("./data/GHA_adm2_170.zip", exdir="./data")
+
+
+# Eduardo provided the GLSS6 district codelist in `./data/GLSS6_codelist.csv`
+gha.lbl <- fread("./data/GLSS6_codelist.csv")
+setnames(gha.lbl, c("id", "svyL2Name", "svyL2Code", "svyL1Name"))
+# Verify
+gha.lbl[, list(.N, length(unique(svyL2Code))), by=svyL1Name]
+#        svyL1Name  N V2
+# 1:       Western 17 17
+# 2:       Central 17 17
+# 3: Greater Accra 10 10
+# 4:         Volta 18 18
+# 5:       Eastern 21 21
+# 6:       Ashanti 27 27
+# 7:   Brong Ahafo 22 22
+# 8:      Northern 20 20
+# 9:    Upper East  9  9
+# 10:   Upper West  9  9
+
+
+gha <- readOGR("./data", "ghana_districts")
+gha.dt <- data.table(gha@data)
+gha.dt[, rn := row.names(gha)]
+dist <- adist(gha.lbl$svyL2Name, gha.dt$DISTRICT, ignore.case=T)
+dist <- apply(dist, 1, function(x) order(x)[1:2])
+gha.lbl[, match1 := gha.dt[dist[1,], DISTRICT]]
+gha.lbl[, match2 := gha.dt[dist[2,], DISTRICT]]
+
+setkey(gha.lbl, match1)
+setkey(gha.dt, DISTRICT)
+gha.lbl$rn1 <- gha.dt[gha.lbl, mult="first"][, rn]
+setkey(gha.dt, match2)
+gha.dt$rn2 <- gha.dt[gha.lbl, mult="first"][, rn]
+
+write.csv(gha.lbl, "./data/GLSS6_district.csv", row.names=F, na="")
+
+# Reload with matching here
+gha.lbl <- fread("./data/GLSS6_district.csv")
+
+# Merge into gha map
+gha.lbl[, rn := as.character(rn)]
+setkey(gha.dt, rn)
+setkey(gha.lbl, rn)
+gha.dt <- gha.lbl[gha.dt]
+gha.dt[is.na(svyL2Code), DISTRICT]
+# [1] NZEMA EAST       BOLE             SAWLA-TUNA-KALBA
+
+setkey(gha.dt, rn)
+gha@data <- gha.dt[row.names(gha)]
+
+# Need to remove duplicate feature 154 (island), ignore 171, 172 (slivers)
+gha <- gha[-c(155,172,173),]
+
+# Export to QGIS and fix the sliver, and reload
+writeOGR(gha, "./data", "GHA_adm2_170", "ESRI Shapefile", overwrite=T)
+gha <- readOGR("./data", "GHA_adm2_170")
+gha.dt <- data.table(gha@data)
+gha.dt[, rn := row.names(gha)]
+
+
+# Intersect with CELL5M variables
+# Helper - return dominant class
+dominant <- function(x, ...) names(sort(table(x), decreasing=T, ...))[1]
+
+var <- c("AEZ16_CLAS", "LGP_AVG", "LGP_CV", "FS_2012_TX", "TT_20K", "TT_50K",
+  "ELEVATION", "PN12_TOT", "pre_mean", "pre_cv", "TPOV_PT200", "TPOV_PT125",
+  "soc_d5", "soc_d15", "soc_d30")
+
+var <- getLayer(var, iso3="GHA")
+var[, AEZ16_CLAS := factor(AEZ16_CLAS)]
+var[, FS_2012_TX := factor(FS_2012_TX)]
+
+var <- SpatialPixelsDataFrame(var[, list(X, Y)], data.frame(var),
+  proj4string=CRS("+init=epsg:4326"), tolerance=0.000120005)
+
+r <- brick(var[, c("AEZ16_CLAS", "FS_2012_TX")])
+tmp <- extract(r, gha, fun=dominant, na.rm=T, factors=T)
+tmp <- data.frame(tmp)
+gha.dt <- cbind(gha.dt, tmp)
+
+r <- brick(var[, c("LGP_AVG", "LGP_CV", "TT_20K",
+  "TT_50K", "ELEVATION", "pre_mean", "pre_cv", "TPOV_PT200",
+  "TPOV_PT125", "soc_d5", "soc_d15", "soc_d30" )])
+tmp <- extract(r, gha, fun=mean, na.rm=T)
+tmp <- data.frame(tmp)
+gha.dt <- cbind(gha.dt, tmp)
+
+r <- raster(var[, "PN12_TOT"])
+tmp <- extract(r, gha, fun=sum, na.rm=T)
+tmp <- data.frame(PN12_TOT=tmp)
+sum(tmp)
+# [1] 24904949
+gha.dt <- cbind(gha.dt, tmp)
+
+# Clean up a bit
+gha.dt <- gha.dt[, .SD, .SDcols=c(4,2,1,3,5,6,13,15,18:33)]
+gha <- spTransform(gha, CRS("+init=epsg:3857"))
+gha.dt[, area_km := area(gha)/1000000]
+summary(gha.dt$area_km)
+
+
+# Generate biovars from CRU 3.22
+# These are needed to generate bioclimatic variables
+tm <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+pre <- brick("./data/cru_ts3.22.1901.2013.pre.dat.nc")
+pre <- setZ(pre, tm, "month")
+tmn <- brick("./data/cru_ts3.22.1901.2013.tmn.dat.nc")
+tmn <- setZ(tmn, tm, "month")
+tmx <- brick("./data/cru_ts3.22.1901.2013.tmx.dat.nc")
+tmx <- setZ(tmx, tm, "month")
+
+gha <- spTransform(gha, proj4string(pre))
+pre <- crop(pre, gha)
+tmn <- crop(tmn, gha)
+tmx <- crop(tmx, gha)
+
+# Keep 1960/01-2013/12
+pre <- subset(pre, 709:1356)
+tmn <- subset(tmn, 709:1356)
+tmx <- subset(tmx, 709:1356)
+
+# Generate biovars year by year
+bio <- lapply(seq(1, 648, 12), function(i) biovars(
+  subset(pre, i:(i+11)), subset(tmn, i:(i+11)), subset(tmx, i:(i+11))))
+length(bio)
+# 54
+
+tmp <- lapply(bio, extract, gha, fun=mean, na.rm=T)
+bio <- lapply(tmp, as.matrix)
+bio <- simplify2array(bio)
+dim(bio)
+# [1] 170  19  54
+
+dimnames(bio)[[1]] <- gha.dt$svyL2Code
+dimnames(bio)[[3]] <- paste0("Y", 1960:2013)
+names(dimnames(bio)) <- c("svyL2Code", "biovars", "year")
+
+# Finaly compute long-term mean for each district
+bio <- apply(bio, c("svyL2Code", "biovars"), mean, na.rm=T)
+bio <- data.frame(bio)
+gha.dt <- cbind(gha.dt, bio)
+gha.dt[, POPDEN_SKm := NULL]
+
+bio.lbl <- c(
+  "Annual Mean Temperature",
+  "Mean Diurnal Range (Mean of monthly (max temp - min temp))",
+  "Isothermality (BIO2/BIO7) (* 100)",
+  "Temperature Seasonality (standard deviation *100)",
+  "Max Temperature of Warmest Month",
+  "Min Temperature of Coldest Month",
+  "Temperature Annual Range (BIO5-BIO6)",
+  "Mean Temperature of Wettest Quarter",
+  "Mean Temperature of Driest Quarter",
+  "Mean Temperature of Warmest Quarter",
+  "Mean Temperature of Coldest Quarter",
+  "Annual Precipitation",
+  "Precipitation of Wettest Month",
+  "Precipitation of Driest Month",
+  "Precipitation Seasonality (Coefficient of Variation)",
+  "Precipitation of Wettest Quarter",
+  "Precipitation of Driest Quarter",
+  "Precipitation of Warmest Quarter",
+  "Precipitation of Coldest Quarter")
+
+gha.dt <- data.frame(gha.dt)
+attr(gha.dt, "var.labels") <- c("shape id", "GLSS6 region", "GLSS6 district code", "GLSS6 district",
+  "DISTRICT", "CAPITAL", "REGION", vi[names(gha.dt)[8:22]][, varLabel], "area sq. km.", bio.lbl)
+
+# Export to STATA
+write.dta(gha.dt, "./data/gha-glss6-svyMap.dta", version=11L)
+
+# Export to shapefile
+setkey(gha.dt, rn)
+gha@data <- gha.dt[row.names(gha)]
+
+writeOGR(gha, "./data", "gha-glss6-svyMap", "ESRI Shapefile")
+
+
+
+#####################################################################################
+# 2015.07.28 Update: Process biovars across AR villages
+#####################################################################################
+
+library(dismo)
+library(raster)
+library(data.table)
+library(rgdal)
+library(hcapi3)
+
+setwd("/home/projects/shiny/rainfall")
+load("./data/rainfall_2014v15.RData")
+
+# Import AR village locations
+ar <- readRDS("./data/ARPointsZoI_2015.07.28.rds")
+
+
+# Generate biovars from CRU 3.22
+# These are needed to generate bioclimatic variables
+tm <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+pre <- brick("./data/cru_ts3.22.1901.2013.pre.dat.nc")
+pre <- setZ(pre, tm, "month")
+tmn <- brick("./data/cru_ts3.22.1901.2013.tmn.dat.nc")
+tmn <- setZ(tmn, tm, "month")
+tmx <- brick("./data/cru_ts3.22.1901.2013.tmx.dat.nc")
+tmx <- setZ(tmx, tm, "month")
+
+# Keep 1960/01-2013/12
+pre <- subset(pre, 709:1356)
+tmn <- subset(tmn, 709:1356)
+tmx <- subset(tmx, 709:1356)
+
+# Intersect with AR villages
+ar <- spTransform(ar, proj4string(pre))
+pre <- extract(pre, ar)
+tmn <- extract(tmn, ar)
+tmx <- extract(tmx, ar)
+
+# Generate biovars year by year
+bio <- lapply(seq(1, 648, 12), function(i) biovars(
+  pre[, i:(i+11)], tmn[, i:(i+11)], tmx[, i:(i+11)]))
+length(bio)
+# 54
+
+bio <- simplify2array(bio)
+dim(bio)
+# [1] 162  19  54
+
+names(dimnames(bio)) <- c("village", "biovars", "year")
+
+# Finaly compute long-term mean for each district
+bio <- apply(bio, c("village", "biovars"), mean, na.rm=T)
+bio <- data.frame(bio)
+ar@data <- cbind(ar@data, bio)
+
+# Save
+saveRDS(ar, "./data/ARPointsZoI_2015.07.28.rds")
+
 
 # Save all
 rm(dt2.eratp, dt2.pdsi, dt2.tmp)
 rm(g2, dt2.tmn, dt2.tmx, genStats, cntr, baseurl, tm, tmn, tmx, pre)
 save.image("./data/rainfall_2014v15.RData")
+
+
+
+
