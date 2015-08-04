@@ -67,10 +67,16 @@ genStats <- function(dt, cntr, dist, tm, mth) {
 shinyServer(function(input, output, session) {
 
   # Create the map
-  map <- createLeafletMap(session, "map")
+  map <- leaflet() %>%
+    setView(41, 1, 6) %>%
+    addTiles(urlTemplate="http://{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+      attribution="Mapbox")
+
+  output$map <- renderLeaflet(map)
 
   # Init reactive values
   values <- reactiveValues()
+
 
   # Primary observer (react to main button)
   observeEvent(input$btn, priority=1, {
@@ -87,33 +93,43 @@ shinyServer(function(input, output, session) {
       pdsi=updateSliderInput(session, "rg", min=1960, max=2012, value=c(1990, 2012)),
       aritp=updateSliderInput(session, "rg", min=1979, max=2014, value=c(1990, 2014)))
 
-    # Read monthly district records from disk (see pre-process steps in `data.R`)
-    dt <- try(readRDS(paste0("../rainfall/data/rds/", input$var, g2.dt[input$selectg0][, ADM0_CODE], ".rds")))
+    # Add statistics
+    dt <- data[ADM0_NAME==input$selectg0 & var==input$var]
+    dt.g2 <- dt[, list(
+      mean=mean(value, na.rm=T),
+      min=min(value, na.rm=T),
+      `85th`=quantile(value, 0.85, na.rm=T),
+      max=max(value, na.rm=T),
+      sd=sd(value, na.rm=T)),
+      by=list(ADM0_CODE, ADM0_NAME, ADM1_CODE, ADM1_NAME, ADM2_CODE, ADM2_NAME)]
 
-    # Read country GeoJSON and symbology from disk (pre-processed in `data.R`)
-    m <- try(readRDS(paste0("../rainfall/data/rds/", input$var, g2.dt[input$selectg0][, ADM0_CODE], ".json.rds")))
+    # Get country boundaries
+    g <- g2[g2$ADM0_NAME==input$selectg0,]
 
-    if (class(dt)[1]=="try-error" | class(m)[1]=="try-error") {
-      # File is missing for that country
-      createAlert(session, "alertNoData",
-        message="Try another combination.",
-        title="Missing Data", type="warning")
+    # Merge attributes
+    setkey(dt.g2, ADM2_CODE)
+    g@data <- data.frame(dt.g2[J(g@data$ADM2_CODE)])
+    coords <- apply(sp::coordinates(g), 2, mean, na.rm=T)
+    pal <- colorBin(vars[[input$var]]$pal, dt$mean)
 
-    } else {
-      # Get country boundaries
-      g <- g2[g2$ADM0_NAME==input$selectg0,]
+    # Add layer
+    leafletProxy("map", data=g) %>%
+      # Recenter map if country has changed
+      setView(coords[1]+5, coords[2], 6) %>%
+      clearShapes() %>%
+      clearControls() %>%
 
-      # Re-center map to selected country centroid
-      map$clearGeoJSON()
-      coords <- apply(sp::coordinates(g), 2, mean, na.rm=T)
-      map$setView(coords[2], coords[1]+5, 6)
-      map$addGeoJSON(m)
+      # Add polygons
+      addPolygons(group="Country", layerId=~ADM2_CODE,
+        stroke=F, fillOpacity=0.5, fillColor=~pal(mean)) %>%
 
-      # Export
-      values$m <- m
-      values$g <- g
-      values$dt1 <- dt
-    }
+      # Add legend
+      addLegend("bottomleft", opacity=1, pal=pal, values=~mean,
+        title=names(d)[d==input$var], labFormat=labelFormat(digits=0))
+
+    # Export
+    values$g <- g
+    values$dt1 <- dt
   })
 
 
@@ -134,8 +150,8 @@ shinyServer(function(input, output, session) {
       if (class(dt)[1]=="try-error") {
         # Data missing for that district
         createAlert(session, "alertNoData", "alertNoData",
-          message="Try another district.",
-          title="Missing Data", type="warning", block=T, append=F)
+          content="Try another district.",
+          title="Missing Data", style="warning", append=F)
       }
       return(dt)
     })
@@ -210,36 +226,43 @@ shinyServer(function(input, output, session) {
     if (input$btn==0) return()
     dist <- input$selectg2
     if (dist==input$selectg0 | dist=="Entire Country") return()
-    m <- values$m
-    i <- which(sapply(m$features, function(x) x$properties$ADM2_NAME==dist))
-    m$features <- m$features[i]
-    m$features[[1]]$style <- list(fillColor="gray", weight=.6, color="white", fillOpacity=0.7)
-    map$addGeoJSON(m, 0)
+    g <- values$g
+    g <- g[g$ADM2_NAME==dist,]
+
+    # Add to map
+    leafletProxy("map", data=g) %>%
+      clearGroup("Selected") %>%
+      addPolygons(group="Selected", smoothFactor=3,
+        color="white", opacity=0.7, fillColor="grey50")
   })
 
 
   # Update district on map click
-  observeEvent(input$map_geojson_click,
-    updateSelectInput(session, "selectg2",
-      selected=input$map_geojson_click$properties$ADM2_NAME))
+  observeEvent(input$map_shape_click, {
+    evt <- data.table(values$g@data, key="ADM2_CODE")
+    evt <- evt[input$map_shape_click$id][, ADM2_NAME]
+    updateSelectInput(session, "selectg2", selected=evt)
+  })
 
 
   # Show district details on mouseover
   output$details <- renderText({
-    evt <- input$map_geojson_mouseover
+    evt <- input$map_shape_mouseover$id
     isolate({
       if (is.null(evt)) {
         out <- div(h3(input$selectg0), p("Mouse over districts to view details."))
       } else {
+        evt <- data.table(values$g@data, key="ADM2_CODE")
+        evt <- evt[input$map_shape_click$id]
         out <- div(
-          h3(input$selectg0, br(), tags$small(evt$properties$ADM2_NAME, ", ", evt$properties$ADM1_NAME)),
+          h3(evt$ADM0_NAME, br(), tags$small(evt$ADM2_NAME, ", ", evt$ADM1_NAME)),
           hr(),
           h4(names(d)[d==input$var]),
           p(
-            "Mean: ", strong(evt$properties$mean), br(),
-            "85th perc.: ", strong(evt$properties$`85th`), br(),
-            "Max: ", strong(evt$properties$max), br(),
-            "Sd. Dev.: ", strong(evt$properties$sd)),
+            "Mean: ", strong(evt$mean), br(),
+            "85th perc.: ", strong(evt$`85th`), br(),
+            "Max: ", strong(evt$max), br(),
+            "Sd. Dev.: ", strong(evt$sd)),
           p(em("Click the map to select this district.")))
       }
     })

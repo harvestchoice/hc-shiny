@@ -1,52 +1,65 @@
 ---
-title: "HarvestChoice - CELL5M Data Validity Tests"
+title: "HarvestChoice - CELL5M Data Validition"
 author: "Bacou, Melanie"
 date: "7/31/2015"
 runtime: shiny
 output: 
 html_document: 
-toc: true
 fig_height: 6
 fig_width: 6
 ---
 
-A sample of data validation tests for HarvestChoice 5-arc minute spatial layers for sub-Sharan Africa (documented at http://harvestchoice.org/data). These are meant to catch more obvious processing errors, not so much to proof the quality of the original sources. These tests are re-ran every time this page is loaded.
+A sample of data validation tests for HarvestChoice 5-arc minute spatial layers for sub-Saharan Africa (further documented at http://harvestchoice.org/data). These are meant to catch more obvious processing errors, not so much to proof the quality of the original sources. These tests are run every time this page is loaded. Source code and results are shown here interactively.
 
-```{r, results='hide'}
-setwd("/home/projects/cell5m")
+This document is part of a series of automated tests to validate HarvestChoice data layers:
 
-# Load libraries
+**Contents**
+
+- [Administrative Classification](#administrative-classification)
+- [Metadata Summary](viValidate.Rmd)
+- [Variable Inventory](viValidate.Rmd#variable-inventory)
+- [Analytical Features](toolsValidate.Rmd)
+
+*************************************************************************************
+
+
+```{r, eval=F}
+# Load common libraries
 library(data.table)
-library(raster)
 library(hcapi3)
-library(tmap)
-library(stringr)
-library(leaflet)
-library(shiny)
+```
 
+```{r, results="hide"}
+# Load spatial libraries
+library(raster)
+library(tmap)
+library(leaflet)
+library(stringr)
 ```
 
 ## Administrative Classification
 
 Verify countries, admin-1, and admin-2 classification across SSA grid. For now this classification should be consistent with FAO GAUL 2008 (2009 eds), aside from Kenya for which we use the 2013 47-county classification. We can load GAUL at level-2 and compare with CELL5M.
 
-```{r, results='hide'}
+```{r, eval=F}
 # Load GAUL admin-2
-g2 <- readRDS("/home/projects/cell5m/rdb/g2_2008v09.web.rds")
-names(g2)
+g2 <- readRDS("../../cell5m/rdb/g2_2008v09.web.rds")
 g2.dt <- data.table(g2@data)
 g2.dt[, rn := row.names(g2)]
 
 ```
 
 ```{r}
+# Show column names
+names(g2)
+
 # Check wich version of Kenya this is
 g2.dt[ADM0_NAME=="Kenya", .N]
 g2.dt[ADM0_NAME=="Kenya", .N, keyby=ADM1_NAME]
 
 # Compare against Kenya boundaries found in CELL5M
 # Get the needed variables from CELL5M
-dt <- getLayer(c("ADM0_CODE", "ADM1_CODE_ALT", "ADM2_CODE_ALT", "AREA_TOTAL"))
+dt <- hcapi(c("ADM0_CODE", "ADM1_CODE_ALT", "ADM2_CODE_ALT", "AREA_TOTAL"))
 names(dt)
 dt[ADM0_NAME=="Kenya", .N]
 ken <- dt[ADM0_NAME=="Kenya", list(ADM2_NAME=unique(ADM2_NAME_ALT)), keyby=ADM1_NAME_ALT]
@@ -116,67 +129,54 @@ dt[, `:=`(
 ```
 
 ```{r, warning=F}
-# Convert CELL5M variables to a raster brick (multi-layer raster object)
-r <- SpatialPixelsDataFrame(dt[, list(X,Y)], data.frame(dt),
-  proj4string=CRS("+init=epsg:4326"),  tolerance=0.0036002)
-r <- brick(r)
-names(r)
-
-# Reproject layers to epsg:3857 to speed up leaflet
-r <- projectRaster(r, crs=CRS("+init=epsg:3857"))
-g2 <- spTransform(g2, CRS("+init=epsg:3857"))
+  # Convert CELL5M variables to multi-layer raster brick
+  r <- SpatialPixelsDataFrame(dt[, list(X,Y)], data.frame(dt),
+    proj4string=CRS("+init=epsg:4326"),  tolerance=0.0036002)
+  r <- brick(r)
+  names(r)
+  
+  # Reproject layers to epsg:3857 to speed up leaflet
+  r <- projectRaster(r, crs=CRS("+init=epsg:3857"))
+  g2 <- spTransform(g2, CRS("+init=epsg:3857"))
+  
+  # Make district centroids from CELL5M to use as popup markers
+  m <- dt[, list(X=mean(X), Y=mean(Y)), by=list(ADM0_NAME, ADM1_CODE_ALT, ADM2_NAME_ALT)]
 
 ```
-
 
 ```{r}
-# Create leaflet widget
-m <- renderLeaflet({
-  # Crop extent to selected country
-  d <- crop(r, g2[g2$ADM0_NAME==input$selectADM0,])
-  p <- dt[ADM0_NAME==input$selectADM0, list(X=mean(X), Y=mean(Y)),
-    by=list(ADM0_CODE, ADM1_CODE_ALT, ADM2_NAME_ALT)]
   
-  # Update map
-  leaflet() %>%
-    setView(mean(p$X), mean(p$Y), 4) %>%
-    addTiles(urlTemplate="http://{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png") %>%
-    addRasterImage(raster(d, "ADM0_NAME"), opacity=.6, project=F, group="Country") %>%
-    addRasterImage(raster(d, "ADM1_NAME_ALT"), opacity=.6, project=F, group="Provinces") %>%
-    addRasterImage(raster(d, "ADM2_NAME_ALT"), opacity=.6, project=F, group="Districts") %>%
-    addMarkers(data=p, lng=~X, lat=~Y, popup=~ADM2_NAME_ALT, 
-      clusterOptions=markerClusterOptions(),
-      options=markerOptions(riseOnHover=T)) %>%
-    hideGroup(c("Provinces", "Districts")) %>%
-    addLayersControl(overlayGroups=c("Country", "Provinces", "Districts"),
-      options=layersControlOptions(collapsed=F))
-})
-
-# Render user input
-selectInput("selectADM0", "Select a Country", choices=levels(dt$ADM0_NAME), selected="Ghana")
+# Render map
+leaflet(width="100%") %>%
+  setView(20,1, 4) %>% # center on Ghana
+  addTiles(urlTemplate="http://{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+    attribution="Mapbox") %>%
+  
+  # Add CELL5M rasters
+  addRasterImage(raster(r, "ADM0_NAME"), 
+    opacity=.6, project=F, maxBytes=8*1024*1024, group="Country") %>%
+  addRasterImage(raster(r, "ADM1_NAME_ALT"), 
+    opacity=.6, project=F, maxBytes=8*1024*1024, group="Provinces") %>%
+  addRasterImage(raster(r, "ADM2_NAME_ALT"), 
+    opacity=.6, project=F, maxBytes=8*1024*1024, group="Districts") %>%
+  
+  # Add district popups
+  addMarkers(data=m, lng=~X, lat=~Y, popup=~ADM2_NAME_ALT, 
+    clusterOptions=markerClusterOptions(),
+    options=markerOptions(riseOnHover=T)) %>%
+  
+  # Add layer control
+  hideGroup(c("Provinces", "Districts")) %>%
+  addLayersControl(overlayGroups=c("Country", "Provinces", "Districts"),
+    options=layersControlOptions(collapsed=F))
 
 ```
 
-```{r, echo=F}
-m
-```
 
+## Regional Classification
 
-## Published Layers and Metadata Completeness
+Test and update the regional classification.
 
-Another batch of quality tests is to look for missing metadata in the Variable Inventory table `vi`. This tables is also part of the HC Data API and was loaded above with `library(hcapi3)`.
-
-Look for possibly misformed raster legends.
-
-
-## Analytical Features
-
-### Domain Summaries
-
-### Top/bottom Ranking
-
-
-
-
+[TBD]
 
 

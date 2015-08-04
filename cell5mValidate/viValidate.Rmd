@@ -1,0 +1,142 @@
+---
+title: "HarvestChoice - CELL5M Data Validation"
+author: "Bacou, Melanie"
+date: "8/1/2015"
+runtime: shiny
+output: 
+html_document: 
+fig_height: 6
+fig_width: 6
+---
+
+This document is part of a series of automated tests to validate [HarvestChoice](http://harvestchoice.org/data) 5-arc-minute spatial rasters for sub-Saharan Africa.
+
+**Contents**
+
+- [Administrative Classification](index.Rmd)
+- [Metadata summary](#metadata-summary)
+- [Variable Inventory](#variable-inventory)
+- [Adjust Raster Legends](#adjust-raster-legends)
+- [Analytical Features](toolsValidate.Rmd)
+
+## Metadata Summary
+
+Another batch of tests looking for missing or inconsistent metadata in the Variable Inventory `vi`. Note that `vi` is loaded with `library(hcapi3)`.
+
+```{r, eval=F}
+# Load common libraries
+library(data.table)
+library(hcapi3)
+```
+
+```{r}
+library(rhandsontable) # Fancy tables on this page
+
+# Summarize published layers across categories
+vi.sum <- vi[published==T, .N, keyby=list(cat1, cat2, cat3)]
+```
+
+There are currently **`r sum(vi.sum$N)` published layers**. The next table shows the number of published layers in each sub-category. Highlight cells and Ctrl+C/Ctrl+V to save it, else download the entire table to CSV.
+
+```{r, echo=F}
+
+cat <- vi[, list(cat2=unique(cat2)), keyby=cat1][order(cat2)]
+cat <- split(cat, cat$cat1)
+cat <- lapply(cat, function(x) x$cat2)
+
+downloadHandler(paste("vi_summary", Sys.Date(), "csv", sep="."), contentType="text/csv", 
+  function(file) write.csv(vi.sum, file, row.names=F, na=""))
+
+renderRHandsontable(
+  rhandsontable(vi.sum, width=540, stretchH="last",
+    rowHeaders=F, readOnly=T, contextMenu=F))
+
+```
+
+
+# Missing Metadata
+
+Another series of tests pointing to possible missing entries across metadata elements. Not all missing should raise a flag (e.g. the `caveat` and `yearEnd` elements are often left blank). `varLabel`, `varTitle`, `sortOrder`, `varDesc`, `type`, `unit`, `aggFunR`, and the legend descriptors `classColors`, `classBreaks`, `classLabels` should not be empty.
+
+```{r, results="hide"}
+
+vi.miss <- vi[published==T, lapply(.SD, function(x) sum(is.na(x), na.rm=T)),
+  keyby=list(cat1, cat2, cat3)]
+vi.miss[, N := Reduce(`+`, .SD), .SDcols=-c(1:3)]
+vi.miss <- vi.miss[N>0]
+
+```
+
+```{r, echo=F}
+
+# Show missing
+l <- dim(vi.miss)[2]
+setcolorder(vi.miss, c(1:3, l, 4:(l-1)))
+
+renderRHandsontable(
+  rhandsontable(vi.miss, rowHeaders=F, readOnly=T, fixedColumnsLeft=3, contextMenu=F) %>%
+    hot_heatmap(cols=-c(1:4), color_scale=c("yellow", "red"))
+)
+
+```
+
+
+## Variable Inventory
+
+Use the table below to make quick corrections to the variable inventory. Just export subsets of the inventory and make further edits with MSExcel, or make edits on this page. Then send the corrected CSV back to the [maintainer](mailto:m.bacou@cgiar.org).
+
+
+```{r, echo=F}
+
+selectInput("cat", "Select a category", cat)
+
+downloadHandler(paste("vi", Sys.Date(), "csv", sep="."), contentType="text/csv", 
+  function(file) if (!is.null(values$hot)) write.csv(values$hot, file, row.names=F, na=""))
+
+helpText("This table shows a subset of required metadata elements. Download to CSV and e-mail your edits back to the maintainer. You can make change in this table but will still need to download a CSV and e-mail it back.")
+
+rHandsontableOutput("hot")
+values <- reactiveValues()
+
+output$hot <- renderRHandsontable({
+  if (!is.null(input$hot)) {
+    df <- hot_to_r(input$hot)
+  } else {
+    df <- vi[published==T & cat2==input$cat][order(cat1, cat2, cat3, sortOrder), 
+      list(varCode, varLabel, sortOrder, unit, year, dec, 
+        cat1, cat2, cat3, genRaster, owner, aggFunR, 
+        classColors, classLabels, classBreaks, varTitle, varDesc)]
+  }
+  
+  values$hot <- df
+  rhandsontable(df, readOnly=T, rowHeaders=F, fixedColumnsLeft=1, width=860, stretchH="all",
+    highlightCol=T, highlightRow=T, columnSorting=T)
+})
+
+```
+
+
+## Adjust Raster Legends
+
+[TBD]
+
+```{r, eval=F, echo=F}
+var <- vi[type=="continuous", varCode]
+names(var) <- vi[type=="continuous", varLabel]
+
+setkey(vi, varCode)
+selectInput("selectVar", "Select a layer", var)
+
+renderUI({
+  i <- input$selectVar
+  cv <- as.numeric(unlist(strsplit(vi[i][, classBreaks], "|", fixed=T)))
+  list(
+    renderPlot(width=500, height=300, stats(i)),
+    sliderInput("classBreaks", "Modify legend breaks", width="500px",
+      min=0, max=last(cv), value=cv, round=T)
+  )
+})
+
+
+```
+

@@ -20,12 +20,7 @@ shinyUI(fluidPage(
   ),
 
   fluidRow(style="position: relative;",
-    leafletMap("map", width="100%", height=380,
-      initialTileLayer = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
-      initialTileLayerAttribution = HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>'),
-      # Center on Kenya
-      options=list(center=c(1, 41), zoom=6)
-    ),
+    leafletOutput("map", height=380),
 
     conditionalPanel(condition="input.btn>0",
       absolutePanel(class="panel panel-default",
@@ -40,7 +35,7 @@ shinyUI(fluidPage(
   fluidRow(
     column(3,
       p(br()),
-      selectInput("var", "Choose a Variable", d[c(5, 7, 11)], selected="pre"),
+      selectInput("var", "Choose a Variable", d[1:3], selected="pre"),
       selectInput("selectg0", "Choose a Country", names(g2.list), selected="Kenya"),
       actionButton("btn", "Show Series", icon("globe"), class="btn-primary"),
       hr(),
@@ -59,7 +54,7 @@ shinyUI(fluidPage(
 
     column(7,
       conditionalPanel(condition="input.btn==0",
-        includeHTML("../rainfall/www/txtIntro.html")),
+        includeMarkdown("../rainfall/www/txtIntro.md")),
       uiOutput("selectedMsg"),
       bsAlert("alertNoData"),
       p(br()),

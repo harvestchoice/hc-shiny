@@ -596,13 +596,6 @@ for (i in cntr) {
 
 
 #####################################################################################
-# TODO 2015.03.20 Migrate to rstudio/leaflet
-#####################################################################################
-
-
-
-
-#####################################################################################
 # TODO 2015.03.18 Update: Use SEAS package for normal and departure statistics
 #####################################################################################
 
@@ -1087,5 +1080,21 @@ rm(g2, dt2.tmn, dt2.tmx, genStats, cntr, baseurl, tm, tmn, tmx, pre)
 save.image("./data/rainfall_2014v15.RData")
 
 
+#####################################################################################
+# 2015.08.02 Update: Update leaflet, merge all data files
+#####################################################################################
 
+# Get all rds files in ./data/rds, not *json*
+# Combine them all and compute mean stats by districts
+
+pre <- readRDS("./data/dt2.pre.rds")
+tmp <- readRDS("./data/dt2.tmp.rds")
+pdsi <- readRDS("./data/dt2.pdsi.rds")
+
+pre[, var := "pre"]
+tmp[, var := "tmp"]
+pdsi[, var := "pdsi"]
+
+dt <- rbind(pre, tmp, pdsi)
+saveRDS(dt, file="./data/dt2.rds")
 
