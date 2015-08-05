@@ -11,19 +11,17 @@ setwd("/home/projects/shiny/tmp")
 library(data.table)
 library(leaflet)
 library(rgdal)
-library(RColorBrewer)
 library(shiny)
 library(rhandsontable)
 
 # Load latest revision
 m <- readRDS("../subnatpov/svyPov_20150804.rds")
-
-# Extract attribute table
-m.dt <- data.table(m@data)
+m@data <- data.frame(m@data)
 
 # constants
 def <- c("circa 2008", "circa 2005")
 perct <- function(x) x*100
+pal <- rev(RColorBrewer::brewer.pal(11, "RdYlGn"))
 
 # Make a list of indicators
 vars <- c(
@@ -41,15 +39,17 @@ vars <- c(
   `Per capita expenditure, mean per annum`="pcexp_ppp_m",
   `Food expenditure, mean per annum`="foodexp_ppp_m",
   `Non-food expenditure, mean per annum`="nfoodexp_ppp_m",
-  `Total population`="totpop"
-)
+  `Total population`="totpop")
 
-# Get list of countries
+# List of countries
 load("/home/projects/cell5m/rdb/latest/lookup.RData")
-iso <- iso[iso %in% c("SSA", levels(m.dt$ISO3)[-c(13,20,33,36,47)])]
+rm(g, readme)
+iso <- iso[iso %in% c("SSA", levels(m@data$ISO3)[-c(13,20,33,36,47)])]
 
+# GAUL Country boundaries
+load("/home/projects/cell5m/rdb/g0.rda")
 
-# Renderer for rhandsometable
+# Helper - Renderer for rhandsometable
 convertNA <- function() htmlwidgets::JS(
   "function(instance, TD, row, col, prop, value, cellProperties) {
   if (value === 'NA' | value === 'NaN') {
