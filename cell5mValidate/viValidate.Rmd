@@ -60,16 +60,14 @@ Another series of tests pointing to possible missing entries across metadata ele
 
 ```{r, results="hide"}
 
-vi.miss <- vi[published==T, lapply(.SD, function(x) sum(is.na(x), na.rm=T)),
+vi.miss <- vi[published==T, lapply(.SD, function(x) sum(is.na(x)==T | trimws(x)=="", na.rm=T)),
   keyby=list(cat1, cat2, cat3)]
 vi.miss[, N := Reduce(`+`, .SD), .SDcols=-c(1:3)]
 vi.miss <- vi.miss[N>0]
-
 ```
 
-```{r, echo=F}
-
-# Show missing
+```{r}
+# Show color-coded missing
 l <- dim(vi.miss)[2]
 setcolorder(vi.miss, c(1:3, l, 4:(l-1)))
 
@@ -88,7 +86,7 @@ Use the table below to make quick corrections to the variable inventory. Just ex
 
 ```{r, echo=F}
 
-selectInput("cat", "Select a category", cat)
+selectInput("cat", "Select a sub-category (`cat2`)", cat)
 
 downloadHandler(paste("vi", Sys.Date(), "csv", sep="."), contentType="text/csv", 
   function(file) if (!is.null(values$hot)) write.csv(values$hot, file, row.names=F, na=""))
@@ -109,8 +107,13 @@ output$hot <- renderRHandsontable({
   }
   
   values$hot <- df
-  rhandsontable(df, readOnly=T, rowHeaders=F, fixedColumnsLeft=1, width=860, stretchH="all",
-    highlightCol=T, highlightRow=T, columnSorting=T)
+  rhandsontable(df, readOnly=F, rowHeaders=F, width=860, stretchH="all",
+    highlightCol=T, highlightRow=T,
+    columnSorting=T, manualColumnResize=T, fixedColumnsLeft=1) %>%
+    hot_cols(list(
+      sortOrder=list(type="numeric"), 
+      dec=list(type="numeric"), 
+      year=list(type="numeric")))
 })
 
 ```
