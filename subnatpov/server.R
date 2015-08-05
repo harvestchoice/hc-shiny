@@ -62,7 +62,7 @@ shinyServer(function(input, output, session) {
 
       # Add legend
       addLegend("bottomright", opacity=1, pal=pal_def, values=~hc_poor2,
-        title="hc_poor2", labFormat=labelFormat(digits=0, transform=perct))
+        title="hc_poor2", labFormat=labelFormat(digits=2))
   })
 
   # Update map
@@ -93,7 +93,7 @@ shinyServer(function(input, output, session) {
 
       # Add legend
       addLegend("bottomright", opacity=1, pal=pal_react, values=~value,
-        title=input$var, labFormat=labelFormat(digits=0, transform=perct))
+        title=input$var, labFormat=labelFormat(digits=2))
 
     names(g)[which(names(g)=="value")] <- input$var
     values$g <- g
@@ -120,13 +120,13 @@ shinyServer(function(input, output, session) {
 
   # Download handler
   output$saveData <- downloadHandler(function() {
-    f <- paste0(input$selectISO3, "-", input$selectYear)
+    f <- paste0(input$selectISO3, "-", input$selectYear, "-", input$var)
     if (input$fileType %in% c("csv", "dta", "pdf")) paste0(f, ".", input$fileType)
     else paste0(f, ".zip")
 
   }, function(file) {
     g <- values$g
-    f <- paste0(input$selectISO3, "-", input$var, ".", input$fileType)
+    f <- paste0(input$selectISO3, "-", input$selectYear, "-", input$var, ".", input$fileType)
 
     switch(input$fileType,
       csv = write.csv(g@data, file, row.names=F, na=""),

@@ -20,7 +20,6 @@ m@data <- data.frame(m@data)
 
 # constants
 def <- c("circa 2008", "circa 2005")
-perct <- function(x) x*100
 pal <- rev(RColorBrewer::brewer.pal(11, "RdYlGn"))
 
 # Make a list of indicators

@@ -37,8 +37,10 @@ shinyUI(fluidPage(
       ),
 
       column(3,
-        p(), p(),
-        helpText("Make a selection and click to refresh the map. Click regions on the map to view details."),
+        p(),
+        helpText("Make a selection and click to refresh the map.
+          Click regions on the map to view details.
+          For now mapping the whole of SSA is very slow and might hang your browser."),
         p(),
         helpText("Both map and table may be saved into multiple formats."),
         selectInput("fileType", "Choose Export Format", choices=c(
@@ -57,16 +59,13 @@ shinyUI(fluidPage(
       ),
 
       column(6,
-        p()
+        p("[graphs, TBD]")
       )
     )
   ),
 
   column(12,
-    p(tags$label("Credits"), br(), "Azzarri, Carlo; Bacou, Melanie; Signorelli, Sara.",
-      br(), "©IFPRI/HarvestChoice, 2015. Source code on",
-      a(href="https://github.com/harvestchoice/hc-shiny/tree/master/subnatpov", target="github",
-        "GitHub."))
+    includeMarkdown("../subnatpov/www/txtCredits.md")
   )
 )
 )

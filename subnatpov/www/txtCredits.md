@@ -1,0 +1,3 @@
+<label>Credits</label> Azzarri, Carlo; Bacou, Melanie; Signorelli, Sara.  
+©IFPRI/[HarvestChoice](http://harvestchoice.org/), 2015. Source code on [GitHub](https://github.com/harvestchoice/hc-shiny/tree/master/subnatpov). Powered by [RStudio Shiny](http://shiny.rstudio.com/).  
+Code and datasets are licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-nc-sa/4.0/).

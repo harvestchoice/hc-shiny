@@ -49,7 +49,7 @@ shinyUI(fluidPage(
           any specific time period or use the range selectors below the chart.
           Double-click to reset the chart to its full length."),
       hr(),
-      includeHTML("../rainfall/www/txtCredits.html")
+      includeMarkdown("../rainfall/www/txtCredits.md")
     ),
 
     column(7,
