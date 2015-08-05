@@ -19,8 +19,12 @@ shinyUI(fluidPage(
   tabsetPanel(type="tabs", selected="Indicators",
 
     tabPanel("About",
-      column(12,
-        includeMarkdown("../subnatpov/www/txtIntro.md"))
+      column(6,
+        includeMarkdown("../subnatpov/www/txtIntro.md")),
+
+      column(6,
+        p("[charts, TBD]")
+      )
     ),
 
     tabPanel("Indicators",
@@ -38,7 +42,7 @@ shinyUI(fluidPage(
         p(),
         helpText("Both map and table may be saved into multiple formats."),
         selectInput("fileType", "Choose Export Format", choices=c(
-          `ESRI Shapefile`="shp", CSV="csv", STATA="dta", `Print format`="png"), selected="csv"),
+          `ESRI Shapefile`="shp", CSV="csv", STATA="dta", `PDF Document`="pdf"), selected="csv"),
         downloadButton("saveData", "Save Layer")
       ),
 
@@ -49,7 +53,7 @@ shinyUI(fluidPage(
 
       column(6,
         h2("Ranking"),
-        p()
+        p("[graphs, TBD]")
       ),
 
       column(6,

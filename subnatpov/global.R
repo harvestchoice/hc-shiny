@@ -47,7 +47,7 @@ rm(g, readme)
 iso <- iso[iso %in% c("SSA", levels(m@data$ISO3)[-c(13,20,33,36,47)])]
 
 # GAUL Country boundaries
-load("/home/projects/cell5m/rdb/g0.rda")
+g0 <- readRDS("/home/projects/cell5m/rdb/g0.epsg3857.rds")
 
 # Helper - Renderer for rhandsometable
 convertNA <- function() htmlwidgets::JS(

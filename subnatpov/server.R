@@ -1,14 +1,22 @@
 
 
 # Helper - Print map
-printMap <- function(x) {
+printMap <- function(x, var, cntr) {
   require(tmap)
 
-  tm_shape(x, is.master=T) +
-    tm_fill(col="value", n=8, legend.hist=T, title="value",
-      palette=rev(RColorBrewer::brewer.pal(8, "RdYlGn")), colorNA="grey90") +
-    tm_shape(g0) + tm_borders(col="grey90") +
-    tm_credits("IFPRI/HarvestChoice, 2015. www.harvestchoice.org", position="right")
+  # Need to reproject
+  x <- spTransform(x, CRS("+init=epsg:3857"))
+
+  p <- tm_shape(g0) + tm_polygons(col="white", borders="grey90") +
+    tm_text("ADM0_NAME", size=0.9, fontcolor="grey70") +
+    tm_shape(x, is.master=T) +
+    tm_fill(col="value", n=8, legend.hist=T, title=var, palette=pal, colorNA="grey90") +
+    tm_text("prttyNm", size="AREA", fontcolor="white") +
+    tm_credits("IFPRI/HarvestChoice, 2015. www.harvestchoice.org") +
+    tm_layout(title=cntr, title.size=1.2, bg.color="#5daddf",
+      inner.margin=c(0,0.3,0,0), legend.position=c(0.02, 0.02))
+
+  return(p)
 }
 
 # Helper - Archive spatial formats for download
@@ -113,7 +121,7 @@ shinyServer(function(input, output, session) {
   # Download handler
   output$saveData <- downloadHandler(function() {
     f <- paste0(input$selectISO3, "-", input$selectYear)
-    if (input$fileType %in% c("csv", "dta")) paste0(f, ".", input$fileType)
+    if (input$fileType %in% c("csv", "dta", "pdf")) paste0(f, ".", input$fileType)
     else paste0(f, ".zip")
 
   }, function(file) {
@@ -124,10 +132,14 @@ shinyServer(function(input, output, session) {
       csv = write.csv(g@data, file, row.names=F, na=""),
       dta = foreign::write.dta(g@data, file, version=12L),
       shp = writeRasterZip(g, file, f, "ESRI Shapefile"),
-      png = {
-        png(file, width=6, height=6, units="in", res=300)
-        printMap(g)
+      pdf = {
+        pdf(file=f, paper="letter")
+        names(g)[which(names(g)==input$var)] <- "value"
+        print(printMap(g,
+          names(vars)[which(vars==input$var)],
+          paste(names(iso)[which(iso==input$selectISO3)], input$selectYear, sep=", ")))
         dev.off()
+        file.copy(f, file)
       }
     )
   })
