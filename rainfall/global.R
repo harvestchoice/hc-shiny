@@ -5,15 +5,18 @@
 # Authors: Bacou, Melanie <mel@mbacou.com>
 #####################################################################################
 
+setwd("/home/projects/shiny/tmp")
+
+# Load common libraries
 library(shiny)
 library(shinyBS)
 library(data.table)
-library(sp)
+library(rgdal)
 library(reshape2)
 library(leaflet)
 library(dygraphs)
 
-# List of layers
+# Attributes of climate variables
 vars <- list(
   # CRU 3.22 precipitation time series (from 1901 onwards)
   pre=list(
@@ -59,17 +62,22 @@ vars <- list(
   wet=list(name="wet")
 )
 
-# Make named array of layers
+
+# Make named array of layers (limit to top 3 for now)
 d <- names(vars)
 names(d) <- sapply(vars, `[[`, "name")
+d <- d[1:3]
 
-# Load all monthly districts stats (already intersected with g2)
-data <- readRDS("./data/dt2.rds")
+# Load all monthly districts stats (already intersected with GAUL 2014v15)
+data <- readRDS("../rainfall/data/dt2.rds")
 
-# Load GAUL 2014 district boundaries (full version)
-g2 <- readRDS("./data/g2_2014v15.rds")
+# Load GAUL 2014 district boundaries
+g2 <- readRDS("/home/projects/cell5m/rdb/g2_2014v15.web.rds")
 g2.dt <- data.table(g2@data)[, .N, by=list(ADM0_CODE, ADM0_NAME)]
 setkey(g2.dt, ADM0_NAME)
 
+# Load GAUL 2012v13 country boundaries for plotting (with water bodies cut out)
+g0 <- readRDS("/home/projects/cell5m/rdb/g0.epsg3857.rds")
+
 # Load country/province/district list to populate controls
-g2.list <- readRDS("./data/g2_2014v15.list.rds")
+g2.list <- readRDS("/home/projects/cell5m/rdb/g2_2014v15.list.rds")

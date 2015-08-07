@@ -35,20 +35,23 @@ shinyUI(fluidPage(
   fluidRow(
     column(3,
       p(br()),
-      selectInput("var", "Choose a Variable", d[1:3], selected="pre"),
+      selectInput("var", "Choose a Variable", d, selected="pre"),
       selectInput("selectg0", "Choose a Country", names(g2.list), selected="Kenya"),
       actionButton("btn", "Show Series", icon("globe"), class="btn-primary"),
       hr(),
-      p("The ", strong("long-term mean"), " is over the selected season
+      conditionalPanel(condition="input.btn>0",
+        p("The ", strong("long-term mean"), " is over the selected season
           and years only (or over the entire year if no specific season is selected).
           The ", strong("trend component"), " is generated through classical seasonal decomposition
           by moving averages over the entire 1960-2013 period. ", strong("Total precipitation"), " at
           the bottom is over the selected season. ", strong("Temperature"),
-        " is near-surface temperature in Celsius."),
-      p("You may use your mouse to zoom into
+          " is near-surface temperature in Celsius."),
+        p("You may use your mouse to zoom into
           any specific time period or use the range selectors below the chart.
           Double-click to reset the chart to its full length."),
-      hr(),
+        hr()
+      ),
+
       includeMarkdown("../rainfall/www/txtCredits.md")
     ),
 
@@ -60,7 +63,7 @@ shinyUI(fluidPage(
       p(br()),
       dygraphOutput("dygraph", width="100%", height="320px"),
       p(br()),
-      dygraphOutput("dygraphAnnual", width="100%", height="240px"),
+      dygraphOutput("dygraphAnnual", width="100%", height="320px"),
       #hr(),
       #h3("Top/Bottom Five Districts"),
       #plotOutput("distBarPlot", width="100%", height="320px"),
@@ -76,7 +79,7 @@ shinyUI(fluidPage(
       hr(),
 
       selectInput("fileType", "Choose Export Format", choices=c(
-        `ESRI Shapefile`="shp", GeoTIFF="tif", netCDF="nc", CSV="csv", STATA="dta"),
+        `ESRI Shapefile`="shp", GeoTIFF="tif", netCDF="nc", CSV="csv", STATA="dta", `PDF Document`="pdf"),
         selected="csv"),
       downloadButton("saveData", "Save Layer"),
       p(br(), tags$label("Export formats"), br(), "NetCDF and GeoTIFF produce monthly

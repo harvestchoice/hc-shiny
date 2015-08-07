@@ -6,11 +6,35 @@
 #####################################################################################
 
 
+#####################################################################################
+# Helper - Print map
+#####################################################################################
+printMap <- function(x, var, cntr) {
+  require(tmap)
+
+  # Need to reproject
+  x <- spTransform(x, CRS("+init=epsg:3857"))
+
+  p <- tm_shape(g0) + tm_polygons(col="white", borders="grey90") +
+    tm_text("ADM0_NAME", size=0.9, fontcolor="grey70") +
+    tm_shape(x, is.master=T) +
+    tm_fill(col="mean", n=8, alpha=0.8, legend.hist=T,
+      title=names(d)[d==var], palette=colorRampPalette(vars[[var]]$pal)(9), colorNA="grey90") +
+    tm_credits("IFPRI/HarvestChoice, 2015. www.harvestchoice.org") +
+    tm_layout(title=cntr, title.size=1.2, bg.color="#5daddf",
+      inner.margin=c(0,0.3,0,0), legend.position=c(0.02, 0.02))
+
+  return(p)
+}
+
+
+#####################################################################################
 # Helper - Archive spatial formats for download
+#####################################################################################
 writeRasterZip <- function(x, file, filename, format, ...) {
 
   if (format=="ESRI Shapefile") {
-    rgdal::writeOGR(x, "./", filename, format, overwrite_layer=T, check_exists=T)
+    writeOGR(x, "./", filename, format, overwrite_layer=T, check_exists=T)
   } else {
     writeRaster(x, filename, format, bylayer=F, overwrite=T, ...)
   }
@@ -22,7 +46,9 @@ writeRasterZip <- function(x, file, filename, format, ...) {
 }
 
 
+#####################################################################################
 # Helper - Generate time series stats
+#####################################################################################
 genStats <- function(dt, cntr, dist, tm, mth) {
 
   if (dist==cntr) {
@@ -63,20 +89,39 @@ genStats <- function(dt, cntr, dist, tm, mth) {
 }
 
 
+#####################################################################################
+# Helper - Make popup
+#####################################################################################
+genPopup <- function(x, var) {
+  # Show district details
+  txt <- div(
+    h3(x$ADM0_NAME, br(), tags$small(x$ADM2_NAME, ", ", x$ADM1_NAME)),
+    h5(var),
+    p(
+      "Mean: ", strong(sprintf("%.2f", x$mean)), br(),
+      "85th perc.: ", strong(sprintf("%.2f", x$perct)), br(),
+      "Max: ", strong(sprintf("%.2f", x$max)), br(),
+      "Sd. Dev.: ", strong(sprintf("%.2f", x$sd))),
+    helpText("Click the map to select this district."))
+  return(as.character(txt))
+}
+
+#####################################################################################
+# Main
+#####################################################################################
 
 shinyServer(function(input, output, session) {
-
-  # Create the map
-  map <- leaflet() %>%
-    setView(41, 1, 6) %>%
-    addTiles(urlTemplate="http://{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
-      attribution="Mapbox")
-
-  output$map <- renderLeaflet(map)
 
   # Init reactive values
   values <- reactiveValues()
 
+  # Create the map
+  output$map <- renderLeaflet(
+    map <- leaflet() %>%
+      setView(41, 1, 6) %>%
+      addTiles(urlTemplate="http://{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+        attribution="Mapbox")
+  )
 
   # Primary observer (react to main button)
   observeEvent(input$btn, priority=1, {
@@ -98,7 +143,7 @@ shinyServer(function(input, output, session) {
     dt.g2 <- dt[, list(
       mean=mean(value, na.rm=T),
       min=min(value, na.rm=T),
-      `85th`=quantile(value, 0.85, na.rm=T),
+      perct=quantile(value, 0.85, na.rm=T),
       max=max(value, na.rm=T),
       sd=sd(value, na.rm=T)),
       by=list(ADM0_CODE, ADM0_NAME, ADM1_CODE, ADM1_NAME, ADM2_CODE, ADM2_NAME)]
@@ -112,24 +157,28 @@ shinyServer(function(input, output, session) {
     coords <- apply(sp::coordinates(g), 2, mean, na.rm=T)
     pal <- colorBin(vars[[input$var]]$pal, dt$mean)
 
-    # Add layer
+    # Update map
     leafletProxy("map", data=g) %>%
       # Recenter map if country has changed
       setView(coords[1]+5, coords[2], 6) %>%
       clearShapes() %>%
-      clearControls() %>%
 
       # Add polygons
       addPolygons(group="Country", layerId=~ADM2_CODE,
         stroke=F, fillOpacity=0.5, fillColor=~pal(mean)) %>%
 
       # Add legend
-      addLegend("bottomleft", opacity=1, pal=pal, values=~mean,
-        title=names(d)[d==input$var], labFormat=labelFormat(digits=0))
+      addLegend("bottomleft", opacity=1, pal=pal, values=~mean, layerId="lgd",
+        title=names(d)[d==input$var])
+
+    # Show popup
+    output$details <- renderText(as.character(helpText("Mouse over districts to view details.")))
 
     # Export
     values$g <- g
     values$dt1 <- dt
+    values$g0 <- input$selectg0
+    values$var <- input$var
   })
 
 
@@ -141,7 +190,6 @@ shinyServer(function(input, output, session) {
     input$selectMonth }, {
 
       if (input$btn==0) return()
-      closeAlert(session, "alertNoData")
       values$tm <- seq(as.Date(paste0(input$rg[1], "-01-01")), as.Date(paste0(input$rg[2], "-12-31")), "month")
       mth <- as.integer(seq(input$selectMonth[1], input$selectMonth[2], 1))
 
@@ -157,29 +205,22 @@ shinyServer(function(input, output, session) {
     })
 
 
-  # Update title text
-  output$selectedMsg <- renderText({
-    # React to dt2() only
-    if (is.null(dt2())) return()
+  # Secondary observer
+  observeEvent(dt2(), {
+    dt <- dt2()
 
-    isolate({
+    # Update title text
+    output$selectedMsg <- renderText({
       mth <- paste0(" (", paste0(substr(unique(month.name[input$selectMonth]), 1, 3), collapse="-"), ")")
       dist <- if(input$selectg0==input$selectg2) "Entire Country" else input$selectg2
-      out <- h3(names(d)[d==input$var], br(),
-        tags$small(tags$mark(dist,", ", input$selectg0), " Period: ",
+      out <- h3(names(d)[d==values$var], br(),
+        tags$small(tags$mark(dist,", ", values$selectg0), " Period: ",
           paste0(format(range(values$tm), "%b %Y"), collapse=" - "), mth))
-      return(as.character(out))
+      as.character(out)
     })
-  })
 
-
-  # Render monthly time-series
-  output$dygraph <- renderDygraph({
-    # React to dt2() only
-    if (is.null(dt2())) return()
-
-    isolate({
-      dt <- dt2()
+    # Render monthly time-series
+    output$dygraph <- renderDygraph({
       dygraph(xts::as.xts(dt[, list(value, mean, trend)], order.by=dt$month), group="dy") %>%
         dySeries("value", label=input$var) %>%
         dySeries("mean", label="period mean") %>%
@@ -192,15 +233,10 @@ shinyServer(function(input, output, session) {
             eratp=c("#1D91C0", "#EDF8B1", "#081D58"))) %>%
         dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=140)
     })
-  })
 
 
-  # Render annual time-series
-  output$dygraphAnnual <- renderDygraph({
-    # React to dt2() only
-    if(is.null(dt2())) return()
-
-    isolate({
+    # Render annual time-series
+    output$dygraphAnnual <- renderDygraph({
       mth <- paste0(substr(unique(month.name[input$selectMonth]), 1, 3), collapse="-")
 
       if (input$var=="pre") {
@@ -214,18 +250,19 @@ shinyServer(function(input, output, session) {
       dygraph(xts::as.xts(dt$sumAnnual, order.by=as.Date(as.character(dt$month), "%Y")), group="dy") %>%
         dySeries("V1", label=txt) %>%
         dyOptions(fillGraph=F, strokeWidth=2,
-          colors=switch(input$var, pre="#84C796", tmp="#1C90FF", pdsi="#8DDE88", aritp="#1D91C0")) %>%
+          colors=switch(values$var, pre="#84C796", tmp="#1C90FF", pdsi="#8DDE88", aritp="#1D91C0")) %>%
         dyLegend(show="always", hideOnMouseOut=F, labelsSeparateLines=T, width=180) %>%
         dyRangeSelector(height=20)
     })
   })
 
 
+
   # Highlight selected polygon
   observeEvent(input$selectg2, priority=-5, {
     if (input$btn==0) return()
     dist <- input$selectg2
-    if (dist==input$selectg0 | dist=="Entire Country") return()
+    if (dist==values$g0 | dist=="Entire Country") return()
     g <- values$g
     g <- g[g$ADM2_NAME==dist,]
 
@@ -233,48 +270,30 @@ shinyServer(function(input, output, session) {
     leafletProxy("map", data=g) %>%
       clearGroup("Selected") %>%
       addPolygons(group="Selected", smoothFactor=3,
-        color="white", opacity=0.7, fillColor="grey50")
+        color="yellow", opacity=0.7, fillColor="grey50")
   })
 
 
   # Update district on map click
   observeEvent(input$map_shape_click, {
-    evt <- data.table(values$g@data, key="ADM2_CODE")
-    evt <- evt[input$map_shape_click$id][, ADM2_NAME]
+    setkey(data, ADM2_CODE)
+    evt <- data[J(input$map_shape_click$id)][, ADM2_NAME]
     updateSelectInput(session, "selectg2", selected=evt)
   })
 
 
   # Show district details on mouseover
-  output$details <- renderText({
-    evt <- input$map_shape_mouseover$id
-    isolate({
-      if (is.null(evt)) {
-        out <- div(h3(input$selectg0), p("Mouse over districts to view details."))
-      } else {
-        evt <- data.table(values$g@data, key="ADM2_CODE")
-        evt <- evt[input$map_shape_click$id]
-        out <- div(
-          h3(evt$ADM0_NAME, br(), tags$small(evt$ADM2_NAME, ", ", evt$ADM1_NAME)),
-          hr(),
-          h4(names(d)[d==input$var]),
-          p(
-            "Mean: ", strong(evt$mean), br(),
-            "85th perc.: ", strong(evt$`85th`), br(),
-            "Max: ", strong(evt$max), br(),
-            "Sd. Dev.: ", strong(evt$sd)),
-          p(em("Click the map to select this district.")))
-      }
-    })
-    return(as.character(out))
-  })
+  observeEvent(input$map_shape_mouseover,
+    output$details <- renderText({
+      evt <- values$g@data[values$g$ADM2_CODE==input$map_shape_mouseover$id, ]
+      genPopup(evt, names(d)[d==values$var])
+    }))
 
 
   # Download handler
   output$saveData <- downloadHandler(function() {
-    f <- paste0(input$selectg0, "-", input$var)
-
-    if (input$fileType %in% c("csv", "dta")) {
+    f <- paste0(values$g0, "-", values$var)
+    if (input$fileType %in% c("csv", "dta", "pdf")) {
       # Complete file path
       paste0(f, "-", input$selectg2, "-", paste(range(values$tm), collapse="-"), ".", input$fileType)
     } else {
@@ -283,44 +302,36 @@ shinyServer(function(input, output, session) {
     }
   }, function(file) {
 
-    var <- input$var
-    f <- paste0(input$selectg0, "-", var, ".", input$fileType)
+    f <- paste0(values$g0, "-", values$var, ".", input$fileType)
 
     if (input$fileType %in% c("tif", "nc")) {
       # Crop raster to selected country extent
       require(raster)
-      r <- brick(get(paste0("path.", var)))
+      r <- brick(get(paste0("path.", values$var)))
       r <- crop(r, values$g)
       # Define z dimension (time)
       proj4string(r) <- CRS("+init=epsg:4326")
-      r <- setZ(r, as.character(get(paste0("tm.", var))))
-      names(r) <- as.character(get(paste0("tm.", var)))
+      r <- setZ(r, as.character(get(paste0("tm.", values$var))))
+      names(r) <- as.character(get(paste0("tm.", values$var)))
     }
 
     switch(input$fileType,
       tif = writeRasterZip(r, file, f, "GTiff", options=c("TFW=YES", "INTERLEAVE=BAND")),
       nc = writeRasterZip(r, file, f, "CDF",
-        varname=input$var, varunit="mm", zname="month", zunit="month",
+        varname=values$var, varunit="mm", zname="month", zunit="month",
         options=c("COMPRESS=DEFLATE", "WRITE_GDAL_TAGS=YES")),
       csv = write.csv(dt2(), file, row.names=F, na=""),
-      dta = foreign::write.dta(dt2(), file, version=9L),
-      shp = {
-        # Combine mean attributes with GAUL 2008 boundaries
-        dt <- values$dt1[, list(
-          mean=mean(value, na.rm=T),
-          min=min(value, na.rm=T),
-          max=max(value, na.rm=T),
-          sd=sd(value, na.rm=T),
-          mad=mad(value, na.rm=T)), by=ADM2_CODE]
-        g <- values$g
-        tmp <- data.table(g@data)
-        tmp[, rn := row.names(g)]
-        setkey(tmp, ADM2_CODE)
-        setkey(dt, ADM2_CODE)
-        tmp <- dt[tmp]
-        setkey(tmp, rn)
-        g@data <- tmp[row.names(g)]
-        writeRasterZip(g, file, f, "ESRI Shapefile")
+      dta = foreign::write.dta(dt2(), file, version=12L),
+      shp = writeRasterZip(values$g, file, f, "ESRI Shapefile"),
+      pdf = {
+        if (!file.exists(f)) {
+          # Re-generate PDF
+          pdf(file=f, paper="letter")
+          print(printMap(values$g, values$var,
+            paste0(values$g0, "\n", paste0(format(range(values$tm), "%b %Y"), collapse=" - "))))
+          dev.off()
+        }
+        file.copy(f, file)
       })
   })
 

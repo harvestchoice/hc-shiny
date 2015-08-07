@@ -16,52 +16,40 @@ shinyUI(fluidPage(
     p()
   ),
 
-  tabsetPanel(type="tabs", selected="Indicators",
+  column(3,
+    selectInput("var", "Select a poverty indicator", vars),
+    selectInput("selectISO3", "Select a country", iso, selected="KEN"),
+    selectInput("selectYear", "Select a survey year", def, selected="2005"),
+    actionButton("btn", "Map Indicator", icon=icon("cog"), class="btn-primary"),
+    helpText(p("Make a selection and click to refresh the map.
+          Click regions on the map to view details."), p(tags$u("Note:"),
+      "mapping the whole of SSA is very slow and might hang your browser."))
+  ),
 
-    tabPanel("About",
-      column(6,
-        includeMarkdown("../subnatpov/www/txtIntro.md")),
+  column(6,
+    conditionalPanel(condition="input.btn==0",
+      includeMarkdown("../subnatpov/www/txtIntro.md")),
 
-      column(6,
-        p("[charts, TBD]")
-      )
-    ),
+    conditionalPanel(condition="input.btn>0",
+      h2("Details"),
+      uiOutput("hText"),
+      rHandsontableOutput("dtDetails", width="100%", height="200px"))
+  ),
 
-    tabPanel("Indicators",
-      p(),
-      column(3,
-        selectInput("var", "Select a poverty indicator", vars),
-        selectInput("selectISO3", "Select a country", selected="KEN", iso),
-        selectInput("selectYear", "Select a survey year", def, selected="2005"),
-        actionButton("btn", "Map Indicator", icon=icon("cog"), class="btn-primary")
-      ),
+  column(3,
+    p(),
+    radioButtons("opts", "Map indicator for the following sub-population", selected="total",
+      choice=c("total", "rural", "urban", "male", "female")),
+    hr(),
+    selectInput("fileType", "Choose Export Format", choices=c(
+      `ESRI Shapefile`="shp", CSV="csv", STATA="dta", `PDF Document`="pdf"), selected="csv"),
+    downloadButton("saveData", "Save Layer"),
+    helpText("Use the download options below to export the map or table.")
+  ),
 
-      column(3,
-        p(),
-        helpText("Make a selection and click to refresh the map.
-          Click regions on the map to view details.
-          For now mapping the whole of SSA is very slow and might hang your browser."),
-        p(),
-        helpText("Both map and table may be saved into multiple formats."),
-        selectInput("fileType", "Choose Export Format", choices=c(
-          `ESRI Shapefile`="shp", CSV="csv", STATA="dta", `PDF Document`="pdf"), selected="csv"),
-        downloadButton("saveData", "Save Layer")
-      ),
-
-      column(6,
-        h2("Details"),
-        rHandsontableOutput("dtDetails", width="100%", height="300px")
-      ),
-
-      column(6,
-        h2("Ranking"),
-        p("[graphs, TBD]")
-      ),
-
-      column(6,
-        p("[graphs, TBD]")
-      )
-    )
+  column(5,
+    h2("Ranking"),
+    p("[graphs, TBD]")
   ),
 
   column(12,

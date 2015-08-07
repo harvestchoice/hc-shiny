@@ -14,9 +14,8 @@ library(rgdal)
 library(shiny)
 library(rhandsontable)
 
-# Load latest revision
-m <- readRDS("../subnatpov/svyPov_20150804.rds")
-m@data <- data.frame(m@data)
+# Load latest revision (note: need epsg 4326, and had to rename vars)
+m <- readRDS("../subnatpov/svyPov_20150806.rds")
 
 # constants
 def <- c("circa 2008", "circa 2005")
@@ -45,7 +44,7 @@ load("/home/projects/cell5m/rdb/latest/lookup.RData")
 rm(g, readme)
 iso <- iso[iso %in% c("SSA", levels(m@data$ISO3)[-c(13,20,33,36,47)])]
 
-# GAUL Country boundaries
+# GAUL Country boundaries (water bodies cut out)
 g0 <- readRDS("/home/projects/cell5m/rdb/g0.epsg3857.rds")
 
 # Helper - Renderer for rhandsometable
