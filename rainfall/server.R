@@ -18,7 +18,7 @@ printMap <- function(x, var, cntr) {
   p <- tm_shape(g0) + tm_polygons(col="white", borders="grey90") +
     tm_text("ADM0_NAME", size=0.9, fontcolor="grey70") +
     tm_shape(x, is.master=T) +
-    tm_fill(col="mean", n=8, alpha=0.8, legend.hist=T,
+    tm_fill(col="mean", n=6, style="kmeans", alpha=0.8, legend.hist=T,
       title=names(d)[d==var], palette=colorRampPalette(vars[[var]]$pal)(9), colorNA="grey90") +
     tm_credits("IFPRI/HarvestChoice, 2015. www.harvestchoice.org") +
     tm_layout(title=cntr, title.size=1.2, bg.color="#5daddf",
@@ -105,6 +105,7 @@ genPopup <- function(x, var) {
     helpText("Click the map to select this district."))
   return(as.character(txt))
 }
+
 
 #####################################################################################
 # Main
@@ -222,11 +223,11 @@ shinyServer(function(input, output, session) {
     # Render monthly time-series
     output$dygraph <- renderDygraph({
       dygraph(xts::as.xts(dt[, list(value, mean, trend)], order.by=dt$month), group="dy") %>%
-        dySeries("value", label=input$var) %>%
+        dySeries("value", label=values$var) %>%
         dySeries("mean", label="period mean") %>%
         dySeries("trend", label="trend", fillGraph=F, strokeWidth=3, strokePattern="dashed") %>%
         dyOptions(fillGraph=T, fillAlpha=0.4,
-          colors=switch(input$var,
+          colors=switch(values$var,
             pre=c("#84C796", "#CA6943", "#428BCA"),
             tmp=c("#1C90FF", "#FFE131 ", "#FF0000"),
             pdsi=c("#8DDE88", "#F8DE70", "#F8AE41"),
@@ -239,7 +240,7 @@ shinyServer(function(input, output, session) {
     output$dygraphAnnual <- renderDygraph({
       mth <- paste0(substr(unique(month.name[input$selectMonth]), 1, 3), collapse="-")
 
-      if (input$var=="pre") {
+      if (values$var=="pre") {
         dt <- dt2()[, list(sumAnnual=sum(value, na.rm=T)), by=list(month=year(month))]
         txt <- paste0(mth, " total")
       } else {
@@ -323,14 +324,12 @@ shinyServer(function(input, output, session) {
       csv = write.csv(dt2(), file, row.names=F, na=""),
       dta = foreign::write.dta(dt2(), file, version=12L),
       shp = writeRasterZip(values$g, file, f, "ESRI Shapefile"),
-      pdf = {
-        if (!file.exists(f)) {
-          # Re-generate PDF
-          pdf(file=f, paper="letter")
-          print(printMap(values$g, values$var,
-            paste0(values$g0, "\n", paste0(format(range(values$tm), "%b %Y"), collapse=" - "))))
-          dev.off()
-        }
+      pdf = { if (!file.exists(f)) {
+        # Re-generate PDF
+        pdf(file=f, paper="letter")
+        print(printMap(values$g, values$var,
+          paste0(values$g0, "\n", paste0(format(range(values$tm), "%b %Y"), collapse=" - "))))
+        dev.off() }
         file.copy(f, file)
       })
   })

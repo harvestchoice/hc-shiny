@@ -60,8 +60,15 @@ shinyServer(function(input, output, session) {
   })
 
 
-  # Update map
-  observeEvent(input$btn, {
+  # Message
+  output$hText <- renderText({
+    input$btn
+    as.character(helpText("Wait a few seconds for the map to render."))
+  })
+
+
+  # Show table
+  observeEvent(input$btn, priority=3, {
 
     values$var <- input$var
 
@@ -72,14 +79,47 @@ shinyServer(function(input, output, session) {
 
     # keep only few columns
     g <- g[, c("ISO3", "year", "prttyNm", names(g)[names(g) %like% values$var])]
-    coords <- apply(bbox(g), FUN=mean, MARGIN=1)
+
+    output$dtDetails <- renderRHandsontable({
+      t <- rhandsontable(g@data,
+        rowHeaders=F, readOnly=T, stretchH="all",
+        height=min(420, 60+nrow(g@data)*16),
+        columnSorting=T, fixedColumnsLeft=3,
+        highlightCol=T, highlightRow=T)
+
+      # Format numbers
+      if (values$var %in% c("num_poor1", "num_poor2", "totpop")) {
+        t <- t %>% hot_cols(type="numeric", format="0,#", renderer=convertNA())
+      } else if (values$var %like% "exp") {
+        t <- t %>% hot_cols(type="numeric", format="PPP$ 0,0.0#", renderer=convertNA())
+      } else {
+        t <- t %>% hot_cols(type="numeric", format="0,0.0# %", renderer=convertNA())
+      }
+
+      # Return
+      t %>% hot_col("year", type="numeric", format="0")
+    })
+
+    # Message
+    output$hText <- renderText({ character(0) })
+
+    # Export
+    values$g <- g
+
+  })
+
+
+  # Update map
+  observeEvent(input$btn, {
 
     # Save selected var
     var <- paste(input$opts, values$var, sep="_")
 
     # Make palette
+    g <- values$g
     names(g)[names(g)==var] <- "value"
     pal <- colorNumeric(pal, g@data$value, na.color="grey90")
+    coords <- apply(bbox(g), FUN=mean, MARGIN=1)
 
     # Add layer
     leafletProxy("map", data=g) %>%
@@ -89,7 +129,7 @@ shinyServer(function(input, output, session) {
 
       # Add polygons
       addPolygons(stroke=F, fillOpacity=0.5, fillColor=~pal(value),
-        smoothFactor=2.2,
+        smoothFactor=2.4,
         popup=~paste(prttyNm, prettyNum(value), sep="<br />")) %>%
 
       # Add legend
@@ -97,42 +137,6 @@ shinyServer(function(input, output, session) {
         title=paste(values$var, input$opts, sep=" - "),
         labFormat=labelFormat(digits=2))
 
-    names(g)[names(g)=="value"] <- var
-    values$g <- g
-  })
-
-
-  # Table
-  observeEvent(values$g, {
-    g <- values$g
-
-    if (class(g)=="integer") {
-      # show help text
-      output$hText <- renderText({ as.character(
-        helpText("Click", tags$b("Map Indicator"), "to view summary table."))
-      })
-
-    } else {
-      # Show table
-      output$dtDetails <- renderRHandsontable({
-        t <- rhandsontable(g@data,
-          rowHeaders=F, readOnly=T, stretchH="all", height=min(400, 60+nrow(g@data)*14),
-          columnSorting=T, fixedColumnsLeft=3,
-          highlightCol=T, highlightRow=T)
-
-        # Format numbers
-        if (values$var %in% c("num_poor1", "num_poor2", "totpop")) {
-          t <- t %>% hot_cols(type="numeric", format="0,#", renderer=convertNA())
-        } else if (values$var %like% "exp") {
-          t <- t %>% hot_cols(type="numeric", format="PPP$ 0,0.0#", renderer=convertNA())
-        } else {
-          t <- t %>% hot_cols(type="numeric", format="0,0.0# %", renderer=convertNA())
-        }
-
-        # Return
-        t %>% hot_col("year", type="numeric", format="0")
-      })
-    }
   })
 
 
@@ -153,7 +157,7 @@ shinyServer(function(input, output, session) {
 
       # Redraw polygons
       addPolygons(stroke=F, fillOpacity=0.5, fillColor=~pal(value),
-        smoothFactor=2.2,
+        smoothFactor=2.4,
         popup=~paste(prttyNm, prettyNum(value), sep="<br />")) %>%
 
       # Update legend
@@ -178,17 +182,15 @@ shinyServer(function(input, output, session) {
       csv = write.csv(g@data, file, row.names=F, na=""),
       dta = foreign::write.dta(g@data, file, version=12L),
       shp = writeRasterZip(g, file, f, "ESRI Shapefile"),
-      pdf = {
-        if (!file.exists(f)) {
-          # Re-generate PDF
-          pdf(file=f, paper="letter")
-          var <- paste(input$opts, values$var, sep="_")
-          names(g)[names(g)==var] <- "value"
-          print(printMap(g,
-            paste(names(vars)[vars==input$var], input$opts, sep=" - "),
-            paste(names(iso)[iso==input$selectISO3], input$selectYear, sep=", ")))
-          dev.off()
-        }
+      pdf = { if (!file.exists(f)) {
+        # Re-generate PDF
+        pdf(file=f, paper="letter")
+        var <- paste(input$opts, values$var, sep="_")
+        names(g)[names(g)==var] <- "value"
+        print(printMap(g,
+          paste(names(vars)[vars==input$var], input$opts, sep=" - "),
+          paste(names(iso)[iso==input$selectISO3], input$selectYear, sep=", ")))
+        dev.off() }
         file.copy(f, file)
       }
     )

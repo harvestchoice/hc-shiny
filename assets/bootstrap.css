@@ -6346,11 +6346,27 @@ h1,h2,h3,h4,h5 {
  font-family: 'Droid Serif', serif;
 }
 
-div.hc-header {
+div.hc {
   background-color: #3C3A2E;
 }
 
-.hc-header h3 {
+.hc p {
+  font-size: 12px;
+  color: #d3ceaf;
+  text-shadow: 1px 1px 0 #000000;
+  margin-top: 20px;
+}
+
+.hc p a {
+  color: #d3ceaf;
+  text-decoration: underline;
+}
+
+.hc p img {
+  margin-right: 20px;
+}
+
+.hc h3 {
   color: #ffffff;
 }
 

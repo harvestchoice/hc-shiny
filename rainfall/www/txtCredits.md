@@ -1,4 +1,2 @@
 <label>Credits</label>  
 Monthly estimates from the [University of East Anglia CRU](http://www.cru.uea.ac.uk/cru/data/hrg/cru_ts_3.22) and [NCAR CDG](http://www.cgd.ucar.edu/cas/catalog/climind/pdsi.html). Administrative boundaries and codification consistent with [FAO/GAUL 2014](http://www.fao.org/geonetwork/srv/en/metadata.show?id=12691).
-
-&copy;IFPRI/HarvestChoice, 2015. Source code on [GitHub](http://github.com/harvestchoice/hc-shiny/tree/master/rainfall). Code and datasets are licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/) International License.

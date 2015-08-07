@@ -8,15 +8,15 @@
 
 shinyUI(fluidPage(
   title="HarvestChoice | Monthly Time-Series fo SSA",
-  theme="bootstrap.css",
+  theme="../assets/bootstrap.css",
 
-  fluidRow(class="hc-header",
+  fluidRow(class="hc",
     column(9,
       h3("Long-Term Climate Trends",
         tags$small("Monthly sub-national time-series for sub-Saharan Africa"))),
     column(2, offset=1,
       h5(a(href="http://harvestchoice.org/", title="Home",
-        img(src="global_logo.png", alt="Home"))))
+        img(src="../assets/global_logo.png", alt="Home"))))
   ),
 
   fluidRow(style="position: relative;",
@@ -87,6 +87,35 @@ shinyUI(fluidPage(
         means over the entire period. CSV and STATA formats return a table of monthly
         statistics for the selected country or district.")
     )
+  ),
+
+  fluidRow(class="hc",
+
+    column(3,
+      p("HarvestChoice generates knowledge products to help guide strategic investments
+        to improve the well-being of poor people in sub-Saharan Africa through more
+        productive and profitable farming.")
+    ),
+
+    column(3,
+      p("©IFPRI/HarvestChoice, 2015. Source code on",
+        a(href="https://github.com/harvestchoice/hc-shiny/tree/master/rainfall", "GitHub."),
+        "Powered by", a(href="http://shiny.rstudio.com/", "RStudio Shiny."),
+        "Code and datasets are licensed under a",
+        a(href="http://creativecommons.org/licenses/by-nc-sa/4.0/",
+          "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License."))
+    ),
+
+    column(6, style="text-align:right;",
+      p(
+        a(href="http://ifpri.org/", img(src="../assets/R_ifpri.png"),
+          title="International Food Policy Research Institute"),
+        a(href="http://www.pim.cgiar.org/", img(src="../assets/R_pim.png"),
+          title="CGIAR Research Program on Policies Institutions and Markets"),
+        a(href="http://umn.edu/", img(src="../assets/R_umn.png"),
+          title="University of Minnesota"))
+    )
   )
+
 )
 )
