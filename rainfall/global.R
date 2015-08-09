@@ -9,6 +9,7 @@ setwd("/home/projects/shiny/tmp")
 
 # Load common libraries
 library(shiny)
+library(shinyBS)
 library(data.table)
 library(rgdal)
 library(reshape2)

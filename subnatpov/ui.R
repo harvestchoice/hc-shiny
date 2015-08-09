@@ -36,14 +36,15 @@ shinyUI(fluidPage(
       tabsetPanel(id="ts", selected="About",
         tabPanel("About", icon=icon("question-circle"),
           column(12, includeMarkdown("../subnatpov/www/txtIntro.md"), hr()),
-          column(9, ggvisOutput("p1"), p()),
+          column(9, ggvisOutput("p1")),
           column(3,
             h3("Country Trajectories"),
             p("Showing trajectories for a sample of 10 countries in
             sub-Saharan Africa. Movements towards the top right quadrant mark progress towards
             poverty reduction and greater income equality."),
             actionLink("p1Update", "Click to view other countries", icon=icon("refresh")),
-            helpText("Mouse over any segment to identify a country."))
+            helpText("Mouse over any segment to identify a country.")),
+          column(12, hr(), includeMarkdown("../subnatpov/www/txtIntro2.md"), br())
         ),
 
         tabPanel("Details", icon=icon("table"),

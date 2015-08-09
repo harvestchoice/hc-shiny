@@ -1,20 +1,14 @@
 ---
 title: "sub-National Poverty - Documentation"
-author: Bacou, Melanie
+author: "Bacou, Melanie"
 output: html_fragment
 ---
-
-
 
 ## Definitions
 
 #### Poverty headcount ratio
 
 It is the most commonly used measure of poverty. It measures the share of the population falling below a defined poverty line, usually corresponding to 1.25, 2 or 2.5 USD of income per day.
-
-Test Def
-
-  : test again
 
 #### Poverty gap and severity
 
