@@ -1,4 +1,11 @@
+---
+title: "sub-National Poverty - About"
+author: Bacou, Melanie
+output: html_fragment
+---
+
 ### About
+
 
 This application presents key income and poverty indicators at the highest geographic resolution currently available from official sources (data points for **495 sub-national administrative units** across sub-Saharan Africa are available). These estimates are derived from nationally representative household surveys for 26 countries, and from the World Bank [Povcalnet](http://iresearch.worldbank.org/PovcalNet/) for an additional 21 countries where only national estimates are available.
 
@@ -9,3 +16,4 @@ In spite of rapid economic growth the number of impoverished people has doubled 
 Trends and disparities may be further explored here across countries, provinces, and districts (for a few countries where estimates are statistically significant at this resolution). 
 
 HarvestChoice's sub-national poverty maps for sub-Saharan Africa are part of a larger effort to better quantify and locate vulnerable communities around the world, and to better guide pro-poor policies and investments. Complementary estimates are available from NASA/Columbia University [SEDAC](http://sedac.ciesin.columbia.edu/data/collection/povmap) and from the [WorldPop](http://www.worldpop.org.uk/) project at the University of Southampton.
+
