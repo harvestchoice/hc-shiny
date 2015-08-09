@@ -1,8 +1,81 @@
 
 #####################################################################################
+# Helper - Make leaflet color palette
+#####################################################################################
+# Only because leaflet doesn't interpret "-RdYlGn" for now
+leafletPal <- function(x) {
+  if(substr(x, 1, 1)=="-") {
+    x <- RColorBrewer::brewer.pal(9, gsub("-", "", x, fixed=T))
+    x <- rev(x)
+  } else {
+    x <- RColorBrewer::brewer.pal(9, x)
+  }
+  return(x)
+}
+
+
+#####################################################################################
+# Helper - p1 Ruttanogram
+#####################################################################################
+
+ap <- axis_props(
+  axis=list(stroke="transparent"),
+  title=list(fill="#444", font="Pt Sans", fontSize=14),
+  labels=list(fill="#444", font="Pt Sans", fontSize=12),
+  ticks=list(stroke="transparent"),
+  grid=list(stroke="#e3e3e3", strokeWidth=1))
+
+p1 <- function() {
+  p <- data.frame(pcn[, N:=.N, by=ISO3][N>1][sample(ISO3, 10)]) %>%
+    ggvis(~gini, ~hc_poor2*100) %>%
+    add_axis("x", title="Poverty HCR (%), PPP$ 2/day", title_offset=40, properties=ap) %>%
+    add_axis("y", title="Gini Coefficient", title_offset=40, properties=ap) %>%
+    scale_numeric("x", reverse=T) %>% scale_numeric("y", reverse=T) %>%
+    layer_text(text:=~as.integer(year), dx:=8, dy:=8, fontSize=9) %>%
+    layer_points(size=2, shape=~factor(country), fill:="#444", stroke:="#444") %>%
+    group_by(ISO3) %>% layer_paths(stroke:="#444") %>%
+    add_legend(scales="shape", title="Country") %>%
+    set_options(height=420, width="auto") %>%
+    add_tooltip(on="hover", function(x) {
+      if(length(x)<4) return(); as.character(x[[4]])})
+  return(p)
+}
+
+
+#####################################################################################
+# Helper - p2 Bubble chart
+#####################################################################################
+
+p2 <- function(x, var, svar) {
+
+  names(x)[names(x)==svar] <- "value"
+  tmp <- data.table(x)[, list(
+    value=mean(value, na.rm=T),
+    num_poor=sum(total_num_poor2, na.rm=T)), by=list(soc_d30_qtl, aez16)]
+
+  p <- data.frame(tmp) %>%
+    ggvis(~value, ~factor(aez16)) %>%
+    add_axis("x", properties=ap, title="") %>%
+    add_axis("y", title="", properties=ap) %>%
+    group_by(soc_d30_qtl) %>%
+    layer_points(stroke=~soc_d30_qtl, fill=~soc_d30_qtl, size=~num_poor) %>%
+    scale_numeric("x", reverse=varList[["var"]]$rev) %>%
+    add_legend(scales=c("stroke", "fill"), title="Soil Fertility",
+      properties=legend_props(gradient=c("#4D4D4D", "#AEAEAE", "#E6E6E6"))) %>%
+    add_legend(scales="size", title="Poverty Headcount $2/day",
+      properties=legend_props(legend=list(y=90))) %>%
+    set_options(height=280, width="auto", duration=0) %>%
+    add_tooltip(function(x) as.character(prettyNum(x[[1]])), on="hover")
+  return(p)
+
+}
+
+
+
+#####################################################################################
 # Helper - Print map
 #####################################################################################
-printMap <- function(x, var, cntr) {
+printMap <- function(x, pal, var, cntr) {
   require(tmap)
 
   # Need to reproject
@@ -11,12 +84,11 @@ printMap <- function(x, var, cntr) {
   p <- tm_shape(g0) + tm_polygons(col="white", borders="grey90") +
     tm_text("ADM0_NAME", size=0.9, fontcolor="grey70") +
     tm_shape(x, is.master=T) +
-    tm_fill(col="value", n=7, legend.hist=T, title=var, palette=pal, colorNA="grey90") +
-    tm_text("prttyNm", size="AREA", fontcolor="white") +
+    tm_fill(col="value", n=9, legend.hist=T, title=var, palette=pal, colorNA="grey90") +
+    tm_text("adminUnit", size="AREA", fontcolor="white") +
     tm_credits("IFPRI/HarvestChoice, 2015. www.harvestchoice.org") +
     tm_layout(title=cntr, title.size=1.2, bg.color="#5daddf",
       inner.margin=c(0,0.3,0,0), legend.position=c(0.02, 0.02))
-
   return(p)
 }
 
@@ -40,7 +112,7 @@ writeRasterZip <- function(x, file, filename, format, ...) {
 shinyServer(function(input, output, session) {
 
   # Init values
-  values <- reactiveValues(g=0L)
+  values <- reactiveValues(g=0L, svar=character(0), var=character(0))
 
   # Update year select
   observeEvent(input$selectISO3, {
@@ -50,7 +122,6 @@ shinyServer(function(input, output, session) {
     )
   })
 
-
   # Basemap
   output$map <- renderLeaflet({
     leaflet(data=values$g) %>%
@@ -59,97 +130,126 @@ shinyServer(function(input, output, session) {
         urlTemplate="http://{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png" )
   })
 
+  # p1 - Ruttanogram
+  p1() %>% bind_shiny("p1")
 
-  # Message
+  # Refresh p1
+  observeEvent(input$p1Update, p1() %>% bind_shiny("p1"))
+
+  # Helptext
   output$hText <- renderText({
     input$btn
-    as.character(helpText("Wait a few seconds for the map to render."))
+    as.character(helpText(
+      "Choose an indicator on the left and wait a few seconds for the map and graphs to render."))
+  })
+
+  # Chart header
+  output$svar <- renderText({
+    if (class(values$g)=="integer") return()
+    as.character(
+      div(h3("Across Agro-Ecological Domains",
+        tags$small(br(), names(iso)[iso==values$iso3], ",",
+          varList[[values$var]]$name, "-", input$opts)),
+        p("Showing the number of under $2/day Poor and mean selected indicator across
+        agro-ecological zones and zones of low, medium and high soil fertility (as measured
+        through mean soil carbon content at depth of 30cm).")))
   })
 
 
-  # Show table
-  observeEvent(input$btn, priority=3, {
-
+  # obsTable - Main observer (1)
+  observeEvent(input$btn, priority=3, label="obsTable", {
+    # Export
     values$var <- input$var
+    values$svar <- paste(input$opts, values$var, sep="_")
+    values$iso3 <- input$selectISO3
 
-    # Subset map
-    g <- if (input$selectISO3=="SSA" & input$selectYear=="circa 2005")  { m[m$Y05==T,]
-    } else if (input$selectISO3=="SSA" & input$selectYear=="circa 2008") { m[m$Y08==T, ]
-    } else m[m$ISO3==input$selectISO3 & m$year==as.numeric(input$selectYear),]
+    # Switch tab
+    updateTabsetPanel(session, "ts", selected="Details")
 
-    # keep only few columns
-    g <- g[, c("ISO3", "year", "prttyNm", names(g)[names(g) %like% values$var])]
+    # Update helptext
+    output$hText <- renderText({
+      as.character(div(
+        h3("Province/District Summary"),
+        helpText("Selecting a row will highlight the corresponding area on the map.")))
+    })
 
+    # Subset rows
+    g <- if (values$iso3=="SSA" & input$selectYear=="circa 2005")  { m[m$Y05==T,]
+    } else if (values$iso3=="SSA" & input$selectYear=="circa 2008") { m[m$Y08==T, ]
+    } else m[m$ISO3==values$iso3 & m$year==as.numeric(input$selectYear),]
+
+    # Subset columns
+    g <- g[, c("ISO3", "year", "adminUnit", "aez16", "soc_d30_qtl", "total_num_poor2",
+      names(g)[names(g) %like% values$var])]
+
+    # Table
     output$dtDetails <- renderRHandsontable({
-      t <- rhandsontable(g@data,
+      rhandsontable(g@data[, -c(4:6)], selectCallback=T,
         rowHeaders=F, readOnly=T, stretchH="all",
         height=min(420, 60+nrow(g@data)*16),
         columnSorting=T, fixedColumnsLeft=3,
-        highlightCol=T, highlightRow=T)
-
-      # Format numbers
-      if (values$var %in% c("num_poor1", "num_poor2", "totpop")) {
-        t <- t %>% hot_cols(type="numeric", format="0,#", renderer=convertNA())
-      } else if (values$var %like% "exp") {
-        t <- t %>% hot_cols(type="numeric", format="PPP$ 0,0.0#", renderer=convertNA())
-      } else {
-        t <- t %>% hot_cols(type="numeric", format="0,0.0# %", renderer=convertNA())
-      }
-
-      # Return
-      t %>% hot_col("year", type="numeric", format="0")
+        highlightCol=T, highlightRow=T) %>%
+        hot_cols(type="numeric", format=varList[[values$var]]$format, renderer=convertNA()) %>%
+        hot_col("year", type="numeric", format="0")
     })
-
-    # Message
-    output$hText <- renderText({ character(0) })
 
     # Export
     values$g <- g
-
   })
 
 
-  # Update map
-  observeEvent(input$btn, {
+  # obsMap - Main observer (2)
+  observeEvent(input$btn, priority=-2, label="obsMap", {
+    # Import
+    g <- values$g
 
-    # Save selected var
-    var <- paste(input$opts, values$var, sep="_")
+    # Update chart p2
+    p2(g@data, values$var, values$svar) %>% bind_shiny("p2")
 
     # Make palette
-    g <- values$g
-    names(g)[names(g)==var] <- "value"
-    pal <- colorNumeric(pal, g@data$value, na.color="grey90")
-    coords <- apply(bbox(g), FUN=mean, MARGIN=1)
+    names(g)[names(g)==values$svar] <- "value"
+    pal <- try(colorNumeric(leafletPal(varList[[values$var]]$pal), g@data$value, na.color="grey90"))
+    if (class(pal)=="try-error") return()
+    ext <- bbox(g)
 
     # Add layer
     leafletProxy("map", data=g) %>%
       # Recenter map if country has changed
-      setView(coords[[1]], coords[[2]], 6) %>%
+      fitBounds(ext[1,1], ext[2,1], ext[1,2], ext[2,2]) %>%
       clearShapes() %>%
 
       # Add polygons
       addPolygons(stroke=F, fillOpacity=0.5, fillColor=~pal(value),
-        smoothFactor=2.4,
-        popup=~paste(prttyNm, prettyNum(value), sep="<br />")) %>%
+        smoothFactor=1.4,
+        popup=~paste(adminUnit, prettyNum(value), sep="<br />")) %>%
 
       # Add legend
       addLegend("bottomright", layerId="lgd", opacity=1, pal=pal, values=~value,
-        title=paste(values$var, input$opts, sep=" - "),
-        labFormat=labelFormat(digits=2))
+        title=paste(varList[[values$var]]$name, input$opts, sep=" - "),
+        labFormat=labelFormat(digits=if(varList[[values$var]]$format=="0,0.0# %") 2 else 0))
 
   })
 
 
-  # Re-symbolize on opts
-  observeEvent(input$opts, {
+  # obsOpts - secondary observer
+  observeEvent(input$opts, label="obsOpts", {
+    # Export
+    values$svar <- paste(input$opts, values$var, sep="_")
+
+    # Import
     g <- values$g
     if (class(g)=="integer") return()
 
-    var <- paste(input$opts, values$var, sep="_")
-    names(g)[names(g)==var] <- "value"
+    # Update chart p2
+    p2(g@data, values$var, values$svar) %>% bind_shiny("p2")
+
+    # TODO Update chart p3
+
 
     # Make palette
-    pal <- colorNumeric(pal, g@data$value, na.color="grey90")
+    names(g)[names(g)==values$svar] <- "value"
+    pal <- try(colorNumeric(leafletPal(varList[[values$var]]$pal), g@data$value, na.color="grey90"))
+    if (class(pal)=="try-error") return()
 
     # Add layer
     leafletProxy("map", data=g) %>%
@@ -157,30 +257,46 @@ shinyServer(function(input, output, session) {
 
       # Redraw polygons
       addPolygons(stroke=F, fillOpacity=0.5, fillColor=~pal(value),
-        smoothFactor=2.4,
-        popup=~paste(prttyNm, prettyNum(value), sep="<br />")) %>%
+        smoothFactor=1.4,
+        popup=~paste(adminUnit, prettyNum(value), sep="<br />")) %>%
 
       # Update legend
       addLegend("bottomright", layerId="lgd", opacity=1, pal=pal, values=~value,
-        title=paste(values$var, input$opts, sep=" - "),
+        title=paste(varList[[values$var]]$name, input$opts, sep=" - "),
         labFormat=labelFormat(digits=2))
 
   })
 
 
+  # Highlight selected polygon on row click
+  observeEvent(input$dtDetails_select$select$r, {
+    # Import
+    g <- values$g[input$dtDetails_select$select$r+1,]
+    ext <- bbox(g)
+
+    # Add to map
+    leafletProxy("map", data=g) %>%
+      fitBounds(ext[1,1]-1, ext[2,1]-1, ext[1,2]+1, ext[2,2]+1) %>%
+      clearGroup("Selected") %>%
+      addPolygons(group="Selected", smoothFactor=3,
+        color="yellow", opacity=0.7, fillColor="grey50")
+  })
+
+
   # Download handler
   output$saveData <- downloadHandler(function() {
-    f <- paste0(input$selectISO3, "-", input$selectYear, "-", input$var)
+    f <- paste0(values$iso3, "-", input$selectYear, "-", input$var)
     if (input$fileType %in% c("csv", "dta", "pdf")) paste0(f, ".", input$fileType)
     else paste0(f, ".zip")
 
   }, function(file) {
+    # Import
     g <- values$g
-    f <- paste0(input$selectISO3, "-", input$selectYear, "-", input$var, ".", input$fileType)
+    f <- paste0(values$iso3, "-", input$selectYear, "-", values$var, ".", input$fileType)
 
     switch(input$fileType,
-      csv = write.csv(g@data, file, row.names=F, na=""),
-      dta = foreign::write.dta(g@data, file, version=12L),
+      csv = write.csv(g@data[, -c(4:6)], file, row.names=F, na=""),
+      dta = foreign::write.dta(g@data[, -c(4:6)], file, version=12L),
       shp = writeRasterZip(g, file, f, "ESRI Shapefile"),
       pdf = { if (!file.exists(f)) {
         # Re-generate PDF
@@ -188,8 +304,9 @@ shinyServer(function(input, output, session) {
         var <- paste(input$opts, values$var, sep="_")
         names(g)[names(g)==var] <- "value"
         print(printMap(g,
-          paste(names(vars)[vars==input$var], input$opts, sep=" - "),
-          paste(names(iso)[iso==input$selectISO3], input$selectYear, sep=", ")))
+          varList[[values$var]]$pal,
+          paste(varList[[values$var]]$name, input$opts, sep=" - "),
+          paste(names(iso)[iso==values$iso3], input$selectYear, sep=", ")))
         dev.off() }
         file.copy(f, file)
       }

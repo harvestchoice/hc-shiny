@@ -106,13 +106,13 @@ shinyUI(fluidPage(
           "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License."))
     ),
 
-    column(6, style="text-align:right;",
-      p(
-        a(href="http://ifpri.org/", img(src="../assets/R_ifpri.png"),
+    column(6,
+      p(style="text-align:right;",
+        a(style="color:#3C3A2E;", href="http://ifpri.org/", img(src="../assets/R_ifpri.png"),
           title="International Food Policy Research Institute"),
-        a(href="http://www.pim.cgiar.org/", img(src="../assets/R_pim.png"),
+        a(style="color:#3C3A2E;", href="http://www.pim.cgiar.org/", img(src="../assets/R_pim.png"),
           title="CGIAR Research Program on Policies Institutions and Markets"),
-        a(href="http://umn.edu/", img(src="../assets/R_umn.png"),
+        a(style="color:#3C3A2E;", href="http://umn.edu/", img(src="../assets/R_umn.png"),
           title="University of Minnesota"))
     )
   )
