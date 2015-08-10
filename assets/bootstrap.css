@@ -6346,30 +6346,36 @@ h1,h2,h3,h4,h5 {
  font-family: 'Droid Serif', serif;
 }
 
-div.hc {
+div.hc, div.hc-footer {
   background-color: #3C3A2E;
 }
 
-.hc p {
+.hc-footer p {
   font-size: 12px;
   color: #d3ceaf;
   text-shadow: 1px 1px 0 #000000;
-  margin-top: 20px;
 }
 
-.hc p a {
+.hc-footer p a {
   color: #d3ceaf;
   text-decoration: underline;
 }
 
-.hc p img {
-  margin-right: 20px;
+.hc-footer img {
+  margin-top: 20px;
 }
 
-.hc h3 {
+.hc h3, .hc-footer h3 {
   color: #ffffff;
 }
 
+@media (min-width: 768px) {
+#ts {
+  margin-top: -62px;
+}
 
-
-
+#ts.nav-tabs > li:not(.active) > a {
+    background-color: #3C3A2E;
+    color: #DEDABE;
+}
+}

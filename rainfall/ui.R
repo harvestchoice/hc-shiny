@@ -89,13 +89,12 @@ shinyUI(fluidPage(
     )
   ),
 
-  fluidRow(class="hc",
-
+  fluidRow(class="hc-footer",
     column(3,
       p("HarvestChoice generates knowledge products to help guide strategic investments
         to improve the well-being of poor people in sub-Saharan Africa through more
         productive and profitable farming.")
-    ),
+      ),
 
     column(3,
       p("©IFPRI/HarvestChoice, 2015. Source code on",
@@ -106,16 +105,13 @@ shinyUI(fluidPage(
           "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License."))
     ),
 
-    column(6,
-      p(style="text-align:right;",
-        a(style="color:#3C3A2E;", href="http://ifpri.org/", img(src="../assets/R_ifpri.png"),
-          title="International Food Policy Research Institute"),
-        a(style="color:#3C3A2E;", href="http://www.pim.cgiar.org/", img(src="../assets/R_pim.png"),
-          title="CGIAR Research Program on Policies Institutions and Markets"),
-        a(style="color:#3C3A2E;", href="http://umn.edu/", img(src="../assets/R_umn.png"),
-          title="University of Minnesota"))
-    )
-  )
+    column(2, a(style="color:#3C3A2E;", href="http://ifpri.org/", img(src="../assets/R_ifpri.png"),
+      title="International Food Policy Research Institute")),
+    column(2, a(style="color:#3C3A2E;", href="http://www.pim.cgiar.org/", img(src="../assets/R_pim.png"),
+      title="CGIAR Research Program on Policies Institutions and Markets")),
+    column(2, a(style="color:#3C3A2E;", href="http://umn.edu/", img(src="../assets/R_umn.png"),
+      title="University of Minnesota"))
+      )
 
 )
 )

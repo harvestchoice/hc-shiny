@@ -76,7 +76,6 @@ p2 <- function(x, var, svar) {
     set_options(height=280, width="auto", duration=0) %>%
     add_tooltip(tt, on="hover")
   return(p)
-
 }
 
 #####################################################################################
@@ -177,9 +176,10 @@ shinyServer(function(input, output, session) {
       div(h3("Across Agro-Ecological Domains",
         tags$small(br(), names(iso)[iso==values$iso3], ",",
           varList[[values$var]]$name, "-", input$opts)),
-        p("Showing the number of under $2/day Poor and mean selected indicator across
-        agro-ecological zones and zones of low, medium and high soil fertility (as measured
-        through mean organic carbon content at depth of 30 cm).")))
+        p("Showing the number of under $2/day Poor and mean",
+          names(vars)[vars==values$var],
+          "across agro-ecological zones and zones of low, medium and high soil
+          fertility (as measured through mean organic carbon content at depth of 30 cm).")))
   })
 
 
@@ -206,8 +206,9 @@ shinyServer(function(input, output, session) {
     } else m[m$ISO3==values$iso3 & m$year==as.numeric(input$selectYear),]
 
     # Subset columns
-    g <- g[, c("ISO3", "year", "adminUnit", "aez16", "soc_d30_qtl", "total_num_poor2",
-      names(g)[names(g) %like% values$var])]
+    cols <- c("ISO3", "year", "adminUnit", "aez16", "soc_d30_qtl", "total_num_poor2",
+      names(g)[names(g) %like% values$var])
+    g <- g[, unique(cols)]
 
     # Table
     output$dtDetails <- renderRHandsontable({
@@ -247,7 +248,7 @@ shinyServer(function(input, output, session) {
       clearShapes() %>%
 
       # Add polygons
-      addPolygons(stroke=F, fillOpacity=0.5, smoothFactor=1.4,
+      addPolygons(stroke=F, fillOpacity=0.8, smoothFactor=1.4,
         fillColor=if(class(pal)=="try-error") "#FAF5AC" else ~pal(value),
         popup=~paste(adminUnit, prettyNum(value), sep="<br />")) %>%
 
@@ -283,7 +284,7 @@ shinyServer(function(input, output, session) {
       clearShapes() %>%
 
       # Redraw polygons
-      addPolygons(stroke=F, fillOpacity=0.5, smoothFactor=1.4,
+      addPolygons(stroke=F, fillOpacity=0.8, smoothFactor=1.4,
         fillColor=if(class(pal)=="try-error") "#FAF5AC" else ~pal(value),
         popup=~paste(adminUnit, prettyNum(value), sep="<br />")) %>%
 

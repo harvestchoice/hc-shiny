@@ -12,14 +12,14 @@ shinyUI(fluidPage(
   ),
 
   fluidRow(style="position: relative;",
-    leafletOutput("map", height=380),
-    p()
+    leafletOutput("map", height=400),
+    br()
   ),
 
   fluidRow(
     column(3,
       wellPanel(
-        p(),
+        br(),
         selectInput("var", "Select a poverty indicator", vars),
         selectInput("selectISO3", "Select a country", iso, selected="KEN"),
         selectInput("selectYear", "Select a survey year", def, selected="2005"),
@@ -27,7 +27,7 @@ shinyUI(fluidPage(
         helpText(br(), p("Select an indicator and region of interest and submit to update
           the map and graphs. Click over shaded areas on the map to view details."))
       ),
-      br(), br(), br(), br(),
+      br(), br(), br(), br(), br(), br(),
       withMathJax(includeMarkdown("../subnatpov/www/txtCredits.md"))
     ),
 
@@ -42,7 +42,7 @@ shinyUI(fluidPage(
             p("Showing trajectories for a sample of 10 countries in
             sub-Saharan Africa. Movements towards the top right quadrant mark progress towards
             poverty reduction and greater income equality."),
-            actionLink("p1Update", "Click to view other countries", icon=icon("refresh")),
+            actionLink("p1Update", "Click to circle countries", icon=icon("refresh")),
             helpText("Mouse over any segment to identify a country.")),
           column(12, hr(), includeMarkdown("../subnatpov/www/txtIntro2.md"), br())
         ),
@@ -54,7 +54,7 @@ shinyUI(fluidPage(
           ),
 
           column(3,
-            p(), br(),br(),
+            br(), br(),br(),
             radioButtons("opts", "Map indicator for the following sub-population", selected="total",
               choice=c(
                 `entire population`="total",
@@ -62,7 +62,7 @@ shinyUI(fluidPage(
                 `urban households`="urban",
                 `female-headed households`="female",
                 `male-headed households`="male")),
-            hr(),
+            br(), br(), hr(),
             selectInput("fileType", "Choose Export Format", choices=c(
               `ESRI Shapefile`="shp", CSV="csv", STATA="dta", `PDF Document (map only)`="pdf"), selected="csv"),
             downloadButton("saveData", "Save Layer"),
@@ -72,7 +72,7 @@ shinyUI(fluidPage(
           column(12,
             uiOutput("svar"),
             ggvisOutput("p2"),
-            p()
+            br()
           )
         ),
 
@@ -91,7 +91,7 @@ shinyUI(fluidPage(
   ),
 
 
-  fluidRow(class="hc",
+  fluidRow(class="hc-footer",
     column(3,
       p("HarvestChoice generates knowledge products to help guide strategic investments
         to improve the well-being of poor people in sub-Saharan Africa through more
@@ -107,15 +107,12 @@ shinyUI(fluidPage(
           "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License."))
     ),
 
-    column(6,
-      p(style="text-align:right;",
-        a(style="color:#3C3A2E;", href="http://ifpri.org/", img(src="../assets/R_ifpri.png"),
-          title="International Food Policy Research Institute"),
-        a(style="color:#3C3A2E;", href="http://www.pim.cgiar.org/", img(src="../assets/R_pim.png"),
-          title="CGIAR Research Program on Policies Institutions and Markets"),
-        a(style="color:#3C3A2E;", href="http://umn.edu/", img(src="../assets/R_umn.png"),
-          title="University of Minnesota"))
-    )
+    column(2, a(style="color:#3C3A2E;", href="http://ifpri.org/", img(src="../assets/R_ifpri.png"),
+      title="International Food Policy Research Institute")),
+    column(2, a(style="color:#3C3A2E;", href="http://www.pim.cgiar.org/", img(src="../assets/R_pim.png"),
+      title="CGIAR Research Program on Policies Institutions and Markets")),
+    column(2, a(style="color:#3C3A2E;", href="http://umn.edu/", img(src="../assets/R_umn.png"),
+      title="University of Minnesota"))
   )
 
 )
