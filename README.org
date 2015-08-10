@@ -7,6 +7,6 @@
 #+LaTeX_CLASS: mel-article
 #+STARTUP: indent showstars
 
-A couple of visualization demos using RStudio Shiny framework, for testing purposes. These apps are viewable at http://tools.harvestchoice.org/:
-- rainfall :: 1960-2013 CRU-TS 3.22 precipitation and PDSI for all districts in SSA
-- subnatpov :: sub-national expenditure, poverty and inequality estimates across 60 countries
+A couple of visualization demos using RStudio Shiny framework:
+- [[rainfall][http://tools.harvestchoice.org/rainfall]] :: 1960-2013 CRU-TS 3.22 precipitation and PDSI for all districts in SSA
+- [[subnatpov][http://tools.harvestchoice.org/subnatpov]] :: sub-national expenditure, poverty and inequality estimates across 60 countries
