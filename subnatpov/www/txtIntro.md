@@ -11,5 +11,5 @@ This application presents key income and poverty indicators at the highest geogr
 
 All indicators have been standardized to 2005 [purchasing power parity](https://en.wikipedia.org/wiki/Purchasing_power_parity) (PPP) monetary terms to ensure results are comparable across countries and regions, but from **varying time periods**.
 
-Trends and disparities may be further explored here across countries, provinces, and districts (for a few countries where estimates are statistically significant across districts). 
+Trends and disparities may be further explored here across countries, provinces, and districts (for a few countries where estimates are statistically significant across districts). To explore another **800 spatially referenced indicators for sub-Saharan Africa**, visit [HarvestChoice Mappr](http://apps.harvestchoice.org/mappr).
 

@@ -6354,6 +6354,7 @@ div.hc, div.hc-footer {
   font-size: 12px;
   color: #d3ceaf;
   text-shadow: 1px 1px 0 #000000;
+  margin-top: 20px;
 }
 
 .hc-footer p a {

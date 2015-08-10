@@ -9,6 +9,7 @@
 shinyUI(fluidPage(
   title="HarvestChoice | Monthly Time-Series fo SSA",
   theme="../assets/bootstrap.css",
+  tags$head(includeScript("../assets/ga.js")),
 
   fluidRow(class="hc",
     column(9,

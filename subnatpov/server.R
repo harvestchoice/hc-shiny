@@ -165,7 +165,7 @@ shinyServer(function(input, output, session) {
   # Helptext
   output$hText <- renderText({
     input$btn
-    as.character(helpText(
+    as.character(helpText(br(), br(),
       "Choose an indicator on the left and wait a few seconds for the map and graphs to render."))
   })
 

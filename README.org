@@ -8,8 +8,5 @@
 #+STARTUP: indent showstars
 
 A couple of visualization demos using RStudio Shiny framework, for testing purposes. These apps are viewable at http://tools.harvestchoice.org/:
-- cell5mGgvis :: testing ggvis package with HC Data Services
-- cell5m :: HarvestChoice Data Layers for all districts in SSA
-- 2014_BMGF :: viz of Ethiopia survey statistics
 - rainfall :: 1960-2013 CRU-TS 3.22 precipitation and PDSI for all districts in SSA
-- dhs :: sub-national DHS estimates across 60 countries
+- subnatpov :: sub-national expenditure, poverty and inequality estimates across 60 countries

@@ -1,6 +1,7 @@
 shinyUI(fluidPage(
   title="HarvestChoice | sub-National Poverty Maps",
   theme="../assets/bootstrap.css",
+  tags$head(includeScript("../assets/ga.js")),
 
   fluidRow(class="hc",
     column(9,
@@ -27,7 +28,7 @@ shinyUI(fluidPage(
         helpText(br(), p("Select an indicator and region of interest and submit to update
           the map and graphs. Click over shaded areas on the map to view details."))
       ),
-      br(), br(), br(), br(), br(), br(),
+      br(), br(), br(), br(),
       withMathJax(includeMarkdown("../subnatpov/www/txtCredits.md"))
     ),
 
