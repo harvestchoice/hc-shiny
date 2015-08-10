@@ -13,17 +13,27 @@ leafletPal <- function(x) {
   return(x)
 }
 
+# Sensible legend wrapping
+titleWrap <- function(x) gsub("\n", "<br />", stringr::str_wrap(x, 15), fixed=T)
+
 
 #####################################################################################
 # Helper - p1 Ruttanogram
 #####################################################################################
 
+# Theme
 ap <- axis_props(
   axis=list(stroke="transparent"),
   title=list(fill="#444", font="Pt Sans", fontSize=14),
   labels=list(fill="#444", font="Pt Sans", fontSize=12),
   ticks=list(stroke="transparent"),
   grid=list(stroke="#e3e3e3", strokeWidth=1))
+
+# Tooltips
+tt <- function(x) {
+  if(is.null(x)) return()
+  paste(sapply(x, format), collapse="<br />")
+}
 
 p1 <- function() {
   p <- data.frame(pcn[, N:=.N, by=ISO3][N>1][sample(ISO3, 10)]) %>%
@@ -36,8 +46,7 @@ p1 <- function() {
     group_by(ISO3) %>% layer_paths(stroke:="#444") %>%
     add_legend(scales="shape", title="Country") %>%
     set_options(height=420, width="auto") %>%
-    add_tooltip(on="hover", function(x) {
-      if(length(x)<4) return(); as.character(x[[4]])})
+    add_tooltip(tt, on="hover")
   return(p)
 }
 
@@ -65,12 +74,30 @@ p2 <- function(x, var, svar) {
     add_legend(scales="size", title="Poverty Headcount $2/day",
       properties=legend_props(legend=list(y=90))) %>%
     set_options(height=280, width="auto", duration=0) %>%
-    add_tooltip(function(x) as.character(prettyNum(x[[1]])), on="hover")
+    add_tooltip(tt, on="hover")
   return(p)
 
 }
 
+#####################################################################################
+# Helper - p4 Data Inventory
+#####################################################################################
 
+p4 <- function() {
+  dl <- data.frame(x05=2005, x08=2008, data.table(m@data)[year>0, .N, keyby=list(ISO3)])
+  p <- data.frame(data.table(m@data)[year>0, .N, keyby=list(ISO3, year)]) %>%
+    ggvis(~year, ~factor(ISO3)) %>%
+    add_axis("y", title="Country ISO3 Code", title_offset=60, properties=ap) %>%
+    add_axis("x", title="Year", title_offset=40, format="4d", properties=ap) %>%
+    layer_points(size=~N, fill:="#444", stroke:="#444") %>%
+    group_by(factor(ISO3)) %>% layer_paths(stroke:="#444") %>%
+    add_legend(scales="size", title="Data points") %>%
+    add_tooltip(tt, on="hover") %>%
+    layer_paths(~x05, ~factor(ISO3), stroke:="#D83228", data=dl) %>%
+    layer_paths(~x08, ~factor(ISO3), stroke:="#D83228", data=dl) %>%
+    set_options(height=500, width="auto")
+  return(p)
+}
 
 #####################################################################################
 # Helper - Print map
@@ -115,12 +142,9 @@ shinyServer(function(input, output, session) {
   values <- reactiveValues(g=0L, svar=character(0), var=character(0))
 
   # Update year select
-  observeEvent(input$selectISO3, {
+  observeEvent(input$selectISO3,
     updateSelectInput(session, inputId="selectYear",
-      choices = if (input$selectISO3=="SSA") { def
-      } else unique(m@data[m$ISO3==input$selectISO3,][sort(-m$year), "year"])
-    )
-  })
+      choices=if(input$selectISO3=="SSA") def else years[input$selectISO3]$year))
 
   # Basemap
   output$map <- renderLeaflet({
@@ -133,6 +157,9 @@ shinyServer(function(input, output, session) {
   # p1 - Ruttanogram
   p1() %>% bind_shiny("p1")
 
+  # p4 - Inventory
+  p4() %>% bind_shiny("p4")
+
   # Refresh p1
   observeEvent(input$p1Update, p1() %>% bind_shiny("p1"))
 
@@ -143,7 +170,7 @@ shinyServer(function(input, output, session) {
       "Choose an indicator on the left and wait a few seconds for the map and graphs to render."))
   })
 
-  # Chart header
+  # Bubble chart header
   output$svar <- renderText({
     if (class(values$g)=="integer") return()
     as.character(
@@ -152,7 +179,7 @@ shinyServer(function(input, output, session) {
           varList[[values$var]]$name, "-", input$opts)),
         p("Showing the number of under $2/day Poor and mean selected indicator across
         agro-ecological zones and zones of low, medium and high soil fertility (as measured
-        through mean soil carbon content at depth of 30cm).")))
+        through mean organic carbon content at depth of 30 cm).")))
   })
 
 
@@ -185,6 +212,7 @@ shinyServer(function(input, output, session) {
     # Table
     output$dtDetails <- renderRHandsontable({
       rhandsontable(g@data[, -c(4:6)], selectCallback=T,
+        colHeaders=gsub("_", " ", names(g)[-c(4:6)], fixed=T),
         rowHeaders=F, readOnly=T, stretchH="all",
         height=min(420, 60+nrow(g@data)*16),
         columnSorting=T, fixedColumnsLeft=3,
@@ -195,6 +223,7 @@ shinyServer(function(input, output, session) {
 
     # Export
     values$g <- g
+
   })
 
 
@@ -209,26 +238,25 @@ shinyServer(function(input, output, session) {
     # Make palette
     names(g)[names(g)==values$svar] <- "value"
     pal <- try(colorNumeric(leafletPal(varList[[values$var]]$pal), g@data$value, na.color="grey90"))
-    if (class(pal)=="try-error") return()
     ext <- bbox(g)
 
     # Add layer
     leafletProxy("map", data=g) %>%
-      # Recenter map if country has changed
+      # Recenter map
       fitBounds(ext[1,1], ext[2,1], ext[1,2], ext[2,2]) %>%
       clearShapes() %>%
 
       # Add polygons
-      addPolygons(stroke=F, fillOpacity=0.5, fillColor=~pal(value),
-        smoothFactor=1.4,
+      addPolygons(stroke=F, fillOpacity=0.5, smoothFactor=1.4,
+        fillColor=if(class(pal)=="try-error") "#FAF5AC" else ~pal(value),
         popup=~paste(adminUnit, prettyNum(value), sep="<br />")) %>%
 
       # Add legend
       addLegend("bottomright", layerId="lgd", opacity=1, pal=pal, values=~value,
-        title=paste(varList[[values$var]]$name, input$opts, sep=" - "),
+        title=titleWrap(paste(varList[[values$var]]$name, input$opts, sep=" ")),
         labFormat=labelFormat(digits=if(varList[[values$var]]$format=="0,0.0# %") 2 else 0))
 
-  })
+    })
 
 
   # obsOpts - secondary observer
@@ -249,20 +277,19 @@ shinyServer(function(input, output, session) {
     # Make palette
     names(g)[names(g)==values$svar] <- "value"
     pal <- try(colorNumeric(leafletPal(varList[[values$var]]$pal), g@data$value, na.color="grey90"))
-    if (class(pal)=="try-error") return()
 
     # Add layer
     leafletProxy("map", data=g) %>%
       clearShapes() %>%
 
       # Redraw polygons
-      addPolygons(stroke=F, fillOpacity=0.5, fillColor=~pal(value),
-        smoothFactor=1.4,
+      addPolygons(stroke=F, fillOpacity=0.5, smoothFactor=1.4,
+        fillColor=if(class(pal)=="try-error") "#FAF5AC" else ~pal(value),
         popup=~paste(adminUnit, prettyNum(value), sep="<br />")) %>%
 
       # Update legend
       addLegend("bottomright", layerId="lgd", opacity=1, pal=pal, values=~value,
-        title=paste(varList[[values$var]]$name, input$opts, sep=" - "),
+        title=titleWrap(paste(varList[[values$var]]$name, input$opts, sep=" ")),
         labFormat=labelFormat(digits=2))
 
   })
@@ -270,7 +297,7 @@ shinyServer(function(input, output, session) {
 
   # Highlight selected polygon on row click
   observeEvent(input$dtDetails_select$select$r, {
-    # Import
+    # Import (note: doesn't work if rows are re-sorted)
     g <- values$g[input$dtDetails_select$select$r+1,]
     ext <- bbox(g)
 
@@ -285,13 +312,14 @@ shinyServer(function(input, output, session) {
 
   # Download handler
   output$saveData <- downloadHandler(function() {
-    f <- paste0(values$iso3, "-", input$selectYear, "-", input$var)
+    f <- paste(values$iso3, input$selectYear, input$var, Sys.Date(), sep="-")
     if (input$fileType %in% c("csv", "dta", "pdf")) paste0(f, ".", input$fileType)
     else paste0(f, ".zip")
 
   }, function(file) {
     # Import
     g <- values$g
+    # Can't use normal tempfile() here because of spatial formats, construct
     f <- paste0(values$iso3, "-", input$selectYear, "-", values$var, ".", input$fileType)
 
     switch(input$fileType,
@@ -299,7 +327,7 @@ shinyServer(function(input, output, session) {
       dta = foreign::write.dta(g@data[, -c(4:6)], file, version=12L),
       shp = writeRasterZip(g, file, f, "ESRI Shapefile"),
       pdf = { if (!file.exists(f)) {
-        # Re-generate PDF
+        # Re-generate PDF map
         pdf(file=f, paper="letter")
         var <- paste(input$opts, values$var, sep="_")
         names(g)[names(g)==var] <- "value"

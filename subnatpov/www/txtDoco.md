@@ -4,7 +4,7 @@ author: "Bacou, Melanie"
 output: html_fragment
 ---
 
-## Definitions
+### Definitions
 
 #### Poverty headcount ratio
 
@@ -25,7 +25,7 @@ $$ PS=PG^2 $$
 The Gini coefficient measures inequality within a society by looking at the income distribution across its members. It can take values from 0 (perfect equality, everyone owns the same) to 100 (perfect inequality, one person possesses everything and all the others nothing). Most of the countries fall in the range between 25 and 55.
 
 
-## Sources of sub-National Poverty Statistics
+### Estimation Methods
 
 Sources and methods are documented (partly) on HarvestChoice web site at [Deriving Sub-national Poverty Estimates for Sub-Saharan Africa](http://harvestchoice.org/labs/readme_poverty). Other publications to be released shortly.
 

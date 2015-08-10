@@ -1,4 +1,4 @@
-<label>Credits</label>  
+<label>Authors</label>  
 Azzarri, Carlo; Bacou, Melanie; Signorelli, Sara.
 
 ***************************************************

@@ -4,7 +4,7 @@ shinyUI(fluidPage(
 
   fluidRow(class="hc",
     column(9,
-      h3("Income, Poverty, and Inequality Trends",
+      h3("Expenditure, Poverty, and Inequality Trends",
         tags$small("sub-national time-series for sub-Saharan Africa"))),
     column(2, offset=1,
       h5(a(href="http://harvestchoice.org/", title="Home",
@@ -20,14 +20,14 @@ shinyUI(fluidPage(
     column(3,
       wellPanel(
         p(),
-        helpText(p("Make a selection and submit to refresh the map and graphs.
-          Click shaded areas on the map to view details.")),
         selectInput("var", "Select a poverty indicator", vars),
         selectInput("selectISO3", "Select a country", iso, selected="KEN"),
         selectInput("selectYear", "Select a survey year", def, selected="2005"),
         actionButton("btn", "Map Indicator", icon=icon("cog"), class="btn-primary"),
-        helpText(p(tags$u("Note:"), "mapping the whole of SSA is slow and could hang your browser."))
+        helpText(br(), p("Select an indicator and region of interest and submit to update
+          the map and graphs. Click over shaded areas on the map to view details."))
       ),
+      br(), br(), br(), br(),
       withMathJax(includeMarkdown("../subnatpov/www/txtCredits.md"))
     ),
 
@@ -56,7 +56,12 @@ shinyUI(fluidPage(
           column(3,
             p(), br(),br(),
             radioButtons("opts", "Map indicator for the following sub-population", selected="total",
-              choice=c("total", "rural", "urban", "male", "female")),
+              choice=c(
+                `entire population`="total",
+                `rural households`="rural",
+                `urban households`="urban",
+                `female-headed households`="female",
+                `male-headed households`="male")),
             hr(),
             selectInput("fileType", "Choose Export Format", choices=c(
               `ESRI Shapefile`="shp", CSV="csv", STATA="dta", `PDF Document (map only)`="pdf"), selected="csv"),
@@ -71,11 +76,17 @@ shinyUI(fluidPage(
           )
         ),
 
-        tabPanel("Sources", icon=icon("file-text-o"),
-          includeMarkdown("../subnatpov/www/txtDoco.md")
+        tabPanel("References", icon=icon("file-text-o"),
+          column(3,
+            h3("Data Inventory"),
+            p("Showing the number of data points across countries and years at which
+              nationally-representative household surveys are available. Two maps for
+              the entire subcontinent are available for reference years 2005 and 2008.")),
+          column(9, br(), ggvisOutput("p4")),
+          column(12, includeMarkdown("../subnatpov/www/txtDoco.md"), br())
         )
-
       )
+
     )
   ),
 
