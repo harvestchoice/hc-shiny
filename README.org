@@ -10,4 +10,4 @@
 A couple of visualization demos using RStudio Shiny framework:
 - [[http://tools.harvestchoice.org/rainfall][rainfall]] :: 1960-2013 CRU-TS 3.22 precipitation and PDSI for all districts in SSA
 - [[http://tools.harvestchoice.org/subnatpov][subnatpov]] :: sub-national expenditure, poverty and inequality estimates across 60 countries
-- [[http://tools.harvestchoice.org/cell5mValidate]][cell5mValidate] :: automated tests for HarvestChoice 5-arc-minute data layers for SSA
+- [[http://tools.harvestchoice.org/cell5mValidate][cell5mValidate]] :: automated tests for HarvestChoice 5-arc-minute data layers for SSA
