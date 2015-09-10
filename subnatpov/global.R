@@ -19,7 +19,7 @@ library(ggvis)
 file.remove(list.files())
 
 # Load latest data revision (web minified)
-m <- readRDS("../subnatpov/svyPov_web_20150808.rds")
+m <- readRDS("../subnatpov/data/svyPov_web_20150808.rds")
 
 # Note: weirdly leaflet needs shapes at epsg:4326 and tmap needs epsg:3857
 # m$rn <- NULL
@@ -27,10 +27,10 @@ m <- readRDS("../subnatpov/svyPov_web_20150808.rds")
 # names(m)[11:25] <- paste0("total_", names(m)[11:25])
 # names(m)[6] <- "adminUnit"
 # m@data <- data.frame(m@data)
-# saveRDS(m, "../subnatpov/svyPov_web_20150808.rds")
+# saveRDS(m, "../subnatpov/data/svyPov_web_20150808.rds")
 
 # Load Povcalnet country stats
-pcn <- readRDS("../subnatpov/PovCalServlet_15.08.06.rds")
+pcn <- readRDS("../subnatpov/data/PovCalServlet_15.08.06.rds")
 
 # List of indicators
 varList <- list(

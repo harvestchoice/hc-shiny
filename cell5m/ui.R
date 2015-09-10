@@ -6,26 +6,10 @@
 #####################################################################################
 
 
-header <- dashboardHeader(title="HarvestChoice")
-
-#   navbarMenu("Analysis", icon=icon("cog"),
-#     tabPanel("Explore",
-#       "Over 800 high-resolution indicators for sub-Saharan Africa ",
-#       icon=icon("angle-right")),
-#     tabPanel("Summarize",
-#       "Retrieve summary statistics across geographic domains",
-#       icon=icon("angle-right")),
-#     tabPanel("Homologues",
-#       "Identify and target similar areas",
-#       icon=icon("angle-right")),
-#     tabPanel("About",
-#       "Learn more about HarvestChoice",
-#       icon=icon("angle-right"))
-
-
+header <- dashboardHeader(title="HarvestChoice", dropdownMenuOutput("layerMenu"))
 
 sidebar <- dashboardSidebar(
-  selectInput("selectISO3", "Choose a Country", iso[order(iso)], selected="GHA"),
+  selectInput("selectISO3", "Choose a Country", iso, selected="GHA"),
   hr(),
 
   sidebarMenu(id="selectCat",
@@ -49,7 +33,7 @@ sidebar <- dashboardSidebar(
 )
 
 body <- dashboardBody(
-  #useShinyjs(),
+  useShinyjs(),
 
   fluidRow(style="position:relative;margin-top:-15px;",
 
@@ -57,24 +41,24 @@ body <- dashboardBody(
     leafletOutput("map", height=450),
 
     # Details
-#     #hidden(
-#       absolutePanel(id="panelDetails", class="panel panel-default",
-#         bottom=20, right=20, width=220, height="auto",
-#         htmlOutput("details", class="panel-body")
-#       #)
-#     ),
+    hidden(
+      absolutePanel(id="panelDetails", class="panel panel-default",
+        bottom=20, right=20, width=220, height="auto",
+        htmlOutput("details", class="panel-body")
+      )
+    ),
 
     # Indicator menu (hidden initially)
-    #hidden(
+    hidden(
       absolutePanel(id="panelInd", class="panel panel-default",
         top=-4, left=-4, width=280,
-        div(class="panel-body", style="height:500px;overflow-y:auto;",
-          uiOutput("selectVar")),
+        div(class="panel-body", style="height:390px;overflow-y:auto;",
+          uiOutput("chkGroupVar")),
         div(class="panel-footer",
-          actionButton("btnLayer", "Show Layer", icon("globe"))
+          actionButton("btnLayer", "Select Layers", icon("globe"))
         )
       )
-    #)
+    )
   ),
 
 
@@ -85,39 +69,27 @@ body <- dashboardBody(
       includeMarkdown("../cell5m/www/txtIntro.md")),
 
     tabItem("Overview",
-      bsAlert("alertNoData"),
-      p(),p(),
-      h3(textOutput("varTitle")),
-      p("Click map to show pixel data."),
-
-      box(width=6,
-        h4("Histogram"),
-        plotOutput("plotHist", height="100%"),
-        p(br(), "Showing frequencies for visible pixels.")),
-
-      box(width=6,
-        h4("Layer Statistics"),
-        tableOutput("tableSum")
-      ),
-
-      box(width=2,
-        conditionalPanel(condition="input.btnLayer>0",
-          p(),
-          sliderInput("selectFilter", "Filter layer to Min/Max", 0, 1, c(0,1)),
-          actionButton("btnFilter", "Update Layer", icon("globe")),
+      br(),
+      column(3,
+        wellPanel(
+          p("Click map to show pixel data."),
           hr(),
           selectInput("fileType", "Choose Export Format",
             choices=c(`Comma-separated`="csv", `ASCII Raster`="asc", GeoTIFF="tif", STATA="dta", RData="rds"),
             selected="asc"),
           downloadButton("saveData", "Save Layer")
         )
+      ),
+
+      column(9,
+        uiOutput("cell5mUI")
       )
     ),
 
     tabItem("Summarize",
 
       box(width=5,
-        p(),
+        br(),
         uiOutput("selectDomain"),
         p("Showing a random list of 10 domains to summarize by."),
         actionButton("btnDomain", "Summarize", icon("cog")),

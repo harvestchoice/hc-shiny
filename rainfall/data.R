@@ -319,7 +319,6 @@ head(names(era))
 tail(names(era))
 tm <- seq(as.Date("1979-01-01"), as.Date("2014-12-01"), "month")
 era <- setZ(era, tm, "month")
-projection(era) <- CRS("+init=epsg:")
 
 tmp <- g2.web[g2.web$ADM0_NAME=="Nigeria",]
 tmp <- crop(era, tmp)
@@ -813,7 +812,7 @@ saveRDS(bio, file="./data/ts_yearly_biovars_g2.rds")
 
 
 #####################################################################################
-# 2015.07.28 Update: Process biovars across Ghana districts
+# 2015.07.28 Update: Process biovars across GLSS6 districts
 #####################################################################################
 
 library(dismo)
@@ -1097,4 +1096,212 @@ pdsi[, var := "pdsi"]
 
 dt <- rbind(pre, tmp, pdsi)
 saveRDS(dt, file="./data/dt2.rds")
+
+
+
+#####################################################################################
+# 2015.08.13 Update: Process biovars across GLSS5 districts
+#####################################################################################
+# Note: had to run this code on Buster but saved to gha-glss5 survey folder
+# Note: Jawoo suggested using a weighted mean by cropland to summarize `soc` layers
+# will need to amend the formula in `vi` as well.
+
+library(dismo)
+library(raster)
+library(data.table)
+library(rgdal)
+library(hcapi3)  # only available on Buster
+
+setwd("/home/projects/shiny/tmp")
+load("../rainfall/data/rainfall_2014v15.RData")
+
+# Load GLSS5 survey map (110 districts)
+gha <- readOGR("./", "gha-glss5-map_L2")
+gha.dt <- data.table(gha@data)
+gha.dt[, rn := row.names(gha)]
+
+## Intersect with standard CELL5M biophysical variables
+var <- c("AEZ16_CLAS", "LGP_AVG", "LGP_CV", "FS_2012_TX", "cpland_mean_ha",
+  "TT_20K", "TT_50K", "TPOV_PT200", "TPOV_PT125",
+  "ELEVATION", "PN12_TOT", "pre_mean", "pre_cv",
+  "soc_d5", "soc_d15", "soc_d30")
+
+var <- hcapi(var, iso3="GHA")
+
+# Convert to factors (so raster can use them)
+var[, AEZ16_CLAS := factor(AEZ16_CLAS)]
+var[, FS_2012_TX := factor(FS_2012_TX)]
+
+var <- SpatialPixelsDataFrame(var[, list(X, Y)], data.frame(var),
+  proj4string=CRS("+init=epsg:4326"), tolerance=0.000120005)
+
+# Generate dominant class
+dominant <- function(x, ...) which.max(table(x))
+r <- brick(var[, c("AEZ16_CLAS", "FS_2012_TX")])
+tmp <- extract(r, gha, fun=dominant, na.rm=T, factors=T)
+tmp <- data.table(tmp)
+tmp[, AEZ16_CLAS := levels(r)[[1]]$AEZ16_CLAS[AEZ16_CLAS]]
+tmp[, FS_2012_TX := levels(r)[[2]]$FS_2012_TX[FS_2012_TX]]
+gha.dt <- cbind(gha.dt, tmp)
+
+# Simple mean
+r <- brick(var[, c("LGP_AVG", "LGP_CV", "TT_20K", "TT_50K", "ELEVATION", "pre_mean", "pre_cv")])
+tmp <- extract(r, gha, fun=mean, na.rm=T)
+tmp <- data.table(tmp)
+gha.dt <- cbind(gha.dt, tmp)
+
+# Weighted mean
+r <- brick(var[, c("cpland_mean_ha", "soc_d5", "soc_d15", "soc_d30")])
+# Construct x*w layers, then sum over polygons
+r$soc_d5_w <- r$soc_d5 * r$cpland_mean_ha
+r$soc_d15_w <- r$soc_d15 * r$cpland_mean_ha
+r$soc_d30_w <- r$soc_d30 * r$cpland_mean_ha
+
+tmp <- extract(r, gha, fun=sum, na.rm=T)
+tmp <- data.table(tmp)
+tmp[, soc_d5 := soc_d5_w/cpland_mean_ha]
+tmp[, soc_d15 := soc_d15_w/cpland_mean_ha]
+tmp[, soc_d30 := soc_d30_w/cpland_mean_ha]
+gha.dt <- cbind(gha.dt, tmp[, .SD, .SDcols=-c(5:7)])
+
+# weighted mean
+r <- brick(var[, c("PN12_TOT", "TPOV_PT200", "TPOV_PT125")])
+# Construct x*w layers, then sum over polygons
+r$TPOV_PT200_w <- r$TPOV_PT200 * r$PN12_TOT
+r$TPOV_PT125_w <- r$TPOV_PT125 * r$PN12_TOT
+
+tmp <- extract(r, gha, fun=sum, na.rm=T)
+tmp <- data.table(tmp)
+tmp[, TPOV_PT200 := TPOV_PT200_w/PN12_TOT]
+tmp[, TPOV_PT125 := TPOV_PT125_w/PN12_TOT]
+gha.dt <- cbind(gha.dt, tmp[, .SD, .SDcols=-c(4:5)])
+
+
+# Add area in sq. km.
+gha <- spTransform(gha, CRS("+init=epsg:3857"))
+gha.dt[, area_km := area(gha)/1000000]
+summary(gha.dt$area_km)
+
+
+## Generate biovars from CRU 3.22
+# These rasters are needed to generate bioclimatic variables (located on server)
+tm <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+pre <- brick("../rainfall/data/cru_ts3.22.1901.2013.pre.dat.nc")
+pre <- setZ(pre, tm, "month")
+tmn <- brick("../rainfall/data/cru_ts3.22.1901.2013.tmn.dat.nc")
+tmn <- setZ(tmn, tm, "month")
+tmx <- brick("../rainfall/data/cru_ts3.22.1901.2013.tmx.dat.nc")
+tmx <- setZ(tmx, tm, "month")
+
+gha <- spTransform(gha, proj4string(pre))
+pre <- crop(pre, gha)
+tmn <- crop(tmn, gha)
+tmx <- crop(tmx, gha)
+
+# Keep 1960/01-2013/12 period
+pre <- subset(pre, 709:1356)
+tmn <- subset(tmn, 709:1356)
+tmx <- subset(tmx, 709:1356)
+
+# Generate biovars year by year
+bio <- lapply(seq(1, 648, 12), function(i) biovars(
+  subset(pre, i:(i+11)), subset(tmn, i:(i+11)), subset(tmx, i:(i+11))))
+length(bio)
+# 54 x 19
+
+# Intersect with Ghana districts
+tmp <- lapply(bio, extract, gha, fun=mean, na.rm=T)
+bio <- lapply(tmp, as.matrix)
+bio <- simplify2array(bio)
+dim(bio)
+# [1] 170  19  54
+
+# Name matrix dimensions
+names(dimnames(bio)) <- c("svyL2Code", "biovars", "year")
+
+# Finally compute period mean across districts
+bio <- apply(bio, c("svyL2Code", "biovars"), mean, na.rm=T)
+bio <- data.table(bio)
+gha.dt <- cbind(gha.dt, bio)
+
+# Add labels
+bio.lbl <- c(
+  "Annual Mean Temperature",
+  "Mean Diurnal Range (Mean of monthly (max temp - min temp))",
+  "Isothermality (BIO2/BIO7) (* 100)",
+  "Temperature Seasonality (standard deviation *100)",
+  "Max Temperature of Warmest Month",
+  "Min Temperature of Coldest Month",
+  "Temperature Annual Range (BIO5-BIO6)",
+  "Mean Temperature of Wettest Quarter",
+  "Mean Temperature of Driest Quarter",
+  "Mean Temperature of Warmest Quarter",
+  "Mean Temperature of Coldest Quarter",
+  "Annual Precipitation",
+  "Precipitation of Wettest Month",
+  "Precipitation of Driest Month",
+  "Precipitation Seasonality (Coefficient of Variation)",
+  "Precipitation of Wettest Quarter",
+  "Precipitation of Driest Quarter",
+  "Precipitation of Warmest Quarter",
+  "Precipitation of Coldest Quarter")
+
+# Export to shapefile
+setkey(gha.dt, rn)
+gha@data <- data.frame(gha.dt[row.names(gha)])
+gha <- spChFIDs(gha, gha$rn)
+writeOGR(gha, "./tmp", "gha-glss5_L2_bio", "ESRI Shapefile", overwrite=T)
+
+# Export to STATA
+gha.dt <- data.frame(gha.dt)
+attr(gha.dt, "var.labels") <- c("ISO3 code",
+  "GLSS5 district code", "GLSS5 district", "Capital city", "Region",
+  vi[names(gha.dt)[6:21]][, varLabel],
+  "area (sq. km.)", bio.lbl)
+write.dta(gha.dt, "./tmp/gha-glss5_L2_bio.dta", version=10L)
+
+
+
+#####################################################################################
+# 2015.07.28 GlobeLand30 land cover classes across GLSS6 survey districts
+#####################################################################################
+
+memory.limit(7000)
+library(tmap)
+
+gha <- readOGR("./maps", "gha-glss6-svyMap")
+
+# Load forest cover (from GlobeLand30)
+lc <- raster("~/Maps/GLC30/CRLANDUSE/crlu30m")
+
+# Plot it
+plot(lc)
+tm_shape(lc) +
+  tm_raster("crlu30m", palette=palette(),
+    legend.hist=T, legend.hist.z=1, title="Land Cover") +
+  tm_layout(inner.margins=c(0,0.12,0,0))
+
+
+# Categorize
+lc.lbl <- c(10, 20, 30, 40, 50, 60, 70, 80, 90, 100)
+names(lc.lbl) <- c(
+  "Cultivated land",
+  "Forest",
+  "Grassland",
+  "Shrubland",
+  "Wetland",
+  "Water body",
+  "Tundra",
+  "Artificial surface",
+  "Bareland",
+  "Permanent snow and ice")
+
+lc@data@attributes[[1]]$class <- names(lc.lbl)[-c(7,10)]
+
+# Overlay
+dominant <- function(x, ...) which.max(table(x))
+lc.ext <- extract(lc, gha, fun=dominant, na.rm=T, factors=T)
+
+
+
 

@@ -11,12 +11,6 @@ setwd("/home/projects/shiny/tmp")
 library(hcapi3)
 library(shiny)
 
-# Set a few global table options
-options(
-  xtable.include.rownames=F,
-  xtable.NA.string="--",
-  html.table.attributes="class=\"compact\"")
-
 # Load GAUL admin-2
 g2 <- readRDS("../../cell5m/rdb/g2_2008v09.web.rds")
 g2.dt <- data.table(g2@data)

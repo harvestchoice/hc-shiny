@@ -9,17 +9,16 @@ library(data.table)
 library(hcapi3)
 library(leaflet)
 library(classInt)
-library(sp)
+library(rgdal)
 library(raster)
-library(shiny)
 library(shinydashboard)
-library(shinyBS)
-#library(shinyjs)
+library(shinyjs)
+library(curl) # make the jsonlite suggested dependency explicit
 
 setwd("/home/projects/shiny/tmp")
 
 # Create layer menu
-setorder(vi, cat1, cat2, cat3, varLabel)
+setorder(vi, cat1, cat2, cat3, sortOrder)
 catlst <- vi[genRaster==T & published==T, list(cat2=unique(cat2)), by=cat1]
 tmp <- apply(catlst, 1, function(row) menuSubItem(
   row[["cat2"]], icon=icon("angle-right"),

@@ -202,7 +202,7 @@ shinyServer(function(input, output, session) {
 
     # Subset rows
     g <- if (values$iso3=="SSA" & input$selectYear=="circa 2005")  { m[m$Y05==T,]
-    } else if (values$iso3=="SSA" & input$selectYear=="circa 2008") { m[m$Y08==T, ]
+    } else if (values$iso3=="SSA" & input$selectYear=="circa 2008") { m[m$Y08==T,]
     } else m[m$ISO3==values$iso3 & m$year==as.numeric(input$selectYear),]
 
     # Subset columns
@@ -326,7 +326,11 @@ shinyServer(function(input, output, session) {
     switch(input$fileType,
       csv = write.csv(g@data[, -c(4:6)], file, row.names=F, na=""),
       dta = foreign::write.dta(g@data[, -c(4:6)], file, version=12L),
-      shp = writeRasterZip(g, file, f, "ESRI Shapefile"),
+      shp = {
+        # No ordered factor allowed
+        g$soc_d30_qtl <- as.character(g$soc_d30_qtl)
+        writeRasterZip(g, file, f, "ESRI Shapefile")
+        },
       pdf = { if (!file.exists(f)) {
         # Re-generate PDF map
         pdf(file=f, paper="letter")
