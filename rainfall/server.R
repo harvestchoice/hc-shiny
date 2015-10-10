@@ -222,7 +222,7 @@ shinyServer(function(input, output, session) {
 
     # Render monthly time-series
     output$dygraph <- renderDygraph({
-      dygraph(xts::as.xts(dt[, list(value, mean, trend)], order.by=dt$month), group="dy") %>%
+      dygraph(xts::as.xts(dt[, list(month, value, mean, trend)]), group="dy") %>%
         dySeries("value", label=values$var) %>%
         dySeries("mean", label="period mean") %>%
         dySeries("trend", label="trend", fillGraph=F, strokeWidth=3, strokePattern="dashed") %>%

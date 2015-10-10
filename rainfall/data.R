@@ -802,9 +802,6 @@ g2.dt[ADM0_CODE==76, unique(ADM0_NAME)]
 bio <- dt2.bio[ADM0_CODE!=76, biovars(pre, tmn, tmx),
   by=list(ADM0_CODE, ADM1_CODE, ADM2_CODE, year(month))]
 
-# Let's also process country-level biovars
-bio.g0 <- dt2.bio[, list(), by=list(ADM0_CODE, month)]
-
 
 # Save for re-use
 saveRDS(bio, file="./data/ts_yearly_biovars_g2.rds")
@@ -1303,5 +1300,247 @@ dominant <- function(x, ...) which.max(table(x))
 lc.ext <- extract(lc, gha, fun=dominant, na.rm=T, factors=T)
 
 
+######################################################################################
+# 2015.09.10 Biovars across SSA countries for Sam Benin
+######################################################################################
+
+## Generate biovars from CRU 3.22
+# These rasters are needed to generate bioclimatic variables (located on server)
+tm <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+pre <- brick("./rainfall/data/cru_ts3.22.1901.2013.pre.dat.nc")
+pre <- setZ(pre, tm, "month")
+tmn <- brick("./rainfall/data/cru_ts3.22.1901.2013.tmn.dat.nc")
+tmn <- setZ(tmn, tm, "month")
+tmx <- brick("./rainfall/data/cru_ts3.22.1901.2013.tmx.dat.nc")
+tmx <- setZ(tmx, tm, "month")
+
+# Load SSA map and check
+g0 <- readRDS("../cell5m/rdb/g0.rds")
+plot(g0)
+plot(g0[g0$ADM0_NAME=="Ethiopia",])
+
+# Keep only SSA countries
+ssa <- fread("../cell5m/rdb/ssa.csv")
+g0 <- g0[!is.na(g0$ADM0_NAME),]
+g0 <- g0[g0$ADM0_NAME %in% c(ssa$ADM0_NAME, "Côte d'Ivoire"),]
+plot(g0)
+
+g0 <- spTransform(g0, proj4string(pre))
+pre <- crop(pre, g0)
+tmn <- crop(tmn, g0)
+tmx <- crop(tmx, g0)
+
+# Keep 1960/01-2013/12 period
+pre <- subset(pre, 709:1356)
+tmn <- subset(tmn, 709:1356)
+tmx <- subset(tmx, 709:1356)
+
+# Generate biovars year by year
+bio <- lapply(seq(1, 648, 12), function(i) biovars(
+  subset(pre, i:(i+11)), subset(tmn, i:(i+11)), subset(tmx, i:(i+11))))
+length(bio)
+# 54 x 19
+
+# Intersect with countries
+tmp <- lapply(bio, extract, g0, fun=mean, na.rm=T)
+bio <- lapply(tmp, as.matrix)
+bio <- simplify2array(bio)
+dim(bio)
+# [1] 48  19  54
+
+# Name matrix dimensions
+g0.dt <- data.table(g0@data)
+g0.dt[, rn := row.names(g0)]
+names(dimnames(bio)) <- c("country", "biovar", "year")
+dimnames(bio)$country <- g0.dt$ADM0_CODE
+dimnames(bio)$year <- 1960:2013
+
+# Finally convert to flat table
+tmp <- as.table(bio)
+tmp <- as.data.table(tmp)
+setkey(tmp, country)
+setkey(g0.dt, ADM0_CODE)
+g0.dt[, ADM1_CODE := NULL]
+g0.dt[, ADM1_NAME := NULL]
+tmp <- g0.dt[tmp]
+setcolorder(tmp, c(5:9,1:4,10:12))
+tmp[, rn := NULL]
+tmp[, STATUS := NULL]
+tmp[, STR_YEAR := NULL]
+tmp[, EXP_YEAR := NULL]
+tmp[, DISP_AREA := NULL]
+setnames(tmp, "N", "value")
+tmp <- dcast(tmp, ...~biovar, value.var="value")
+
+# Note that biovars were reordered alphabetically!
+setcolorder(tmp, c(1:6, 17:24, 7:16))
+
+# Add labels
+bio.lbl <- c(
+  "Annual Mean Temperature",
+  "Mean Diurnal Range (Mean of monthly (max temp - min temp))",
+  "Isothermality (BIO2/BIO7) (* 100)",
+  "Temperature Seasonality (standard deviation *100)",
+  "Max Temperature of Warmest Month",
+  "Min Temperature of Coldest Month",
+  "Temperature Annual Range (BIO5-BIO6)",
+  "Mean Temperature of Wettest Quarter",
+  "Mean Temperature of Driest Quarter",
+  "Mean Temperature of Warmest Quarter",
+  "Mean Temperature of Coldest Quarter",
+  "Annual Precipitation",
+  "Precipitation of Wettest Month",
+  "Precipitation of Driest Month",
+  "Precipitation Seasonality (Coefficient of Variation)",
+  "Precipitation of Wettest Quarter",
+  "Precipitation of Driest Quarter",
+  "Precipitation of Warmest Quarter",
+  "Precipitation of Coldest Quarter")
+
+# Export to STATA
+attr(tmp, "var.labels") <- c("GAUL country code", "GAUL country name",
+  "perimeter", "area", "year", bio.lbl)
+write.dta(tmp, "./rainfall/data/SB/ssa_L0_1960-2013_yearly_bio.dta", version=10L)
+
+# Save all
+save.image(file="./rainfall/data/SB/ssa_L0_1960-2013_yearly_bio.RData")
+
+
+#####################################################################################
+# 2015.09.10 Process biovars across AR Malawi villages
+#####################################################################################
+# For Beliyou, note we processed these variables across AR villages back in July.
+# Then Beliyou noted differences with Joe's earlier version
+# [9/2/2015 3:26:55 PM] HC - Haile, Beliyou: I just did keep if country==3
+# in your file and did a summary of elevation, slope, etc. which are all different
+# from those of Joe's...
+#
+#     Variable |        Obs        Mean    Std. Dev.       Min        Max
+# -------------+---------------------------------------------------------
+#    ELEVATION |         54    674.9259    597.3919        132       2669
+# from your file
+#
+#     Variable |        Obs        Mean    Std. Dev.       Min        Max
+# -------------+---------------------------------------------------------
+#         elev |      1,134    923.2707    260.5408        514       1259
+# from joe's file, for example
+#
+#
+#     Variable |        Obs        Mean    Std. Dev.       Min        Max
+# -------------+---------------------------------------------------------
+#        slope |         54    1.034032    1.831992   .0672607   10.63578
+# from your file
+#
+#     Variable |        Obs        Mean    Std. Dev.       Min        Max
+# -------------+---------------------------------------------------------
+#         slop |      1,134    1.108095    .8437256     .10428    3.76778
+# from joe's file
+
+
+library(dismo)
+library(raster)
+library(data.table)
+library(hcapi3)
+
+setwd("/home/projects/shiny/rainfall")
+load("./data/rainfall_2014v15.RData")
+
+# Import AR village locations
+ar <- readRDS("./data/ARPointsZoI_2015.07.28.rds")
+
+
+# Generate biovars from CRU 3.22
+# These are needed to generate bioclimatic variables
+tm <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+pre <- brick("./data/cru_ts3.22.1901.2013.pre.dat.nc")
+pre <- setZ(pre, tm, "month")
+tmn <- brick("./data/cru_ts3.22.1901.2013.tmn.dat.nc")
+tmn <- setZ(tmn, tm, "month")
+tmx <- brick("./data/cru_ts3.22.1901.2013.tmx.dat.nc")
+tmx <- setZ(tmx, tm, "month")
+
+# Keep 1960/01-2013/12
+pre <- subset(pre, 709:1356)
+tmn <- subset(tmn, 709:1356)
+tmx <- subset(tmx, 709:1356)
+
+# Intersect with AR villages
+ar <- spTransform(ar, proj4string(pre))
+pre <- extract(pre, ar)
+tmn <- extract(tmn, ar)
+tmx <- extract(tmx, ar)
+
+# Generate biovars year by year
+bio <- lapply(seq(1, 648, 12), function(i) biovars(
+  pre[, i:(i+11)], tmn[, i:(i+11)], tmx[, i:(i+11)]))
+length(bio)
+# 54
+
+bio <- simplify2array(bio)
+dim(bio)
+# [1] 162  19  54
+
+names(dimnames(bio)) <- c("village", "biovars", "year")
+
+# Finaly compute long-term mean for each district
+bio <- apply(bio, c("village", "biovars"), mean, na.rm=T)
+bio <- data.frame(bio)
+ar@data <- cbind(ar@data, bio)
+
+# Save
+saveRDS(ar, "./data/ARPointsZoI_2015.07.28.rds")
+
+
+
+#####################################################################################
+# 2015.09.19 Process biovars across AR Malawi households
+#####################################################################################
+
+setwd("/home/projects/shiny/rainfall")
+
+# Import AR village locations
+ar <- readRDS("./data/MWI-HH-Coordinates.rds")
+
+
+# Generate biovars from CRU 3.22
+# These are needed to generate bioclimatic variables
+tm <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+pre <- brick("./data/cru_ts3.22.1901.2013.pre.dat.nc")
+pre <- setZ(pre, tm, "month")
+tmn <- brick("./data/cru_ts3.22.1901.2013.tmn.dat.nc")
+tmn <- setZ(tmn, tm, "month")
+tmx <- brick("./data/cru_ts3.22.1901.2013.tmx.dat.nc")
+tmx <- setZ(tmx, tm, "month")
+
+# Keep 1960/01-2013/12
+pre <- subset(pre, 709:1356)
+tmn <- subset(tmn, 709:1356)
+tmx <- subset(tmx, 709:1356)
+
+# Intersect with AR villages
+ar <- spTransform(ar, proj4string(pre))
+pre <- extract(pre, ar)
+tmn <- extract(tmn, ar)
+tmx <- extract(tmx, ar)
+
+# Generate biovars year by year
+bio <- lapply(seq(1, 648, 12), function(i) biovars(
+  pre[, i:(i+11)], tmn[, i:(i+11)], tmx[, i:(i+11)]))
+length(bio)
+# 54
+
+bio <- simplify2array(bio)
+dim(bio)
+# [1] 1131   19   54
+
+names(dimnames(bio)) <- c("hhid", "biovars", "year")
+
+# Finaly compute long-term mean for each district
+bio <- apply(bio, c("hhid", "biovars"), mean, na.rm=T)
+bio <- data.frame(bio)
+ar@data <- cbind(ar@data, bio)
+
+# Save
+saveRDS(ar, "./data/MWI-HH-Coordinates_bio.rds")
 
 
