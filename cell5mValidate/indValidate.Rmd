@@ -1,0 +1,74 @@
+---
+title: "HarvestChoice - CELL5M Data Validition"
+author: "Bacou, Melanie"
+date: "7/31/2015"
+runtime: shiny
+output: html_document
+---
+
+A sample of data validation tests for HarvestChoice 5-arc minute spatial layers for sub-Saharan Africa (further documented at http://harvestchoice.org/data). These are meant to catch more obvious processing errors, not so much to proof the quality of the original sources. These tests are run every time this page is loaded. Source code and results are shown here interactively.
+
+This document is part of a series of automated tests to validate HarvestChoice data layers:
+
+**Contents**
+
+- [Administrative Classification](#administrative-classification)
+- [Metadata Summary](viValidate.Rmd)
+- [Variable Inventory](viValidate.Rmd#variable-inventory)
+- [Analytical Features](toolsValidate.Rmd)
+
+*************************************************************************************
+
+
+```{r, eval=F}
+# Load common libraries
+library(data.table)
+library(hcapi3)
+```
+
+```{r, results="hide"}
+# Load spatial libraries
+library(raster)
+library(leaflet)
+```
+
+
+```{r, echo=F}
+
+selectInput("var", "Select an indicator", vi[published==T & genRaster==T][, unique(varCode)])
+selectInput("iso3", "Select a country", iso, "GHA")
+
+```
+
+
+```{r, collapse=T}
+
+renderLeaflet({
+  
+  # Call API
+  dt <- hcapi(input$var, input$iso3)
+  
+  # Raster needs all character variables categorized into factors first
+  # Convert CELL5M variables to multi-layer raster brick
+  r <- SpatialPixelsDataFrame(dt[, list(X,Y)], data.frame(dt),
+    proj4string=CRS("+init=epsg:4326"),  tolerance=0.0036002)
+  r <- brick(r)
+  
+  # Reproject layers to epsg:3857 to speed up leaflet
+  r <- projectRaster(r, crs=CRS("+init=epsg:3857"))
+  
+  # Colors
+  cc <- unlist(strsplit(vi[input$var][, classColors], "|", fixed=T))
+  
+  # Render map
+  leaflet(width="100%") %>%
+    setView(20,1, 4) %>% # center on Ghana
+    addTiles(urlTemplate="http://{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+      attribution="Mapbox") %>%
+    
+    # Add CELL5M rasters
+    addRasterImage(raster(r, input$var), colors=cc,
+      opacity=.6, project=F, maxBytes=8*1024*1024, group="Indicator")
+})
+
+```
