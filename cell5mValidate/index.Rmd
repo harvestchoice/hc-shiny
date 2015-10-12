@@ -4,9 +4,9 @@ author: "Bacou, Melanie"
 date: "7/31/2015"
 runtime: shiny
 output: 
-html_document: 
-fig_height: 6
-fig_width: 6
+  html_document: 
+    fig_height: 6
+    fig_width: 6
 ---
 
 A sample of data validation tests for HarvestChoice 5-arc minute spatial layers for sub-Saharan Africa (further documented at http://harvestchoice.org/data). These are meant to catch more obvious processing errors, not so much to proof the quality of the original sources. These tests are run every time this page is loaded. Source code and results are shown here interactively.
@@ -65,6 +65,7 @@ dt[ADM0_NAME=="Kenya", .N]
 ken <- dt[ADM0_NAME=="Kenya", list(ADM2_NAME=unique(ADM2_NAME_ALT)), keyby=ADM1_NAME_ALT]
 ken
 nrow(ken[ADM1_NAME_ALT!="buffer gridcell"])
+
 ```
 
 47 counties are shown for Kenya as opposed to 86 in the official GAUL 2008 (2009) release. This is normal. We can verify all other country classification similarly.
@@ -126,6 +127,7 @@ dt[, `:=`(
   ADM1_NAME_ALT=factor(ADM1_NAME_ALT),
   ADM2_NAME_ALT=factor(ADM2_NAME_ALT),
   ISO3=factor(ISO3))]
+
 ```
 
 ```{r, warning=F}
