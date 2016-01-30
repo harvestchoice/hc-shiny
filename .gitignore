@@ -13,6 +13,6 @@
 .project
 
 /rainfall/data/*
+/rainfall/wc0.5/*
 !/rainfall/data/g2*
-!/rainfall/data/rds
-!/rainfall/data/rds/*
+!/rainfall/data/*.rds

@@ -1109,11 +1109,10 @@ library(data.table)
 library(rgdal)
 library(hcapi3)  # only available on Buster
 
-setwd("/home/projects/shiny/tmp")
-load("../rainfall/data/rainfall_2014v15.RData")
+setwd("/home/projects/shiny/rainfall")
 
 # Load GLSS5 survey map (110 districts)
-gha <- readOGR("./", "gha-glss5-map_L2")
+gha <- readOGR("./data/DSG", "gha-glss5-map_L2")
 gha.dt <- data.table(gha@data)
 gha.dt[, rn := row.names(gha)]
 
@@ -1183,22 +1182,61 @@ summary(gha.dt$area_km)
 ## Generate biovars from CRU 3.22
 # These rasters are needed to generate bioclimatic variables (located on server)
 tm <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
-pre <- brick("../rainfall/data/cru_ts3.22.1901.2013.pre.dat.nc")
+pre <- brick("./data/cru_ts3.22.1901.2013.pre.dat.nc")
 pre <- setZ(pre, tm, "month")
-tmn <- brick("../rainfall/data/cru_ts3.22.1901.2013.tmn.dat.nc")
+tmn <- brick("./data/cru_ts3.22.1901.2013.tmn.dat.nc")
 tmn <- setZ(tmn, tm, "month")
-tmx <- brick("../rainfall/data/cru_ts3.22.1901.2013.tmx.dat.nc")
+tmx <- brick("./data/cru_ts3.22.1901.2013.tmx.dat.nc")
 tmx <- setZ(tmx, tm, "month")
+tmp <- brick("./data/cru_ts3.22.1901.2013.tmp.dat.nc")
+tmp <- setZ(tmp, tm, "month")
 
 gha <- spTransform(gha, proj4string(pre))
 pre <- crop(pre, gha)
 tmn <- crop(tmn, gha)
 tmx <- crop(tmx, gha)
+tmp <- crop(tmp, gha)
 
 # Keep 1960/01-2013/12 period
 pre <- subset(pre, 709:1356)
 tmn <- subset(tmn, 709:1356)
 tmx <- subset(tmx, 709:1356)
+tmp <- subset(tmp, 709:1356)
+
+# Save monthly means across districts
+t1 <- extract(pre, gha, mean, na.rm=T)
+t1 <- as.data.table(t1)
+t1 <- cbind(gha.dt, t1)
+t1 <- melt(t1, id.vars=1:9, value.name="pre", variable.name="month")
+
+t2 <- extract(tmp, gha, mean, na.rm=T)
+t2 <- as.data.table(t2)
+t2 <- cbind(gha.dt, t2)
+t2 <- melt(t2, id.vars=1:9, value.name="tmp", variable.name="month")
+
+t3 <- extract(tmn, gha, mean, na.rm=T)
+t3 <- as.data.table(t3)
+t3 <- cbind(gha.dt, t3)
+t3 <- melt(t3, id.vars=1:9, value.name="tmn", variable.name="month")
+
+t4 <- extract(tmx, gha, mean, na.rm=T)
+t4 <- as.data.table(t4)
+t4 <- cbind(gha.dt, t4)
+t4 <- melt(t4, id.vars=1:9, value.name="tmx", variable.name="month")
+
+bio <- cbind(t1, tmp=t2$tmp, tmn=t3$tmn, tmx=t4$tmx)
+bio[, month := as.character(month)]
+bio[, month := as.Date(month, "X%Y.%m.%d")]
+
+
+attr(bio, "var.labels") <- c("ISO3 code",
+  "Country", "Region", "District",
+  "GLSS5 district code", "GLSS5 district", "Capital city", "Region",
+  "shape id", "month", "prepitation CRU TS v3.22 (mm)",
+  "temperature CRU TS v3.22 (Celsius)", "min. temp. (Celsius)", "max. temp. (Celsius)")
+
+write.dta(bio, "./data/DSG/gha-glss5_L2_bio_month.dta", version=12L)
+
 
 # Generate biovars year by year
 bio <- lapply(seq(1, 648, 12), function(i) biovars(
@@ -1247,15 +1285,14 @@ bio.lbl <- c(
 setkey(gha.dt, rn)
 gha@data <- data.frame(gha.dt[row.names(gha)])
 gha <- spChFIDs(gha, gha$rn)
-writeOGR(gha, "./tmp", "gha-glss5_L2_bio", "ESRI Shapefile", overwrite=T)
+writeOGR(gha, "./data/DSG", "gha-glss5_L2_bio", "ESRI Shapefile", overwrite=T)
 
 # Export to STATA
-gha.dt <- data.frame(gha.dt)
 attr(gha.dt, "var.labels") <- c("ISO3 code",
   "GLSS5 district code", "GLSS5 district", "Capital city", "Region",
   vi[names(gha.dt)[6:21]][, varLabel],
   "area (sq. km.)", bio.lbl)
-write.dta(gha.dt, "./tmp/gha-glss5_L2_bio.dta", version=10L)
+write.dta(gha.dt, "./data/DSG/gha-glss5_L2_bio.dta", version=10L)
 
 
 
@@ -1543,4 +1580,323 @@ ar@data <- cbind(ar@data, bio)
 # Save
 saveRDS(ar, "./data/MWI-HH-Coordinates_bio.rds")
 
+
+
+#####################################################################################
+# 2015.10.25 Process biovars across district survey maps
+#####################################################################################
+setwd("/home/projects/shiny/rainfall")
+
+# Generate biovars from CRU 3.22
+# These are needed to generate bioclimatic variables
+tm <- seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month")
+pre <- brick("./data/cru_ts3.22.1901.2013.pre.dat.nc")
+pre <- setZ(pre, tm, "month")
+tmn <- brick("./data/cru_ts3.22.1901.2013.tmn.dat.nc")
+tmn <- setZ(tmn, tm, "month")
+tmx <- brick("./data/cru_ts3.22.1901.2013.tmx.dat.nc")
+tmx <- setZ(tmx, tm, "month")
+
+# Keep 1960/01-2013/12
+pre <- subset(pre, 709:1356)
+tmn <- subset(tmn, 709:1356)
+tmx <- subset(tmx, 709:1356)
+
+# Intersect with districts map
+l2.map <- readOGR("./r15.10", "svyL2Maps_r1")
+l2.map <- spTransform(l2.map, proj4string(pre))
+l2.map.dt <- data.table(l2.map@data)
+
+pre <- extract(pre, l2.map, fun=mean, na.rm=T, small=T)
+tmn <- extract(tmn, l2.map, fun=mean, na.rm=T, small=T)
+tmx <- extract(tmx, l2.map, fun=mean, na.rm=T, small=T)
+
+# Generate biovars year by year
+bio <- lapply(seq(1, 648, 12), function(i) biovars(
+  pre[, i:(i+11)], tmn[, i:(i+11)], tmx[, i:(i+11)]))
+length(bio)
+# [1] 54
+
+bio <- simplify2array(bio)
+dim(bio)
+# [1] 1258   19   54
+
+names(dimnames(bio)) <- c("admin", "biovars", "year")
+dimnames(bio)[[1]] <- l2.map$rn
+dimnames(bio)[[3]] <- 1960:2013
+
+# Keep the survey year means
+bio.svy <- data.table(melt(bio))
+bio.svy <- bio.svy[year %between% c(2000,2012) & biovars %in% c("bio1", "bio4", "bio12", "bio15")]
+bio.svy <- dcast(admin~biovars+year, data=bio.svy)
+bio.svy <- data.table(bio.svy)
+bio.svy <- cbind(l2.map@data, bio.svy)
+bio.svy <- data.table(bio.svy)
+bio.svy[, admin := NULL]
+
+# Finaly compute long-term mean for each admin unit
+bio <- apply(bio, c("admin", "biovars"), mean, na.rm=T)
+bio <- data.frame(bio)
+bio <- cbind(l2.map@data, bio)
+
+# Monthly means
+names(dimnames(pre)) <- c("admin", "month")
+names(dimnames(tmn)) <- c("admin", "month")
+names(dimnames(tmx)) <- c("admin", "month")
+pre.mth <- melt(pre)
+tmn.mth <- melt(tmn)
+tmx.mth <- melt(tmx)
+pre.mth <- data.table(pre.mth)
+tmn.mth <- data.table(tmn.mth)
+tmx.mth <- data.table(tmx.mth)
+pre.mth[, var := "pre"]
+tmn.mth[, var := "tmn"]
+tmx.mth[, var := "tmx"]
+
+bio.mth <- rbind(pre.mth, tmn.mth, tmx.mth)
+rm(pre.mth, tmn.mth, tmx.mth)
+bio.mth[, mth := month.abb[as.integer(substr(month, 7, 8))]]
+bio.mth <- bio.mth[, .(value=mean(value, na.rm=T)), by=.(admin, var, mth)]
+bio.mth <- dcast.data.table(admin~var+mth, data=bio.mth)
+bio.mth <- cbind(l2.map@data, bio.mth)
+bio.mth <- data.table(bio.mth)
+bio.mth[, admin := NULL]
+
+# Export
+attr <- c("shape id", "ISO3 code", "survey code",
+  "adm-1 code (in survey)", "admin-1 name (in survey)",
+  "adm-2 code (in survey, 0 is missing or not surveyed)", "admin-2 name (in survey)",
+  "print label", "area (sq. km.)", "longitude", "latitude")
+
+bio.lbl <- c(
+  "Annual Mean Temperature",
+  "Mean Diurnal Range (Mean of monthly (max temp - min temp))",
+  "Isothermality (bio2/bio7) (* 100)",
+  "Temperature Seasonality (standard deviation *100)",
+  "Max Temperature of Warmest Month",
+  "Min Temperature of Coldest Month",
+  "Temperature Annual Range (bio5-bio6)",
+  "Mean Temperature of Wettest Quarter",
+  "Mean Temperature of Driest Quarter",
+  "Mean Temperature of Warmest Quarter",
+  "Mean Temperature of Coldest Quarter",
+  "Annual Precipitation",
+  "Precipitation of Wettest Month",
+  "Precipitation of Driest Month",
+  "Precipitation Seasonality (Coefficient of Variation)",
+  "Precipitation of Wettest Quarter",
+  "Precipitation of Driest Quarter",
+  "Precipitation of Warmest Quarter",
+  "Precipitation of Coldest Quarter")
+
+bio.svy.lbl <- c(
+  paste0(bio.lbl[1], " Y", 2000:2012),
+  paste0(bio.lbl[4], " Y", 2000:2012),
+  paste0(bio.lbl[12], " Y", 2000:2012),
+  paste0(bio.lbl[15], " Y", 2000:2012))
+
+bio.mth.lbl <- c(
+  paste0("precipitation", " - ", month.abb),
+  paste0("min. temp.", " - ", month.abb),
+  paste0("max. temp.", " - ", month.abb))
+
+# Export
+attr(bio, "var.labels") <- c(attr, bio.lbl)
+attr(bio.svy, "var.labels") <- c(attr, bio.svy.lbl)
+attr(bio.mth, "var.labels") <- c(attr, bio.mth.lbl)
+
+write.dta(bio, "./r15.10/svyL2Maps-CRU.3.22_1960-2013_r1.dta", version=12L)
+write.dta(bio.svy, "./r15.10/svyL2Maps-CRU.3.22_2000-2010_year_r1.dta", version=12L)
+write.dta(bio.mth, "./r15.10/svyL2Maps-CRU.3.22.dta_1960-2013_month_r1.dta", version=12L)
+
+
+# Save all
+save.image(file="./data/r15.10/svyL2Maps.RData")
+
+
+
+#####################################################################################
+# 2015.10.30 Simplify watershed boundaries for Carleen
+#####################################################################################
+
+library(rgdal)
+library(rgeos)
+library(leaflet)
+
+setwd("/home/projects/shiny/rainfall")
+
+m <- readOGR("./HUC", "HUC_Name_clip")
+s <- m[1:30,]
+s <- gSimplify(m, 0.08, topologyPreserve=T)
+s <- SpatialPolygonsDataFrame(s, m@data)
+
+l <- leaflet(m[1:30,]) %>% addTiles() %>% addPolygons()
+l <- leaflet(s) %>% addTiles() %>% addPolygons()
+
+writeOGR(s, "./HUC", "HUC_Name_clip_web", "ESRI Shapefile", overwrite_layer=T)
+
+
+#####################################################################################
+# 2015.11.11 Re-run biovars above across district survey maps from 1990-2013
+#####################################################################################
+setwd("/home/projects/shiny/rainfall")
+load("./data/r15.10/svyL2Maps.RData")
+
+library(data.table)
+library(reshape2)
+library(dismo)
+library(foreign)
+
+# Generate biovars year by year
+bio <- lapply(seq(1, 648, 12), function(i) biovars(
+  pre[, i:(i+11)], tmn[, i:(i+11)], tmx[, i:(i+11)]))
+length(bio)
+# [1] 54
+
+bio <- simplify2array(bio)
+dim(bio)
+# [1] 1258   19   54
+
+names(dimnames(bio)) <- c("admin", "biovars", "year")
+dimnames(bio)[[1]] <- l2.map$rn
+dimnames(bio)[[3]] <- 1960:2013
+
+# Keep the survey year means
+bio.svy <- data.table(melt(bio))
+bio.svy <- bio.svy[year %between% c(1990,2013) & biovars %in% c("bio1", "bio4", "bio12", "bio15")]
+bio.svy <- dcast(admin~biovars+year, data=bio.svy)
+bio.svy <- data.table(bio.svy)
+bio.svy <- cbind(l2.map@data, bio.svy)
+bio.svy <- data.table(bio.svy)
+bio.svy[, admin := NULL]
+
+# Export
+bio.svy.lbl <- c(
+  paste0(bio.lbl[1], " Y", 1990:2013),
+  paste0(bio.lbl[4], " Y", 1990:2013),
+  paste0(bio.lbl[12], " Y", 1990:2013),
+  paste0(bio.lbl[15], " Y", 1990:2013))
+
+attr(bio.svy, "var.labels") <- c(attr, bio.svy.lbl)
+write.dta(bio.svy, "./data/r15.10/svyL2Maps-CRU.3.22_1990-2013_year_r1.dta", version=12L)
+
+
+# We also need WorldClim biovars at 1km 1990-2000
+proj4string(l2.map)
+l2.map.xy <- coordinates(l2.map)
+dim(l2.map.xy)
+dimnames(l2.map.xy)[[2]] <- c("X", "Y")
+bio.wc <- apply(l2.map.xy, 1, function(x) getData("worldclim", var="bio", res=0.5, lon=x["X"], lat=x["Y"]))
+dim(bio.wc[[1]])
+# [1] 3600 3600   19
+class(bio.wc[[1]])
+# [1] "RasterStack"
+
+bio.wc.l2 <-  lapply(1:length(bio.wc), function(i) extract(bio.wc[[i]], l2.map[i,],
+  fun=mean, na.rm=T, small=T))
+class(bio.wc.l2[[1]])
+# [1] "matrix"
+dim(bio.wc.l2[[1]])
+# [1]  1 19
+
+bio.wc.l2 <- do.call(rbind, bio.wc.l2)
+dim(bio.wc.l2)
+bio.wc.l2 <- data.table(bio.wc.l2)
+bio.wc.l2 <- cbind(l2.map@data, bio.wc.l2)
+setnames(bio.wc.l2, 12:30, paste0("bio", 1:19))
+
+# Export period means
+attr(bio.wc.l2, "var.labels") <- c(attr, bio.lbl)
+write.dta(bio.wc.l2, "./data/r15.10/svyL2Maps-WorldClim-1km_1950-2000_r1.dta", version=12L)
+
+
+# Also get 12 monthly files for tmin, tmax, prec over 1950-2000
+tmin.wc <- apply(l2.map.xy, 1, function(x) getData("worldclim", var="tmin", res=0.5, lon=x["X"], lat=x["Y"]))
+tmax.wc <- apply(l2.map.xy, 1, function(x) getData("worldclim", var="tmax", res=0.5, lon=x["X"], lat=x["Y"]))
+tpre.wc <- apply(l2.map.xy, 1, function(x) getData("worldclim", var="prec", res=0.5, lon=x["X"], lat=x["Y"]))
+
+# I assume each tile covers the entire admin unit, but maybe I should combine the tiles
+# first into 1 single raster instead? Let's try to map them to check
+leaflet(l2.map[1,]) %>%
+  addRasterImage(raster(tmin.wc[[1]], layer=1)) %>%
+  addPolygons(fillColor="#000")
+# => tiles are very large indeed, so code below is fine
+
+tmin.wc.l2 <-  lapply(1:length(bio.wc), function(i) extract(tmin.wc[[i]], l2.map[i,],
+  fun=mean, na.rm=T, small=T))
+tmax.wc.l2 <-  lapply(1:length(bio.wc), function(i) extract(tmax.wc[[i]], l2.map[i,],
+  fun=mean, na.rm=T, small=T))
+tpre.wc.l2 <-  lapply(1:length(bio.wc), function(i) extract(tpre.wc[[i]], l2.map[i,],
+  fun=mean, na.rm=T, small=T))
+
+# Monthly summaries
+# Values are listed across admin units for each 12 months in 1990-2000 period
+tmin.wc.l2[[1]]
+# tmin1_25 tmin2_25 tmin3_25 tmin4_25 tmin5_25 tmin6_25 tmin7_25 tmin8_25 tmin9_25
+# [1,] 202.2451 215.1861 220.9259 221.9773 222.3661 216.6641 213.6172 208.0666 215.1513
+# tmin10_25 tmin11_25 tmin12_25
+# [1,]  214.5855  216.0756  209.3404
+tmin.wc.l2 <- do.call(rbind, tmin.wc.l2)
+tmax.wc.l2 <- do.call(rbind, tmax.wc.l2)
+tpre.wc.l2 <- do.call(rbind, tpre.wc.l2)
+
+tmin.wc.l2 <- cbind(l2.map@data, tmin.wc.l2)
+setnames(tmin.wc.l2, 12:23, paste0("tmin_", substr(month.name, 1, 3)))
+setnames(tmax.wc.l2, paste0("tmax_", substr(month.name, 1, 3)))
+setnames(tpre.wc.l2, paste0("tpre_", substr(month.name, 1, 3)))
+
+bio.wc.mth <- cbind(tmin.wc.l2, tmax.wc.l2, tpre.wc.l2)
+
+# Export monthly means
+bio.mth.lbl <- c(
+  paste0("min. temp.", " - ", month.abb, " (degree C*10)"),
+  paste0("max. temp.", " - ", month.abb, " (degree C*10)"),
+  paste0("precipitation", " - ", month.abb, " (mm)"))
+
+attr(bio.wc.mth, "var.labels") <- c(attr, bio.mth.lbl)
+write.dta(bio.wc.mth, "./data/r15.10/svyL2Maps-WorldClim-1km_month_1950-2000_r1.dta", version=12L)
+
+
+# Sara also needs yearly drought index across districts 1990-2013
+pdsi <- brick("./data/pdsisc.monthly.maps.1850-2012.nc")
+tm <- seq(as.Date("1850-01-01"), as.Date("2012-12-31"), "month")
+pdsi <- setZ(pdsi, tm, "month")
+pdsi <- subset(pdsi, 1681:1956)
+pdsi.l2 <- extract(pdsi, l2.map, fun=mean, na.rm=T, small=T)
+dim(pdsi.l2)
+# [1] 1258  276
+
+tm <- seq(as.Date("1990-01-01"), as.Date("2012-12-31"), "month")
+names(dimnames(pdsi.l2)) <- c("admin", "month")
+dimnames(pdsi.l2)[[1]] <- l2.map$rn
+dimnames(pdsi.l2)[[2]] <- tm
+
+# Keep the survey year means
+tm <- data.table(mInt=names(pdsi.svy), mStr=tm)
+pdsi.svy <- data.table(pdsi.l2)
+pdsi.svy[, admin := row.names(pdsi.svy)]
+pdsi.svy <- melt(pdsi.svy, id.vars="admin", variable.name="month")
+setkey(pdsi.svy, month)
+setkey(tm, mInt)
+pdsi.svy$m <- tm[pdsi.svy][, as.Date(mStr)]
+pdsi.svy <- pdsi.svy[, .(pdsi=mean(value, na.rm=T)), by=.(admin, year(m))]
+pdsi.svy <- dcast(admin~year, data=pdsi.svy)
+pdsi.svy <- data.table(pdsi.svy)
+pdsi.svy <- cbind(l2.map@data, pdsi.svy)
+pdsi.svy <- data.table(pdsi.svy)
+pdsi.svy[, admin := NULL]
+setnames(pdsi.svy, 12:34, paste0("pdsi", 1990:2012))
+
+
+
+# Export
+pdsi.lbl <- paste0("Index - Y", 1990:2012)
+attr(pdsi.svy, "var.labels") <- c(attr, pdsi.lbl)
+write.dta(pdsi.svy, "./data/r15.10/svyL2Maps-PDSI-50km_1990-2012_r1.dta", version=12L)
+
+
+
+
+# Save all
+save.image(file="./data/r15.10/svyL2Maps.RData")
 

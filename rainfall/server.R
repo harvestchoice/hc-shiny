@@ -16,7 +16,7 @@ printMap <- function(x, var, cntr) {
   x <- spTransform(x, CRS("+init=epsg:3857"))
 
   p <- tm_shape(g0) + tm_polygons(col="white", borders="grey90") +
-    tm_text("ADM0_NAME", size=0.9, fontcolor="grey70") +
+    tm_text("ADM0_NAME", size=0.9, col="grey70") +
     tm_shape(x, is.master=T) +
     tm_fill(col="mean", n=6, style="kmeans", alpha=0.8, legend.hist=T,
       title=names(d)[d==var], palette=colorRampPalette(vars[[var]]$pal)(9), colorNA="grey90") +
