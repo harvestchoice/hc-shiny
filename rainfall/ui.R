@@ -53,12 +53,12 @@ shinyUI(fluidPage(
         hr()
       ),
 
-      includeMarkdown("../rainfall/www/txtCredits.md")
+      includeMarkdown("./www/txtCredits.md")
     ),
 
     column(7,
       conditionalPanel(condition="input.btn==0",
-        includeMarkdown("../rainfall/www/txtIntro.md")),
+        includeMarkdown("./www/txtIntro.md")),
       uiOutput("selectedMsg"),
       bsAlert("alertNoData"),
       p(br()),

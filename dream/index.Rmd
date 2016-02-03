@@ -1,0 +1,477 @@
+---
+title: "DREAM - Model Description"
+author: "You, Liangzhi (IFPRI); Bacou, Melanie (IFPRI)"
+date: "Updated on Jan. 29, 2016"
+runtime: shiny
+output:
+html_document:
+fig_caption: yes
+fig_width: 5
+toc: yes
+toc_depth: 3
+---
+
+Model sets, parameters, and equations are described below. To run a sample simulation click [sample scenario](sample.Rmd).
+
+*************************************************************************************
+
+# Introduction
+
+DREAM is based upon the concepts and method described in [*Science Under Scarcity*](http://ebrary.ifpri.org/cdm/ref/collection/p15738coll11/id/6) by Alston, Norton and Pardey (1995). The original framework was described in pp. 386-394 of this comprehensive book. The current version of the DREAM model is based on the original framework but includes several modifications.
+
+The DREAM approach is constructed on the economic surplus method with the following assumptions:
+
+* single or multiple regions `i`
+* producing a homogeneous product
+* with linear supply and demand functions in each region
+* with exponential (parallel) exogenous growth of linear supply and demand
+* with a parallel research-induced supply shift in one region (or multiple regions)
+* with a consequent parallel research-induced supply shift in other regions if technological spillover occurs
+* with a range of market-distorting policies
+* with a research lag followed by an adoption curve up to a maximum adoption rate
+
+
+# General Form of Supply and Demand Initial Parameterization
+
+For region `r` in year `t`, linear supply and demand equations for a particular commodity `i` are specified as: 
+
+$$ Q_{i,r,t}=\alpha_{i,r,t}+\beta_{i,r,t}PP_{i,r,t} $$
+$$ C_{i,r,t}=\gamma_{i,r,t}+\delta_{i,r,t}PC_{i,r,t} $$
+
+
+The subscript `r` refers to a region, and the second subscript `t` refers to years from the initial starting point of the evaluation. The slopes may change during the simulation period (due to, i.e., elasticity changes) but we always assume parallel supply shifts due to research. The intercepts may grow over time to reflect underlying growth in supply or demand due to factors other than research (i.e., growth in productivity or income). All of the variables are expressed in real terms so that any growth is real growth. One important implication of this is that the discount rate used in subsequent analysis to compare costs and benefits of research over time must be a real discount rate.
+
+The parameters of the supply and demand equations are defined by beginning with initial values at `t=0` of:
+
+* quantity consumed in each region – $C_{i,r,0}$
+* quantity produced in each region – $Q_{i,r,0}$
+* producer price in each region – $PP_{i,r,0}$
+* consumer price in each region – $PC_{i,r,0}$
+* elasticity of supply in each region - $\epsilon_{i,r,0}$
+* elasticity of demand in each region - $\eta_{i,r,0}$  (<0)
+
+Considering the definition of supply and demand elasticities, these initial values are sufficient to allow us to compute the slope and intercept of supply and demand in each region for the initial year:
+
+$$ \beta_{i,r,0}=\epsilon_{i,r,0}Q_{i,r,0}/PP_{i,r,0} $$
+$$ \alpha_{i,r,0}=(1-\epsilon_{i,r,0}Q_{i,r,0}) $$
+$$ \delta_{i,r,0}=\eta_{i,r,0}C_{i,r,0}/PC_{i,r,0} $$
+$$ \gamma_{i,r,0}=(1-\eta_{i,r,0})C_{i,r,0} $$
+
+In case of changes of elasticities over time, the slopes of supply and demand curves are calculated as:
+
+$$ \beta_{i,r,t}=\epsilon_{i,r,t-1}Q_{i,r,t-1}/PP_{i,r,t-1} $$
+$$ \delta_{i,r,t}=\eta_{i,r,t-1}C_{i,r,t}/PC_{i,r,t-1} $$
+
+
+## Exogenous Growth in Supply and Demand
+
+We incorporate average exponential growth rates to reflect growth in demand (due to growth in population and income) and supply (due to growth in productivity or an increase in area cropped) that is expected to occur regardless of whether the research program of interest is undertaken.
+
+`for t > 1`
+$$ \alpha_{i,r,t}=\alpha_{i,r,t-1}\pi^Q_{i,r,t}Q_{i,r,t-1} $$ 
+$$ \gamma_{i,r,t}=\gamma_{i,r,t-1}\pi^C_{i,r,t}C_{i,r,t-1} $$
+
+where,
+
+* $\pi^C_{i,r,t}$ the exogenous growth rate of demand for commodity `i` in region `r` at year `t` (e.g., population growth rate + income elasticity  income growth rate)
+* $\pi^Q_{i,r,t}$ the exogenous growth rate of supply for commodity `i` in region `r` at year `t` (e.g., area growth rate + yield growth rate not attributable to research) 
+
+Now we have sufficient information to parameterize the supply and demand equations for each commodity, region in each year under the *no-research* scenario.
+
+
+## Research-Induced Supply Shifts[^1]
+
+[^1]: There may be demand shift too (e.g. quality change research). The critical distinction is that the upward demand shift is considered positive shift `k > 0` while downward supply shift is regarded as negative. The corresponding equations for demand shifts are similar (with minor modifications) to those for supply shift, and so we consider only supply shifts. DREAM can handle both.
+
+The research-induced supply shift has local effects as well as spillover effects if technology spillovers exist. Let region `r` undertake a program of research with,
+
+* probability of success $p_{i,r}$, which, if the research is successful and the results are fully adopted, will yield
+* a cost saving per unit of output equal to $c_{i,r}$ percent of the initial price, $PP_{i,r,0}$ in region `r`, while
+* a ceiling adoption rate of $A^{MAX}_{i,r}$ percent holds in region `r`
+
+Then it is anticipated that the supply function in region `r` will shift down (in the price direction), eventually, by *an amount per unit* equal to:
+
+$$ k^{MAX}_{i,r}=p_{i,r}c_{i,r}A^{MAX}_{i,r} \qquad \geq 0$$
+
+The actual supply shift in any particular year $k_{i,r,t}$ is some fraction of the eventual maximum supply shift of $k^{MAX}_{i,r}$. In order to define the actual supply shift, we can combine the maximum supply shift with other information about the shape of the time path of $k_{i,r,t}$ based on data about adoption and depreciation-cum-obsolescence factors. Assuming a trapezoidal shape for the adoption curve (Figure 2.3), in order to define the entire profile of supply shifts over time, we need to define the following parameters:
+
+* research lag in years $\lambda_R$
+* adoption lag (years from initial adoption to maximum adoption) $\lambda_A$
+* maximum lag (years from maximum adoption to eventual decline) $\lambda_M$  
+* decline lag (years from the beginning to the end of the decline) $\lambda_D$
+
+Then we can define the supply shifts (in the price direction) for commodity `i` in region `r` at year `t` given a trapezoidal adoption curve as follows:
+
+
+$k_{i,r,t}=0 \qquad\qquad\qquad\qquad\qquad\quad for \qquad 0 \leqslant t \leqslant \lambda_R$
+
+$k_{i,r,t}=k^{MAX}_{i,r}(t-\lambda_R)/\lambda_A \qquad\qquad for \qquad \lambda_R < t \leqslant \lambda_R+\lambda_A$
+
+$k_{i,r,t}=k^{MAX}_{i,r} \qquad\qquad\qquad\qquad\quad for \qquad \lambda_R+\lambda_A < t \leqslant \lambda_R+\lambda_A+\lambda_M$
+
+$k_{i,r,t}=k^{MAX}_{i,r}\frac{\lambda_R+\lambda_A+\lambda_M+\lambda_D-t}{\lambda_D} \qquad\quad for \qquad \lambda_R+\lambda_A+\lambda_M < t \leqslant \lambda_R+\lambda_A+\lambda_M+\lambda_D$
+
+$k_{i,r,t}=0 \qquad\qquad\qquad\qquad\qquad\quad for \qquad t > \lambda_R+\lambda_A+\lambda_M+\lambda_D$
+
+
+Figure 2.3 shows the trapezoidal adoption curve and shows how the parameters above $\lambda_R$, $\lambda_A$, $\lambda_M$, and $\lambda_D$ may be used to define the entire curve.
+
+The S-shaped adoption curve shown in Figure 2.4 is another reasonable assumption with slower adoption at first followed by rapid adoption. This curve (also called logistic curve) is defined by three parameters[^2] $A^{MAX}$, $\alpha^{ADOPT}$, $\beta^{ADOPT}$:
+
+[^2]: For simplicity, the region-specific subscript is suppressed. DREAM allows each region has its own the adoption profile.
+
+$$ A_t=\frac{A^{MAX}}{1+e^{-(\alpha^{ADOPT}+\beta^{ADOPT}t)}}  $$
+
+where $A^{MAX}$ is the maximum adoption rate (for commodity `i` in region `r`) which is commonly expressed as the percentage of the total area ultimately planted to a crop using the new technology. $A_t$ is adoption rate at `t` years after the release of the new technology (between Year $\lambda_R$ and Year $\lambda_R+\lambda_A$ in Figure 2.4). $\alpha^{ADOPT}$ and $\beta^{ADOPT}$ are the parameters that define the logistic curve. In practice, $A^{MAX}$ can be reasonably estimated and two more points along the curve would determine the values of the other two parameters $\alpha^{ADOPT}$ and $\beta^{ADOPT}$. For example, one point at the first year of technology release (say, $A_1 = 2%$) and another point at the middle of the curve (say, it takes 6 years for the technology to reach half of the maximum adoption rate, $A_6 = 0.5A^{MAX}$). With these two points and $A^{MAX}$, the two parameters of $\alpha^{ADOPT}$ and $\beta^{ADOPT}$ could be solved by taking the logarithms of the above equation (P. 358 Alston, Norton and Pardey, 1995):
+
+$$ \beta^{ADOPT}=\frac{1}{t}(ln(\frac{A_t}{A_{MAX}-A_t})-\alpha^{ADOPT})  $$
+
+With $A_t$ defined as above, the actual supply shift in any particular year $k_t$ is
+
+$$ k_t=k^{MAX}\frac{A_t}{A^{MAX}} $$
+
+
+### Combined Vertical and Horizontal Shifts
+
+Most technological effects are more than just cost saving $c_r$ as described in the above. For example, a new crop variety may increase yield, saving labor but requiring high inputs such as fertilizer. These effects result in different types of supply shifts. For cost saving effects, the supply shifts vertically down while yield-increasing effects shift the supply curve horizontally. DREAM calculates the combined effect of these two shifts as (p.360-361, Alston, Norton and Pardey, 1995):
+
+$$ k^{MAX}_r=(\frac{y_r}{\epsilon_{r,0}}-\frac{c_r}{1+y_r})p_rA^{MAX}_rPP_{r,0} $$
+
+where $y_r$ (%) is the relative yield increase with the new technology and $\epsilon_{r,0}$ is the supply elasticity for region `r`. 
+
+Since the supply elasticity $\epsilon_{r,0}$ is not bound to be 1, the value of supply elasticity has great impact on estimation of supply shift $k^{MAX}_r$ and therefore on the final surplus estimations (Osehmke and Crawford, 2002). In DREAM, we make an option for the user to input another elasticity (maybe different from supply elasticity) just for converting horizontal shift into vertical shift as described in (2.8). As recommended by Alston, Norton and Pardey (1995), the default value is 1.0.
+
+The estimation of supply shift is not an easy task, in particular for non specialist in R&D evaluation. DREAM provides an interface which estimates size of supply shifts by on-farm budget data under without and with technology scenarios. The details of this estimation are described in the next chapter.
+
+
+### Variable Supply Shifts
+
+The above research-induced supply shift is fixed in the sense that the R&D impacts are constant, i.e., once adopted the technology delivers the same benefit per unit production or area. DREAM also considers other types of technology that has time varying impacts. There are cumulative change where the technology impact change cumulatively every year ($c_r$ per year) or even yearly changes $c_{r,t}$ where the technological impacts vary from year to year. For these so-called variable supply shifts, the combined impact of adoption and technological impact $c_{r,t}$ is a little more complicated (than the fixed impact) because the impact of technology for the same adopter actually depends on the adopting time of that adopter. For example, the variable technology impacts are `5%` for the first year and `7%` for the second year. There are `10%` technology adoption in the first year, and another `25%` adoption in the second year (total adoption of `35%`). Then the combined impact of adoption and technology for the first year is `5%*10%=0.5%`, which is obvious. For the second year, the technology impact for the earlier adopters (the first `10%`) would be `7%` while the technology impact is `5%` for the `25%` additional adopters in the second year because for these adopters it is their first year of adopting the technology. Therefore, the supply shift for the second year is `7%*10%+5%*25%=1.95%`. In general, for time-varying technology impact $c_{r,t}$ with the total adoption rate at year `t` $A_t$, the actual supply shift at any particular year `t` is :
+
+$$ k^v_{r,t}=\sum^{t}_{s=\lambda_R+1}{p_rc_{r,t-s+1}\Delta A_sPP_{r,0}}  $$
+
+where,
+
+* $\Delta A_s=A_s-A_{s-1}$ incremental adoption rate from year `s-1` to year `s`.
+* $s \in {\lambda_R+1, \lambda_R+2, \cdots, \lambda_R+\lambda_A+\lambda_M+\lambda_D}$
+
+
+### Technology Spillovers
+
+In many cases, there exist spillover effects of research[^3]. The spillover effects from region `i` to other regions `j`, are parameterized in relation to the supply shifts in region `i`. DREAM allows two parameters to define the spillover effect: spillover coefficient $\theta_{i,j}$ and spillover time lag $t_{i,j}$. Spillover coefficient is the ratio of potential cost saving per unit of output in region `j` $c_j$ to that in region `i` $c_i$, the technology source region. The spillover time lag is the time needed for the technology to be transferred from source region `i` to the receiving region `j`. 
+
+
+[^3]: The spillover coefficients,   are defined as if they were constant for all types of research-induced supply shifts and, for a given technological change, constant over time, implying that the relative shifts always occur in fixed proportion.  These might not be reasonable restrictions for all problems.  Between agroecological zones i and j, the spillover relationships are very likely to differ among commodities, among types of technological changes for a given commodity, and over time for a given technological change and a given commodity.  For some problems, it might be necessary to redefine the spillover matrix for different types of technologies and different times after release of a technology.
+
+
+$$ c_j=\theta_{i,j}c_i \forall (i,j) $$
+
+where,
+
+$\theta_{i,j}$ supply shift in `j` due to research-induced supply shift in `i` (by default $\theta_{i,j}=1$)
+
+Therefore, for any region there may be supply shift induced by its own technology as well as supply shifts from technological spillover from other regions. Depending on the nature of technologies, these effects may be complimentary or substitutive. For complimentary technologies, the total cost saving $c_r$ is the sum of own-technology induced cost saving and that from spillover effect while substitutive technologies would allow the region to gain the maximum effect from different technologies.
+To model the with-research case (denoted by superscript R on all relevant variables and parameters), we take the intercepts from the without-research case (but include the effects of exogenous supply growth), add the effect of the supply shift to them, and include the result in the supply equation:
+
+$$ \alpha^R_{j,t}=\alpha_{j,t}+k_{j,t}\beta_{j,t}   $$
+
+The models for supply and demand that reflect the local and spillover effects of research are:
+
+$$ Q^R_{i,t}=\alpha^R_{i,t}+\beta_{i,t}PP^R_{i,t} $$
+$$ C^R_{i,t}=\gamma^R_{i,t}+\delta{i,t}PC^R_{i,t} $$
+
+The only substantive difference from the corresponding without-research equations (2.1a and 2.1b) is in the supply intercept, but as noted above, the prices and quantities are labeled differently (the R superscript) to distinguish them from the without–research values:
+
+*	quantity consumed in each region - $C^R_{i,t}$
+*	quantity produced in each region - $Q^R_{i,t}$
+*	producer price in each region - $PP^R_{i,t}$
+* consumer price in each region - $PC^R_{i,t}$
+
+
+## Market-Clearing Rules and Prices
+
+For all of the scenarios to be considered, there is an overall quantity clearing rule to the effect that the sum of quantities supplied equals the sum of quantities demanded in each year.  Considering `n` regions, 
+
+$$ $$
+
+All of the market-clearing rules express policies in terms of price wedges that permit differences between consumer and producer prices within and among regions consistent with clearing quantities produced and consumed. The market clearing rules would solve for the endogenous market clearing prices. 
+
+
+### Structural Price Difference and Price Transmission Elasticities
+
+To model the influence of transportation costs and other trade barriers, we introduce market margin, vi, and price transmission elasticity, wi. We assume:
+
+$$  $$
+
+where Pi,t is the price in region i in year t, vi is the market margin between region i and the market equilibrium price Pt, and wi is the price transmission elasticity between region i and all other regions.  Market margin (vi) takes values between -1 and 1 and it reflects the price wedge between region i and the equilibrium price. Price transmission elasticity with value less than one dampens the price change arising within the innovating region when this change is transmitted to other regions. A coefficient of wi =1.0 would represent perfect, costless, free trade among regions, while a coefficient of 0 represents a closed economy (autarky) in which that regions market is independent of all others.  The market margin vi can be calculated by equating prices among all regions initially (t = 0), i.e., Pi,0 = wiP0. Therefore:
+
+Supply:	 $ $	
+Demand:	 $ $
+
+The total supply and demand quantities are equal, therefore:
+
+$$  $$
+
+From this initial equilibrium price P0, we could calculate the market margin vi as: 
+
+$$  $$
+
+
+
+
+
+
+
+## Welfare Effects
+
+
+# DREAM Model
+
+## Indices, Sets, Variables, and Parameters
+
+```{r}
+
+#####################################################################################
+# Indices
+#####################################################################################
+
+i <- 1L                                         # number of commodities
+r <- 2L                                         # number of regions
+t <- 10L                                        # time periods
+
+
+#####################################################################################
+# Sets
+#####################################################################################
+
+sets <- list(
+  # commodities
+  commdt = c("whea"),
+  # regions
+  region = c("A", "B"),
+  # periods
+  period = paste0("Y", 1:t-1)
+)
+
+
+#####################################################################################
+# Variables
+#####################################################################################
+
+vars <- list(
+  # producer prices
+  PP = array(numeric(), dim=c(i,r,t), dimnames=sets),
+  # consumer prices
+  PC = array(numeric(), dim=c(i,r,t), dimnames=sets),
+  
+  # production
+  Q = array(numeric(), dim=c(i,r,t), dimnames=sets),
+  # consumption
+  C = array(numeric(), dim=c(i,r,t), dimnames=sets),
+  
+  # yield shifts
+  Y = array(numeric(), dim=c(i,r), dimnames=sets[1:2])
+)
+
+
+#####################################################################################
+# Parameters
+#####################################################################################
+
+params <- list(
+  # elasticity of supply
+  epsilon = array(numeric(), dim=c(i,r,t), dimnames=sets),
+  
+  # alternate elasticity of supply (shift), default to 1
+  epsilon_shift = array(1, dim=c(i,r), dimnames=sets[1:2]),
+  
+  # elasticity of demand
+  eta = array(numeric(), dim=c(i,r,t), dimnames=sets),
+  
+  # supply growth rates
+  qpi = array(numeric(), dim=c(i,r,t), dimnames=sets),
+  
+  # demand growth rates
+  cpi = array(numeric(), dim=c(i,r,t), dimnames=sets),
+  
+  # probability of success
+  p = array(numeric(), dim=c(i,r), dimnames=sets[1:2]),
+  
+  # cost saving per unit of output
+  c = array(numeric(), dim=c(i,r), dimnames=sets[1:2]),
+  
+  # shape of adoption curve (trapezoidal, logistic)
+  adoption="trapezoidal",
+  
+  # ceiling adoption rate
+  a_max = array(numeric(), dim=c(i,r), dimnames=sets[1:2]),
+  
+  # trapezoidal adoption parameters
+  lagR = array(numeric(), dim=c(i,r), dimnames=sets[1:2]),
+  lagA = array(numeric(), dim=c(i,r), dimnames=sets[1:2]),
+  lagM = array(numeric(), dim=c(i,r), dimnames=sets[1:2]),
+  lagD = array(numeric(), dim=c(i,r), dimnames=sets[1:2]),
+  
+  # logistic adoption parameters
+  alphalog = array(numeric(), dim=c(i,r), dimnames=sets[1:2]),
+  betalog = array(numeric(), dim=c(i,r), dimnames=sets[1:2]),
+  
+  # variable adoption rates
+  a = array(numeric(), dim=c(i,r,t), dimnames=sets)
+  
+
+  
+)
+
+```
+
+
+# Main Routine
+
+
+```{r}
+
+#####################################################################################
+# DREAM Model
+#####################################################################################
+
+dream <- function(sets, vars, params) {
+  
+  # Rescope
+  for (x in names(sets)) assign(x, sets[[x]])
+  for (x in names(vars)) assign(x, vars[[x]])
+  for (x in names(params)) assign(x, params[[x]])
+  
+  # Indices
+  i <- i
+  r <- r
+  t <- t
+  
+  # Supply and demand elasticities
+  alpha <- array(numeric(), dim=c(i,r,t), dimnames=sets)
+  beta <- array(numeric(), dim=c(i,r,t), dimnames=sets)
+  delta <- array(numeric(), dim=c(i,r,t), dimnames=sets)
+  gamma <- array(numeric(), dim=c(i,r,t), dimnames=sets)
+  
+  # Slopes and intercepts
+  beta[,, 1] <-  epsilon[,, 1] * Q[,, 1] / PP[,, 1]                    # 2.2a
+  alpha[,, 1] <- (1 - epsilon[,, 1]) * Q[,, 1]                         # 2.2b
+  delta[,, 1] <- eta[,, 1] * C[,, 1] / PC[,, 1]                        # 2.2c
+  gamma[,, 1] <- (1 - eta[,, 1]) * C[,, 1]                             # 2.2d
+  
+  beta[,, 2:t] <-  epsilon[,, 2:t] * Q[,, 2:t-1] / PP[,, 2:t-1]        # 2.2e
+  delta[,, 2:t] <- eta[,, 2:t] * C[,, 2:t-1] / PC[,, 2:t-1]            # 2.2f
+  
+  
+  # Demand and supply growth rates
+  alpha[,, 2:t] <- alpha[,, 2:t-1] / qpi[,, 2:t-1] * Q[,, 2:t-1]       # 2.3a
+  gamma[,, 2:t] <- gamma[,, 2:t-1] / cpi[,, 2:t-1] * C[,, 2:t-1]       # 2.3b
+  
+  
+  # Probability of success
+  #stopifnot(p>=0, p<=1)
+  
+  # Cost saving per unit of output
+  #stopifnot(c>=0, c<=1)
+  
+  # Ceiling technology adoption rate
+  #stopifnot(a_max>=0, a_max<=1)
+  
+  # Maximum supply shift
+  k_max <- p * c * a_max * PP[,,1]                                             # 2.4
+  
+  # Combined vertical and horizontal maximum supply shift
+  k_max <- p * a_max * PP[,,1] * ((Y / epsilon_shift[,,1]) - (c / (1 + y)))    # 2.8
+  
+  
+  # Trapezoidal adoption curve
+  adoptT <- function(x, k_max, lagR, lagA, lagM, lagD) {
+    
+    # Sensible defaults
+    if (all(is.na(lagR))) lagR[,] <- 1
+    if (all(is.na(lagA))) lagA[,] <- x%/%3 
+    if (all(is.na(lagM))) lagM[,] <- 2*x%/%3
+    if (all(is.na(lagD))) lagD[,] <- x  
+    
+    # Segments
+    y <- sapply(1:x, function(i) ifelse( i>lagR & i<=lagR+lagA, k_max*(i-lagR)/lagA,
+      ifelse( i>lagR+lagA & i>=lagR+lagA+lagM, k_max,
+        ifelse( i<lagR+lagA+lagM & i>=lagR+lagA+lagM+lagD, k_max*(lagR+lagA+lagM+lagD-i)/lagD,
+          array(0, dim=c(i,r,t))))), simplify="array")
+    dimnames(y) <- sets
+    return(y)
+  }
+  
+  # Logistic adoption curve
+  adoptL <- function(x, k_max, a_max, alphalog, betalog) {
+    a <- sapply(1:x, function(i) a_max / (1 + exp(-(alphalog + betalog*i))), 
+      simplify="array")                                                        # 2.5
+    y <- sapply(a, function(i) k_max*i/a_max, 
+      simplify="array")                                                        # 2.7
+    dimnames(y) <- sets
+    return(y)
+  }
+  
+  # TODO Variable supply shifts
+  adoptV <- function(x, p, c, a, PP) {
+    d <- array(0, dim=c(i,r,t), dimnames=sets)
+    d[,,2:x] <- a[,,2:x]-a[,,2:x-1]
+    y <- sapply(1:x, function(z) apply((lagR+1):z, names(sets)[1:2], 
+      function(j) sum(p*c[,,z-j+1]*d[,,j]*PP[,,1])),
+      simplify="array")                                                        # 2.9
+    dimnames(y) <- sets
+    return(y)
+  }
+  
+  
+  
+  
+  # Supply shifts
+  k <- switch(adoption,
+    { # Trapezoidal supply shifts
+      adoptT(t, k_max, lagR, lagA, lagM, lagD)    
+    },
+    logistic = {
+      # Logistic supply shift
+      adoptL(t, k_max, a_max, alphalog, betalog)
+    },
+    variable = {
+      adoptV(t, )
+    })
+  
+  
+  # TODO Demand shift
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  res <- list(k_max=k_max, k=k)
+  return(res)
+}
+
+
+```
+
+
+
+```{r}
+
+#####################################################################################
+# Validate main model routine
+#####################################################################################
+
+res <- dream(sets, vars, params)
+names(res)
+
+
+```
+

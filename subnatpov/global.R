@@ -5,8 +5,6 @@
 # Authors: Bacou, Melanie <mel@mbacou.com>
 #####################################################################################
 
-setwd("/home/projects/shiny/tmp")
-
 # Load common libraries
 library(data.table)
 library(leaflet)
@@ -19,7 +17,7 @@ library(ggvis)
 file.remove(list.files())
 
 # Load latest data revision (web minified)
-m <- readRDS("../subnatpov/data/svyPov_web_20150808.rds")
+m <- readRDS("./data/svyPov_web_20150808.rds")
 
 # Note: weirdly leaflet needs shapes at epsg:4326 and tmap needs epsg:3857
 # m$rn <- NULL
@@ -27,10 +25,10 @@ m <- readRDS("../subnatpov/data/svyPov_web_20150808.rds")
 # names(m)[11:25] <- paste0("total_", names(m)[11:25])
 # names(m)[6] <- "adminUnit"
 # m@data <- data.frame(m@data)
-# saveRDS(m, "../subnatpov/data/svyPov_web_20150808.rds")
+# saveRDS(m, "./data/svyPov_web_20150808.rds")
 
 # Load Povcalnet country stats
-pcn <- readRDS("../subnatpov/data/PovCalServlet_15.08.06.rds")
+pcn <- readRDS("./data/PovCalServlet_15.08.06.rds")
 
 # List of indicators
 varList <- list(
@@ -69,7 +67,7 @@ vars <- names(varList)
 names(vars) <- sapply(varList, `[[`, "name")
 
 # List of countries, years
-load("/home/projects/cell5m/rdb/latest/lookup.RData")
+load("/home/projects/hc-cell5m/rdb/latest/lookup.RData")
 rm(g, readme)
 iso <- iso[iso %in% c("SSA", levels(m@data$ISO3)[-c(13,20,33,36,47)])]
 years <- data.table(m@data)[order(-year), list(year=unique(year)), keyby=ISO3]
@@ -78,7 +76,7 @@ years <- data.table(m@data)[order(-year), list(year=unique(year)), keyby=ISO3]
 def <- c("circa 2008", "circa 2005")
 
 # GAUL Country boundaries for plotting (water bodies cut out)
-g0 <- readRDS("/home/projects/cell5m/rdb/g0.epsg3857.rds")
+g0 <- readRDS("/home/projects/hc-cell5m/rdb/g0.epsg3857.rds")
 
 # Helper - Formatter for rhandsometable
 convertNA <- function() htmlwidgets::JS(

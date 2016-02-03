@@ -5,8 +5,6 @@
 # Authors: Bacou, Melanie <mel@mbacou.com>
 #####################################################################################
 
-setwd("/home/projects/shiny/tmp")
-
 # Load common libraries
 library(shiny)
 library(shinyBS)
@@ -69,15 +67,15 @@ names(d) <- sapply(vars, `[[`, "name")
 d <- d[1:3]
 
 # Load all monthly districts stats (already intersected with GAUL 2014v15)
-data <- readRDS("../rainfall/data/dt2.rds")
+data <- readRDS("./data/dt2.rds")
 
 # Load GAUL 2014 district boundaries
-g2 <- readRDS("/home/projects/cell5m/rdb/g2_2014v15.web.rds")
+g2 <- readRDS("/home/projects/hc-cell5m/rdb/g2_2014v15.web.rds")
 g2.dt <- data.table(g2@data)[, .N, by=list(ADM0_CODE, ADM0_NAME)]
 setkey(g2.dt, ADM0_NAME)
 
 # Load GAUL 2012v13 country boundaries for plotting (with water bodies cut out)
-g0 <- readRDS("/home/projects/cell5m/rdb/g0.epsg3857.rds")
+g0 <- readRDS("/home/projects/hc-cell5m/rdb/g0.epsg3857.rds")
 
 # Load country/province/district list to populate controls
-g2.list <- readRDS("/home/projects/cell5m/rdb/g2_2014v15.list.rds")
+g2.list <- readRDS("/home/projects/hc-cell5m/rdb/g2_2014v15.list.rds")

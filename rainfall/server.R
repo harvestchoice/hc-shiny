@@ -98,11 +98,11 @@ genPopup <- function(x, var) {
     h3(x$ADM0_NAME, br(), tags$small(x$ADM2_NAME, ", ", x$ADM1_NAME)),
     h5(var),
     p(
-      "Mean: ", strong(sprintf("%.2f", x$mean)), br(),
-      "85th perc.: ", strong(sprintf("%.2f", x$perct)), br(),
-      "Max: ", strong(sprintf("%.2f", x$max)), br(),
-      "Sd. Dev.: ", strong(sprintf("%.2f", x$sd))),
-    helpText("Click the map to select this district."))
+      "Mean: ", strong(prettyNum(x$mean, digits=0)), br(),
+      "85th perc.: ", strong(prettyNum(x$perct, digits=0)), br(),
+      "Max: ", strong(prettyNum(x$max, digits=0)), br(),
+      "Sd. Dev.: ", strong(prettyNum(x$sd, digits=0))),
+    helpText("Click the map to view time-series for this district."))
   return(as.character(txt))
 }
 
@@ -215,7 +215,7 @@ shinyServer(function(input, output, session) {
       mth <- paste0(" (", paste0(substr(unique(month.name[input$selectMonth]), 1, 3), collapse="-"), ")")
       dist <- if(input$selectg0==input$selectg2) "Entire Country" else input$selectg2
       out <- h3(names(d)[d==values$var], br(),
-        tags$small(tags$mark(dist,", ", values$selectg0), " Period: ",
+        tags$small(tags$mark(dist, ", ", values$g0), "  Period: ",
           paste0(format(range(values$tm), "%b %Y"), collapse=" - "), mth))
       as.character(out)
     })

@@ -179,7 +179,7 @@ function(input, output, session) {
     leafletProxy("map") %>%
       fitBounds(ext[1,1], ext[2,1], ext[1,2], ext[2,2]) %>%
       addRasterImage(raster(r, layer=svar), group=svar, opacity=.8, colors=cc,
-        project=F, maxBytes=Inf)
+        project=F, maxBytes=10*1024*1024)
 
     # Update legend
     #     addLegend("bottomright", layerId="lgd", opacity=1,

@@ -29,14 +29,14 @@ shinyUI(fluidPage(
           the map and graphs. Click over shaded areas on the map to view details."))
       ),
       br(), br(), br(), br(),
-      withMathJax(includeMarkdown("../subnatpov/www/txtCredits.md"))
+      withMathJax(includeMarkdown("./www/txtCredits.md"))
     ),
 
     column(9,
 
       tabsetPanel(id="ts", selected="About",
         tabPanel("About", icon=icon("question-circle"),
-          column(12, includeMarkdown("../subnatpov/www/txtIntro.md"), hr()),
+          column(12, includeMarkdown("./www/txtIntro.md"), hr()),
           column(9, ggvisOutput("p1")),
           column(3,
             h3("Country Trajectories"),
@@ -45,7 +45,7 @@ shinyUI(fluidPage(
             poverty reduction and greater income equality."),
             actionLink("p1Update", "Click to circle countries", icon=icon("refresh")),
             helpText("Mouse over any segment to identify a country.")),
-          column(12, hr(), includeMarkdown("../subnatpov/www/txtIntro2.md"), br())
+          column(12, hr(), includeMarkdown("./www/txtIntro2.md"), br())
         ),
 
         tabPanel("Details", icon=icon("table"),
@@ -84,7 +84,7 @@ shinyUI(fluidPage(
               nationally-representative household surveys are available. Two maps for
               the entire subcontinent are available for reference years 2005 and 2008.")),
           column(9, br(), ggvisOutput("p4")),
-          column(12, includeMarkdown("../subnatpov/www/txtDoco.md"), br())
+          column(12, includeMarkdown(".//www/txtDoco.md"), br())
         )
       )
 

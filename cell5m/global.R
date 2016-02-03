@@ -15,8 +15,6 @@ library(shinydashboard)
 library(shinyjs)
 library(curl) # make the jsonlite suggested dependency explicit
 
-setwd("/home/projects/shiny/tmp")
-
 # Create layer menu
 setorder(vi, cat1, cat2, cat3, sortOrder)
 catlst <- vi[genRaster==T & published==T, list(cat2=unique(cat2)), by=cat1]
