@@ -4,11 +4,11 @@ author: "You, Liangzhi (IFPRI); Bacou, Melanie (IFPRI)"
 date: "Updated on Jan. 29, 2016"
 runtime: shiny
 output:
-html_document:
-fig_caption: yes
-fig_width: 5
-toc: yes
-toc_depth: 3
+  html_document:
+    fig_caption: yes
+    fig_width: 5
+    toc: yes
+    toc_depth: 3
 ---
 
 Model sets, parameters, and equations are described below. To run a sample simulation click [sample scenario](sample.Rmd).
@@ -153,7 +153,7 @@ $$ k^v_{r,t}=\sum^{t}_{s=\lambda_R+1}{p_rc_{r,t-s+1}\Delta A_sPP_{r,0}}  $$
 where,
 
 * $\Delta A_s=A_s-A_{s-1}$ incremental adoption rate from year `s-1` to year `s`.
-* $s \in {\lambda_R+1, \lambda_R+2, \cdots, \lambda_R+\lambda_A+\lambda_M+\lambda_D}$
+* $s \in {{\lambda_R+1, \lambda_R+2, \cdots, \lambda_R+\lambda_A+\lambda_M+\lambda_D}}$
 
 
 ### Technology Spillovers
@@ -232,26 +232,22 @@ $$  $$
 ```{r}
 
 #####################################################################################
-# Indices
-#####################################################################################
-
-i <- 1L                                         # number of commodities
-r <- 2L                                         # number of regions
-t <- 10L                                        # time periods
-
-
-#####################################################################################
 # Sets
 #####################################################################################
 
 sets <- list(
   # commodities
-  commdt = c("whea"),
+  commdt = c("whea", "rice"),
   # regions
   region = c("A", "B"),
   # periods
-  period = paste0("Y", 1:t-1)
+  period = paste0("Y", 1:10-1)
 )
+
+# Indices
+i <- length(sets[["commdt"]])
+r <- length(sets[["region"]])
+t <- length(sets[["period"]])
 
 
 #####################################################################################
@@ -279,6 +275,7 @@ vars <- list(
 #####################################################################################
 
 params <- list(
+  
   # elasticity of supply
   epsilon = array(numeric(), dim=c(i,r,t), dimnames=sets),
   
@@ -316,7 +313,7 @@ params <- list(
   alphalog = array(numeric(), dim=c(i,r), dimnames=sets[1:2]),
   betalog = array(numeric(), dim=c(i,r), dimnames=sets[1:2]),
   
-  # variable adoption rates
+  # variable adoption rates (per period)
   a = array(numeric(), dim=c(i,r,t), dimnames=sets)
   
 
@@ -326,7 +323,7 @@ params <- list(
 ```
 
 
-# Main Routine
+## Main Model
 
 
 ```{r}
@@ -343,9 +340,9 @@ dream <- function(sets, vars, params) {
   for (x in names(params)) assign(x, params[[x]])
   
   # Indices
-  i <- i
-  r <- r
-  t <- t
+  i <- length(sets[["commdt"]])
+  r <- length(sets[["region"]])
+  t <- length(sets[["period"]])
   
   # Supply and demand elasticities
   alpha <- array(numeric(), dim=c(i,r,t), dimnames=sets)
@@ -381,7 +378,7 @@ dream <- function(sets, vars, params) {
   k_max <- p * c * a_max * PP[,,1]                                             # 2.4
   
   # Combined vertical and horizontal maximum supply shift
-  k_max <- p * a_max * PP[,,1] * ((Y / epsilon_shift[,,1]) - (c / (1 + y)))    # 2.8
+  k_max <- p * a_max * PP[,,1] * ((Y / epsilon_shift[,]) - (c / (1 + Y)))    # 2.8
   
   
   # Trapezoidal adoption curve
@@ -394,10 +391,14 @@ dream <- function(sets, vars, params) {
     if (all(is.na(lagD))) lagD[,] <- x  
     
     # Segments
-    y <- sapply(1:x, function(i) ifelse( i>lagR & i<=lagR+lagA, k_max*(i-lagR)/lagA,
-      ifelse( i>lagR+lagA & i>=lagR+lagA+lagM, k_max,
-        ifelse( i<lagR+lagA+lagM & i>=lagR+lagA+lagM+lagD, k_max*(lagR+lagA+lagM+lagD-i)/lagD,
-          array(0, dim=c(i,r,t))))), simplify="array")
+    y <- sapply(1:x, function(i) ifelse( 
+      i>lagR & i<=lagR+lagA, k_max*(i-lagR)/lagA,
+      ifelse( 
+        i>lagR+lagA & i>=lagR+lagA+lagM, k_max,
+        ifelse(
+          i<lagR+lagA+lagM & i>=lagR+lagA+lagM+lagD, k_max*(lagR+lagA+lagM+lagD-i)/lagD,
+          array(0, dim=c(i,r,t))))), 
+      simplify="array")
     dimnames(y) <- sets
     return(y)
   }
@@ -426,17 +427,18 @@ dream <- function(sets, vars, params) {
   
   
   
-  # Supply shifts
+  # Apply selected supply shift
   k <- switch(adoption,
     { # Trapezoidal supply shifts
       adoptT(t, k_max, lagR, lagA, lagM, lagD)    
     },
     logistic = {
-      # Logistic supply shift
+      # Logistic supply shifts
       adoptL(t, k_max, a_max, alphalog, betalog)
     },
     variable = {
-      adoptV(t, )
+      # variable supply shifts
+      adoptV(t)
     })
   
   
@@ -466,9 +468,10 @@ dream <- function(sets, vars, params) {
 ```{r}
 
 #####################################################################################
-# Validate main model routine
+# Validate main model
 #####################################################################################
 
+# Run on empty arrays, just to catch errors
 res <- dream(sets, vars, params)
 names(res)
 
