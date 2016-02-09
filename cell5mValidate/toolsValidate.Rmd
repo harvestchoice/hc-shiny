@@ -23,26 +23,32 @@ This document is part of a series of automated tests to validate [HarvestChoice]
 
 
 ```{r, eval=F}
+
 # Load common libraries
 library(data.table)
 library(hcapi3)
 ```
 
 ```{r}
+
 library(rhandsontable) # Just to render fancy tables on this page
+
 ```
 
 ## Basic Data Consistency Tests
 
 ```{r, echo=F}
+
 vars <- vi[published==T & type=="continuous", list(cat3=unique(cat3)), by=list(cat1, cat2)]
 vars <- split(vars, vars$cat1)
 vars <- lapply(vars, function(x) split(x, x$cat2))
 vars <- lapply(vars, function(x) lapply(x, function(i) i$cat3))
 selectInput("selectCat", "Select a variable", vars, selected="Precipitation")
+
 ```
 
 ```{r}
+
 # Choose to quickly visualize subsets of variables (across sub-categories, limited to 6)
 renderPlot(height=900, {
   p <- vi[order(sortOrder)][cat3==input$selectCat, varCode]
@@ -76,6 +82,7 @@ We run a series of pre-defined tests across HC API analytical mehods and show th
 All rasters are summarizable across zones (e.g. across farming systems, agro-ecological zones, administrative boundaries, market access zones), or across any geographic domain defined by a categorized raster (by default a continuous raster will be classified along the legend breaks found in the metadata). In addition users nay pass their own breaks, e.g. using `hcapi("bmi", by=list(whea_r_h=c(100, 200, 400, 800, 1600, 3200, 6400)))`.
 
 ```{r}
+
 # For example, show default legend breaks for rainfed maize harvested area
 renderRHandsontable({
   df <- vi["maiz_r_h"][, lapply(.SD, function(x) unlist(strsplit(x, "|", fixed=T))), 
@@ -86,12 +93,14 @@ renderRHandsontable({
 ```
 
 ```{r, echo=F}
+
 # Add user select
 selectInput("selectISO", "Select a country", iso)
 
 ```
 
 ```{r}
+
 # Summarize 5 random rasters across zones of low to high maize harvested area using default breaks.
 vars1 <- sample(vi[published==T & varCode != "maiz_r_h", varCode], 5)
 
@@ -114,6 +123,7 @@ renderRHandsontable({
 ```
 
 ```{r}
+
 # Summarize another 4 random rasters across districts for the same country
 vars2 <- sample(vi[published==T, varCode], 4)
 

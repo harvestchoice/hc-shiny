@@ -13,8 +13,6 @@ library(shiny)
 library(rhandsontable)
 library(ggvis)
 
-# Clear cache
-file.remove(list.files())
 
 # Load latest data revision (web minified)
 m <- readRDS("./data/svyPov_web_20150808.rds")

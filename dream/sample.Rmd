@@ -1,0 +1,18 @@
+---
+title: "DREAM - Sample Simulation"
+author: "You, Liangzhi (IFPRI); Bacou, Melanie (IFPRI)"
+date: "Updated on Jan. 29, 2016"
+runtime: shiny
+output:
+  html_document:
+    fig_caption: yes
+    fig_width: 5
+    toc: yes
+---
+
+The model code in R with default variables and parameters are [here](dream.Rmd). Detailed [model documentation](index.Rmd) is also available.
+
+*************************************************************************************
+
+# Sample Simulation
+

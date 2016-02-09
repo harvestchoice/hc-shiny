@@ -1,0 +1,341 @@
+---
+title: "DREAM Model in R"
+author: "You, Liangzhi (IFPRI); Bacou, Melanie (IFPRI)"
+date: "Updated on Jan. 29, 2016"
+runtime: shiny
+output:
+  html_document:
+    fig_caption: yes
+    fig_width: 4
+    toc: yes
+---
+
+
+Model sets, parameters, and equations are defined below. To run a sample simulation click [sample scenario](sample.Rmd). To read through the model [documentation](index.Rmd).
+
+*************************************************************************************
+
+```{r, echo=F}
+
+# Helper
+showme <- function(x) { 
+  rhandsontable(x[1,,], paste0("Y", per-1), readOnly=T, width="80%", height=100) %>%
+    hot_cols(type="numeric", format="0,0.#", renderer=convertNA())
+}
+
+```
+
+
+# Arguments
+
+Declare all model arguments as arrays with sensible dimensions and default values.
+
+## Sets
+
+```{r}
+
+#####################################################################################
+# Sets
+#####################################################################################
+
+sets <- list(
+  # commodities
+  com = c("whea", "rice"),
+  # regions
+  reg = c("reg-A", "reg-B"),
+  # periods
+  per = 1:10
+)
+
+# Sets dimensions
+sets_dim <- sapply(sets, length, USE.NAMES=T)
+
+```
+
+## Variables
+
+```{r}
+
+#####################################################################################
+# Variables
+#####################################################################################
+
+# producer prices
+PP <- array(1, sets_dim, sets)
+
+# consumer prices
+PC <- array(1.20, sets_dim, sets)
+
+# supply
+Q <- array(1, sets_dim, sets)
+
+# demand
+C <- array(1, sets_dim, sets)
+
+```
+
+## Parameters
+
+
+```{r}
+
+#####################################################################################
+# Parameters
+#####################################################################################
+
+# price elasticity of supply
+epsilon <- array(0.75, sets_dim, sets)
+
+# alternate elasticity of supply (shift), default to 1
+epsilon_shift <- array(1, sets_dim[1:2], sets[1:2])
+
+# price elasticity of demand
+eta <- array(-0.15, sets_dim, sets)
+
+# exogenous supply growth rates
+qpi <- array(runif(prod(sets_dim)), sets_dim, sets)
+
+# exogenous demand growth rates
+cpi <- array(runif(prod(sets_dim)), sets_dim, sets)
+
+# probability of success
+p <- array(1, sets_dim[1:2], sets[1:2])
+
+# own-technology cost saving per unit of output 
+# note: can also vary over time in case of variable adoption
+c_own <- array(runif(prod(sets_dim)), sets_dim, sets)
+
+# yield-increasing effect
+y <- array(0, sets_dim, sets)
+
+# shape of adoption curve (trapezoidal, logistic, variable)
+adoption <-"trapezoidal"
+
+# ceiling adoption rate
+a_max <- array(1, sets_dim[1:2], sets[1:2])
+
+# technology research, adoption, maturity, decline lags
+lagR <- array(1, sets_dim[1:2], sets[1:2])
+lagA <- array(1, sets_dim[1:2], sets[1:2])
+lagM <- array(1, sets_dim[1:2], sets[1:2])
+lagD <- array(1, sets_dim[1:2], sets[1:2])
+
+# logistic adoption parameters (as shares of a_max)
+t0 <- array(1, sets_dim[1:2], sets[1:2])
+t1 <- array(length(sets$per)%/%2, sets_dim[1:2], sets[1:2])
+a0 <- array(0.1, sets_dim[1:2], sets[1:2])
+a1 <- array(0.5, sets_dim[1:2], sets[1:2])
+
+# variable adoption rates (per period)
+a <- array(runif(prod(sets_dim)), sets_dim, sets)
+
+# research-induced spillover effects across regions (1-diagonal) with time lag
+# negative values indicate substitutive effects
+theta <- array(0, sets_dim[c(1,2,3,2)], sets[c(1,2,3,2)])
+names(dimnames(theta))[4] <- "source"
+for(i in sets$com) for(t in sets$per) theta[i,,t,] <- diag(sets_dim[2])
+
+
+```
+
+
+# Main Model
+
+## Demand and Supply
+
+```{r}
+
+
+#####################################################################################
+# DREAM Model
+#####################################################################################
+
+# Rescope sets
+for (i in names(sets)) assign(i, sets[[i]])
+
+# Verify cost saving per unit of output
+stopifnot(c_own>=0, c_own<=1)
+
+# Verify probabilities of success
+stopifnot(p>=0, p<=1)
+
+# Verify ceiling technology adoption rate
+stopifnot(a_max>=0, a_max<=1)
+
+# Verify technology lags
+stopifnot(lagR>=0, lagA>=0, lagM>=0, lagD>=0)
+
+
+#####################################################################################
+# Supply and demand slopes, intercepts
+alpha <- array(numeric(), sets_dim, sets)
+beta <- array(numeric(), sets_dim, sets)
+delta <- array(numeric(), sets_dim, sets)
+gamma <- array(numeric(), sets_dim, sets)
+
+# Initial slopes and intercepts from elasticities                               # 2.2
+beta[,, 1] <-  epsilon[,, 1] * Q[,, 1] / PP[,, 1]
+alpha[,, 1] <- (1 - epsilon[,, 1]) * Q[,, 1]
+delta[,, 1] <- eta[,, 1] * C[,, 1] / PC[,, 1]
+gamma[,, 1] <- (1 - eta[,, 1]) * C[,, 1]
+
+for(t in per[-1]) {
+  beta[,, t] <-  epsilon[,, t] * Q[,, t-1] / PP[,, t-1]
+  delta[,, t] <- eta[,, t] * C[,, t-1] / PC[,, t-1]
+}
+
+# Include exogenous demand and supply growth rates                             # 2.3
+for(t in per[-1]) {
+  alpha[,, t] <- alpha[,, t-1] + qpi[,, t] * Q[,, t-1]
+  gamma[,, t] <- gamma[,, t-1] + cpi[,, t] * C[,, t-1]
+}
+
+
+```
+
+```{r, echo=F}
+
+# Plot
+curve(x*1, 0, 5, xlab="Quantity", ylab="Price", col="white")
+curve((x-alpha[1,1,1])/beta[1,1,1], col="blue", add=T)
+curve((x-gamma[1,1,1])/delta[1,1,1], col="green", add=T)
+curve((x-alpha[1,1,2])/beta[1,1,2], col="blue", add=T)
+curve((x-gamma[1,1,2])/delta[1,1,2], col="green", add=T)
+
+```
+
+
+## Technological Change
+
+```{r}
+
+# Technology spillovers from source to receiving region                       # 2.10
+c_spill <- apply(theta, c("com", "reg", "per"), sum, na.rm=T)*c_own
+
+# Combined own and spillover cost saving effects
+c <- ifelse(c_spill>=0, c_own + c_spill, max(c_own, c_spill, na.rm=T))
+
+showme(c)
+
+
+# Maximum supply shift                                                          # 2.4
+k_max <- array(1, sets_dim, sets)
+for(t in per) k_max[,, t] <- p[,]*a_max[,]*PP[,, 1]*c[,, t]
+
+# Combine vertical and horizontal maximum supply shifts                         # 2.8
+# TODO check this formula, sign seems off
+# for(t in per) k_max[,, t] <- p[,]*a_max[,]*PP[,, 1]*
+#   ((y[,, t]/epsilon_shift)-(c[,, t]/(1+y[,, t])))
+
+showme(k_max)
+
+
+# Trapezoidal adoption curve
+adoptT <- function(t, k_max=1, lagR=1, lagA=1, lagM=1, lagD=1) {
+  # supply shift per period
+  t <- t-1
+  k <- ifelse( 
+    t>lagR & t<=lagR+lagA, k_max*(t-lagR)/lagA, ifelse( 
+      t>lagR+lagA & t<=lagR+lagA+lagM, k_max, ifelse(
+        t>lagR+lagA+lagM & t<=lagR+lagA+lagM+lagD, 
+        k_max*(lagR+lagA+lagM+lagD-t)/lagD, 0)))
+  return(k)
+}
+
+# Logistic adoption curve based on 2 known points (t0, a0), (t1, a1)
+adoptL <- function(t, a_max=1, k_max=1, t0=2, t1=3, a0=0.1, a1=0.5,
+  lagR=1, lagA=1, lagM=1, lagD=1) {
+  
+  # solve logistic coeffs
+  a0 <- a0*a_max
+  a1 <- a1*a_max
+  a0 <- log(a0/(a_max-a0))
+  a1 <- log(a1/(a_max-a1))
+  betalog <- (a1*t0-a0*t1)/(t1-t0)
+  alphalog <- (a0-a1)/(t0-t1)
+  
+  # incremental adoption                                                        # 2.5
+  t <- t-1
+  a <- a_max/(1 + exp(-(alphalog + t*betalog)))
+  # supply shift per period                                                     # 2.7
+  k <- ifelse( 
+    t>lagR & t<=lagR+lagA, k_max*a/a_max, ifelse( 
+      t>lagR+lagA & t<=lagR+lagA+lagM, k_max, ifelse(
+        t>lagR+lagA+lagM & t<=lagR+lagA+lagM+lagD, 
+        k_max*(lagR+lagA+lagM+lagD-t)/lagD, 0)))
+  
+  return(k)
+}
+
+# Variable adoption
+adoptV <- function() {
+  
+  # incremental adoption per period
+  diff_a <- array(0, sets_dim, sets)
+  for(t in per[-1]) diff_a[,, t] <- a[,, t] - a[,, t-1]
+  # supply shifts per period                                                    # 2.9
+  k <- array(0, sets_dim, sets)
+  for(i in com) for(r in reg) for(t in per) k[i, r, t] <- ifelse(
+    t>=lagR[i,r]+1, p[i, r]*PP[i, r, 1] * 
+      sum(c[i,r, t-((lagR[i,r]+1):t)+1] * diff_a[i,r, (lagR[i,r]+1):t], na.rm=T),
+    0)
+  return(k)
+}
+
+# Apply user-selected adoption curve
+k <- array(numeric(), sets_dim, sets)
+
+switch(adoption, 
+  # logistic
+  logistic = for(t in per) k[,, t] <- adoptL(t, a_max, k_max[,,t], t0, t1, a0, a1), 
+  # variable
+  variable = k <- adoptV(), 
+  # trapezoidal (default)
+  for(t in per) k[,, t] <- adoptT(t, k_max[,,t], lagR, lagA, lagM, lagD)
+)
+
+showme(k)
+
+```
+
+```{r, echo=F, fig.width=8}
+
+# Plot adoption curves
+par(mfrow=c(1,2))
+plot(adoptT, 1, 11, xlab=NA, ylab="supply shift", sub="Trapezoidal adoption")
+plot(adoptL, 1, 11, xlab=NA, ylab="supply shift", sub="Logistic adoption")
+
+```
+
+```{r}
+
+# TODO Demand shift
+
+
+
+# Redefine the supply intercept with research                                  # 2.11
+alpha_R <- alpha + k*beta
+
+
+
+
+
+
+# Supply and demand curves under no research                                    # 2.1
+# Q <- alpha + beta*PP
+# C <- gamma + delta*PC
+
+# Redefine the supply and demand equations with research                       # 2.12
+# Q_R <- alpha_R + beta*PP_R
+# C_R <- gamma + delta*PC_R
+
+
+
+
+
+
+# c, k_max, k
+
+```
+
+
