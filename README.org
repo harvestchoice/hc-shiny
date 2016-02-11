@@ -1,4 +1,4 @@
-#+TITLE: Shiny Data Visualization Applications
+#+TITLE: HarvestChoice Visualizations
 #+AUTHOR: Melanie Bacou
 #+EMAIL: mel@mbacou.com
 #+DATE: {{{modification-time(%Y-%m-%d)}}}
@@ -7,7 +7,7 @@
 #+LaTeX_CLASS: mel-article
 #+STARTUP: indent showstars
 
-** Interactive Visualizations
+** Interactive Demos
 
 A couple of visualization demos using RStudio Shiny framework:
 - [[http://tools.harvestchoice.org/rainfall][rainfall]] :: 1960-2013 CRU-TS 3.22 precipitation and PDSI for all districts in SSA
