@@ -1,0 +1,2965 @@
+ ====================================================================================
+                    HARVESTCHOICE USER LICENSE, Version 2008-01
+                                   April 16, 2008
+ ====================================================================================
+
+This dataset was obtained from HarvestChoice at http://www.harvestchoice.org/. 
+The data was last generated on 2016-02-11. 
+ 
+USE TERMS FOR ENCLOSED DATA FILES
+ 
+The Data and any Related Materials are the property of HarvestChoice and its 
+Contributors and are protected by United States copyright laws and applicable 
+international copyright treaties and conventions. HarvestChoice reserves rights for 
+the enclosed data file(s) and distributes data under the following license. In order 
+to view or use the data, you must accept this license. If you do not accept this 
+license, please return all files and do not retain a copy. By keeping the files, you 
+have agreed to the following terms.
+
+============================= Variable Definitions ================================== 
+
+Please cite original sources.
+
+Code:	acof_h
+Label:	Coffee arabica area '05
+Details:	Coffee Arabica Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(acof_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Coffee Arabica
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Coffee Arabica Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/acof_h.
+--------------------------------------------------------------------------------------
+Code:	acof_i_h
+Label:	Irr. coffee arabica area '05
+Details:	Coffee Arabica Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(acof_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Coffee Arabica
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Coffee Arabica Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/acof_i_h.
+--------------------------------------------------------------------------------------
+Code:	acof_r_h
+Label:	Rfd. coffee arabica area '05
+Details:	Coffee Arabica Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(acof_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Coffee Arabica
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Coffee Arabica Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/acof_r_h.
+--------------------------------------------------------------------------------------
+Code:	ADM0_NAME
+Label:	Adm-0 Name (GAUL, 2008)
+Details:	Country Administrative Boundaries (GAUL 2008). Country administrative
+boundaries based on GAUL 2008 (release 2009).
+Type:	class
+Unit:	class
+Version:	SChEF r2.2
+Aggregation Formula:	names(which.max(table(ADM0_NAME)))
+Period:	2008
+Category:	Administrative
+Sub-category:	National
+Item:	level-0
+Source:	Food and Agriculture Organization of the United Nations. FAO GEONETWORK.
+Global Administrative Unit Layers (GAUL) (GeoLayer). (Latest update: 18 Feb
+2014) Accessed (20 Feb 2014). URI: http://data.fao.org/ref/f7e7adb0-88fd-11da-
+a88f-000d939bc5d8.html?version=1.0
+Contact:	m.bacou@cgiar.org
+Citation:	HarvestChoice, 2015. "Country Administrative Boundaries (GAUL 2008)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/ADM0_NAME.
+--------------------------------------------------------------------------------------
+Code:	ADM1_NAME_ALT
+Label:	Adm-1 Name (GAUL, 2008 mod.)
+Details:	First-level Administrative Boundaries (GAUL 2008). First-level administrative
+boundaries based on GAUL 2008 (release 2009).
+Type:	class
+Unit:	class
+Version:	SChEF r2.2
+Aggregation Formula:	names(which.max(table(ADM1_NAME_ALT)))
+Period:	2008
+Category:	Administrative
+Sub-category:	Provinces
+Item:	level-1
+Source:	Food and Agriculture Organization of the United Nations. FAO GEONETWORK.
+Global Administrative Unit Layers (GAUL) (GeoLayer). (Latest update: 18 Feb
+2014) Accessed (20 Feb 2014). URI: http://data.fao.org/ref/f7e7adb0-88fd-11da-
+a88f-000d939bc5d8.html?version=1.0
+Contact:	m.bacou@cgiar.org
+Citation:	HarvestChoice, 2015. "First-level Administrative Boundaries (GAUL 2008)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/ADM1_NAME_ALT.
+--------------------------------------------------------------------------------------
+Code:	ADM2_NAME_ALT
+Label:	Adm-2 Name (GAUL, 2008 mod.)
+Details:	Second-level Administrative Boundaries (GAUL 2008). Second-level
+administrative boundaries based on GAUL 2008 (release 2009).
+Type:	class
+Unit:	class
+Version:	SChEF r2.2
+Aggregation Formula:	names(which.max(table(ADM2_NAME_ALT)))
+Period:	2008
+Category:	Administrative
+Sub-category:	Districts
+Item:	level-2
+Source:	Food and Agriculture Organization of the United Nations. FAO GEONETWORK.
+Global Administrative Unit Layers (GAUL) (GeoLayer). (Latest update: 18 Feb
+2014) Accessed (20 Feb 2014). URI: http://data.fao.org/ref/f7e7adb0-88fd-11da-
+a88f-000d939bc5d8.html?version=1.0
+Contact:	m.bacou@cgiar.org
+Citation:	HarvestChoice, 2015. "Second-level Administrative Boundaries (GAUL 2008)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/ADM2_NAME_ALT.
+--------------------------------------------------------------------------------------
+Code:	bana_h
+Label:	Banana area '05
+Details:	Banana Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(bana_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Banana
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Banana Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/bana_h.
+--------------------------------------------------------------------------------------
+Code:	bana_i_h
+Label:	Irr. banana area '05
+Details:	Banana Irrigated Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(bana_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Banana
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Banana Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/bana_i_h.
+--------------------------------------------------------------------------------------
+Code:	bana_r_h
+Label:	Rfd. banana area '05
+Details:	Banana Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(bana_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Banana
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Banana Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/bana_r_h.
+--------------------------------------------------------------------------------------
+Code:	bapl_h
+Label:	Bananas & plantains area '05
+Details:	Bananas & Plantains Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(bapl_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Banana/Plantain
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Bananas & Plantains Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/bapl_h.
+--------------------------------------------------------------------------------------
+Code:	bapl_i_h
+Label:	Irr. bananas & plantains area '05
+Details:	Bananas & Plantains Irrigated Harvested Area (ha, 2005). Spatially
+disaggregated production statistics of circa 2005 using the Spatial Production
+Allocation Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(bapl_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Banana/Plantain
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Bananas & Plantains Irrigated Harvested Area (ha,
+2005)", International Food Policy Research Institute, Washington, DC.,
+and University of Minnesota, St. Paul, MN. Available online at http://
+harvestchoice.org/data/bapl_i_h.
+--------------------------------------------------------------------------------------
+Code:	bapl_r_h
+Label:	Rfd. bananas & plantains area '05
+Details:	Bananas & Plantains Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(bapl_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Banana/Plantain
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Bananas & Plantains Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/bapl_r_h.
+--------------------------------------------------------------------------------------
+Code:	barl_h
+Label:	Barley area '05
+Details:	Barley Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(barl_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Barley
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Barley Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/barl_h.
+--------------------------------------------------------------------------------------
+Code:	barl_i_h
+Label:	Irr. barley area '05
+Details:	Barley Irrigated Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(barl_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Barley
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Barley Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/barl_i_h.
+--------------------------------------------------------------------------------------
+Code:	barl_r_h
+Label:	Rfd. barley area '05
+Details:	Barley Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(barl_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Barley
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Barley Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/barl_r_h.
+--------------------------------------------------------------------------------------
+Code:	bean_h
+Label:	Bean area '05
+Details:	Bean Harvested Area (ha, 2005). Spatially disaggregated production statistics
+of circa 2005 using the Spatial Production Allocation Model (SPAM). Values are
+for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(bean_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Bean
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Bean Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/bean_h.
+--------------------------------------------------------------------------------------
+Code:	bean_i_h
+Label:	Irr. bean area '05
+Details:	Bean Irrigated Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(bean_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Bean
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Bean Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/bean_i_h.
+--------------------------------------------------------------------------------------
+Code:	bean_r_h
+Label:	Rfd. bean area '05
+Details:	Bean Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(bean_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Bean
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Bean Rainfed Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/bean_r_h.
+--------------------------------------------------------------------------------------
+Code:	cass_h
+Label:	Cassava area '05
+Details:	Cassava Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(cass_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Cassava
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Cassava Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/cass_h.
+--------------------------------------------------------------------------------------
+Code:	cass_i_h
+Label:	Irr. cassava area '05
+Details:	Cassava Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(cass_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Cassava
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Cassava Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/cass_i_h.
+--------------------------------------------------------------------------------------
+Code:	cass_r_h
+Label:	Rfd. cassava area '05
+Details:	Cassava Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(cass_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Cassava
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Cassava Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/cass_r_h.
+--------------------------------------------------------------------------------------
+Code:	CELL5M
+Label:	Gridcell
+Details:	HarvestChoice Gridcell for sub-Saharan Africa (5 arc-minute). Global 5 arc-
+minute grid cell identifiers.
+Type:	class
+Unit:	class
+Version:	SChEF r2.2
+Aggregation Formula:	names(which.max(table(CELL5M)))
+Period:	2013
+Category:	Administrative
+Sub-category:	Raster Grid
+Item:	Grid
+Source:	HarvestChoice/International Food Policy Research Center (IFPRI), 2013.
+Contact:	j.koo@cgiar.org
+Citation:	HarvestChoice, 2015. "HarvestChoice Gridcell for sub-Saharan Africa (5 arc-
+minute)", International Food Policy Research Institute, Washington, DC.,
+and University of Minnesota, St. Paul, MN. Available online at http://
+harvestchoice.org/data/CELL5M.
+--------------------------------------------------------------------------------------
+Code:	cere_h
+Label:	Cereals area '05
+Details:	Cereals Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(cere_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Cereals
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Cereals Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/cere_h.
+--------------------------------------------------------------------------------------
+Code:	cere_i_h
+Label:	Irr. cereals area '05
+Details:	Cereals Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(cere_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Cereals
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Cereals Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/cere_i_h.
+--------------------------------------------------------------------------------------
+Code:	cere_r_h
+Label:	Rfd. cereals area '05
+Details:	Cereals Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(cere_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Cereals
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Cereals Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/cere_r_h.
+--------------------------------------------------------------------------------------
+Code:	chic_h
+Label:	Chickpea area '05
+Details:	Chickpea Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(chic_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Chickpea
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Chickpea Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/chic_h.
+--------------------------------------------------------------------------------------
+Code:	chic_i_h
+Label:	Irr. chickpea area '05
+Details:	Chickpea Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(chic_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Chickpea
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Chickpea Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/chic_i_h.
+--------------------------------------------------------------------------------------
+Code:	chic_r_h
+Label:	Rfd. chickpea area '05
+Details:	Chickpea Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(chic_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Chickpea
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Chickpea Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/chic_r_h.
+--------------------------------------------------------------------------------------
+Code:	cnut_h
+Label:	Coconut area '05
+Details:	Coconut Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(cnut_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Coconut
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Coconut Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/cnut_h.
+--------------------------------------------------------------------------------------
+Code:	cnut_r_h
+Label:	Rfd. coconut area '05
+Details:	Coconut Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(cnut_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Coconut
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Coconut Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/cnut_r_h.
+--------------------------------------------------------------------------------------
+Code:	coco_h
+Label:	Cocoa area '05
+Details:	Cocoa Harvested Area (ha, 2005). Spatially disaggregated production statistics
+of circa 2005 using the Spatial Production Allocation Model (SPAM). Values are
+for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(coco_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Cocoa
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Cocoa Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/coco_h.
+--------------------------------------------------------------------------------------
+Code:	coco_r_h
+Label:	Rfd. cocoa area '05
+Details:	Cocoa Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(coco_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Cocoa
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Cocoa Rainfed Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/coco_r_h.
+--------------------------------------------------------------------------------------
+Code:	coff_h
+Label:	Coffee area '05
+Details:	Coffee Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(coff_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Coffee
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Coffee Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/coff_h.
+--------------------------------------------------------------------------------------
+Code:	coff_i_h
+Label:	Irr. coffee area '05
+Details:	Coffee Irrigated Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(coff_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Coffee
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Coffee Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/coff_i_h.
+--------------------------------------------------------------------------------------
+Code:	coff_r_h
+Label:	Rfd. coffee area '05
+Details:	Coffee Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(coff_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Coffee
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Coffee Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/coff_r_h.
+--------------------------------------------------------------------------------------
+Code:	cott_h
+Label:	Cotton area '05
+Details:	Cotton Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(cott_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Cotton
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Cotton Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/cott_h.
+--------------------------------------------------------------------------------------
+Code:	cott_i_h
+Label:	Irr. cotton area '05
+Details:	Cotton Irrigated Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(cott_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Cotton
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Cotton Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/cott_i_h.
+--------------------------------------------------------------------------------------
+Code:	cott_r_h
+Label:	Rfd. cotton area '05
+Details:	Cotton Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(cott_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Cotton
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Cotton Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/cott_r_h.
+--------------------------------------------------------------------------------------
+Code:	cowp_h
+Label:	Cowpea area '05
+Details:	Cowpea Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(cowp_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Cowpea
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Cowpea Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/cowp_h.
+--------------------------------------------------------------------------------------
+Code:	cowp_r_h
+Label:	Rfd. cowpea area '05
+Details:	Cowpea Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(cowp_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Cowpea
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Cowpea Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/cowp_r_h.
+--------------------------------------------------------------------------------------
+Code:	frui_h
+Label:	Fruits area '05
+Details:	Tropical & Temperate Fruit Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(frui_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Fruits
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Tropical & Temperate Fruit Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/frui_h.
+--------------------------------------------------------------------------------------
+Code:	frui_i_h
+Label:	Irr. fruits area '05
+Details:	Tropical & Temperate Fruit Irrigated Harvested Area (ha, 2005). Spatially
+disaggregated production statistics of circa 2005 using the Spatial Production
+Allocation Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(frui_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Fruits
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Tropical & Temperate Fruit Irrigated Harvested Area
+(ha, 2005)", International Food Policy Research Institute, Washington,
+DC., and University of Minnesota, St. Paul, MN. Available online at http://
+harvestchoice.org/data/frui_i_h.
+--------------------------------------------------------------------------------------
+Code:	frui_r_h
+Label:	Rfd. fruits area '05
+Details:	Tropical & Temperate Fruit Rainfed Harvested Area (ha, 2005). Spatially
+disaggregated production statistics of circa 2005 using the Spatial Production
+Allocation Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(frui_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Fruits
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Tropical & Temperate Fruit Rainfed Harvested Area
+(ha, 2005)", International Food Policy Research Institute, Washington,
+DC., and University of Minnesota, St. Paul, MN. Available online at http://
+harvestchoice.org/data/frui_r_h.
+--------------------------------------------------------------------------------------
+Code:	grou_h
+Label:	Groundnut area '05
+Details:	Groundnut Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(grou_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Groundnut
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Groundnut Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/grou_h.
+--------------------------------------------------------------------------------------
+Code:	grou_i_h
+Label:	Irr. groundnut area '05
+Details:	Groundnut Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(grou_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Groundnut
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Groundnut Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/grou_i_h.
+--------------------------------------------------------------------------------------
+Code:	grou_r_h
+Label:	Rfd. groundnut area '05
+Details:	Groundnut Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(grou_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Groundnut
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Groundnut Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/grou_r_h.
+--------------------------------------------------------------------------------------
+Code:	ISO3
+Label:	Country ISO3 Codes
+Details:	Country ISO3 Codes. List of ISO3 codes based on GAUL 2008 (release 2009).
+Type:	class
+Unit:	class
+Version:	SChEF r2.2
+Aggregation Formula:	names(which.max(table(ISO3)))
+Period:	2008
+Category:	Administrative
+Sub-category:	National
+Item:	level-0
+Source:	HarvestChoice/International Food Policy Research Center (IFPRI), 2013.
+Contact:	m.bacou@cgiar.org
+Citation:	HarvestChoice, 2015. "Country ISO3 Codes", International Food Policy Research
+Institute, Washington, DC., and University of Minnesota, St. Paul, MN.
+Available online at http://harvestchoice.org/data/ISO3.
+--------------------------------------------------------------------------------------
+Code:	lent_h
+Label:	Lentil area '05
+Details:	Lentil Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(lent_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Lentil
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Lentil Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/lent_h.
+--------------------------------------------------------------------------------------
+Code:	lent_i_h
+Label:	Irr. lentil area '05
+Details:	Lentil Irrigated Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(lent_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Lentil
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Lentil Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/lent_i_h.
+--------------------------------------------------------------------------------------
+Code:	lent_r_h
+Label:	Rfd. lentil area '05
+Details:	Lentil Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(lent_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Lentil
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Lentil Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/lent_r_h.
+--------------------------------------------------------------------------------------
+Code:	maiz_h
+Label:	Maize area '05
+Details:	Maize Harvested Area (ha, 2005). Spatially disaggregated production statistics
+of circa 2005 using the Spatial Production Allocation Model (SPAM). Values are
+for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(maiz_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Maize
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Maize Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/maiz_h.
+--------------------------------------------------------------------------------------
+Code:	maiz_i_h
+Label:	Irr. maize area '05
+Details:	Maize Irrigated Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(maiz_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Maize
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Maize Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/maiz_i_h.
+--------------------------------------------------------------------------------------
+Code:	maiz_r_h
+Label:	Rfd. maize area '05
+Details:	Maize Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(maiz_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Maize
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Maize Rainfed Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/maiz_r_h.
+--------------------------------------------------------------------------------------
+Code:	mill_h
+Label:	Millets area '05
+Details:	Millets Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(mill_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Millets
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Millets Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/mill_h.
+--------------------------------------------------------------------------------------
+Code:	mill_i_h
+Label:	Irr. millets area '05
+Details:	Millets Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(mill_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Millets
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Millets Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/mill_i_h.
+--------------------------------------------------------------------------------------
+Code:	mill_r_h
+Label:	Rfd. millets area '05
+Details:	Millets Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(mill_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Millets
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Millets Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/mill_r_h.
+--------------------------------------------------------------------------------------
+Code:	ocer_h
+Label:	Oth. cereals area '05
+Details:	Other Cereals Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(ocer_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(other) Cereals
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Other Cereals Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/ocer_h.
+--------------------------------------------------------------------------------------
+Code:	ocer_i_h
+Label:	Irr. oth. cereal area '05
+Details:	Other Cereals Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(ocer_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(other) Cereals
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Other Cereals Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/ocer_i_h.
+--------------------------------------------------------------------------------------
+Code:	ocer_r_h
+Label:	Rfd. oth. cereal area '05
+Details:	Other Cereals Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(ocer_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(other) Cereals
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Other Cereals Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/ocer_r_h.
+--------------------------------------------------------------------------------------
+Code:	ofib_h
+Label:	Oth. fibres area '05
+Details:	Other Fibres Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(ofib_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(other) Fibers
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Other Fibres Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/ofib_h.
+--------------------------------------------------------------------------------------
+Code:	ofib_i_h
+Label:	Irr. oth. fibres area '05
+Details:	Other Fibres Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(ofib_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(other) Fibers
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Other Fibres Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/ofib_i_h.
+--------------------------------------------------------------------------------------
+Code:	ofib_r_h
+Label:	Rfd. oth. fibres area '05
+Details:	Other Fibres Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(ofib_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(other) Fibers
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Other Fibres Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/ofib_r_h.
+--------------------------------------------------------------------------------------
+Code:	oilp_h
+Label:	Oil palm area '05
+Details:	Oil Palm Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(oilp_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Oil Palm
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Oil Palm Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/oilp_h.
+--------------------------------------------------------------------------------------
+Code:	oilp_i_h
+Label:	Irr. oils palm area '05
+Details:	Oil Palm Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(oilp_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Oil Palm
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Oil Palm Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/oilp_i_h.
+--------------------------------------------------------------------------------------
+Code:	oilp_r_h
+Label:	Rfd. oils palm area '05
+Details:	Oil Palm Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(oilp_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Oil Palm
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Oil Palm Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/oilp_r_h.
+--------------------------------------------------------------------------------------
+Code:	ooil_h
+Label:	Oth. oils area '05
+Details:	Other Oils Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(ooil_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(other) Oils
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Other Oils Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/ooil_h.
+--------------------------------------------------------------------------------------
+Code:	ooil_i_h
+Label:	Irr. oth. oils area '05
+Details:	Other Oils Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(ooil_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(other) Oils
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Other Oils Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/ooil_i_h.
+--------------------------------------------------------------------------------------
+Code:	ooil_r_h
+Label:	Rfd. oth. oils area '05
+Details:	Other Oils Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(ooil_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(other) Oils
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Other Oils Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/ooil_r_h.
+--------------------------------------------------------------------------------------
+Code:	opul_h
+Label:	Oth. pulses area '05
+Details:	Other Pulses Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(opul_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(other) Pulses
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Other Pulses Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/opul_h.
+--------------------------------------------------------------------------------------
+Code:	opul_i_h
+Label:	Irr. oth. pulses area '05
+Details:	Other Pulses Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(opul_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(other) Pulses
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Other Pulses Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/opul_i_h.
+--------------------------------------------------------------------------------------
+Code:	opul_r_h
+Label:	Rfd. oth. pulses area '05
+Details:	Other Pulses Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(opul_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(other) Pulses
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Other Pulses Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/opul_r_h.
+--------------------------------------------------------------------------------------
+Code:	orts_h
+Label:	Oth. roots & tubers area '05
+Details:	Other Roots & Tubers Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(orts_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(other) Roots and Tubers
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Other Roots & Tubers Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/orts_h.
+--------------------------------------------------------------------------------------
+Code:	orts_i_h
+Label:	Irr. oth. roots & tubers area '05
+Details:	Other Roots & Tubers Irrigated Harvested Area (ha, 2005). Spatially
+disaggregated production statistics of circa 2005 using the Spatial Production
+Allocation Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(orts_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(other) Roots and Tubers
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Other Roots & Tubers Irrigated Harvested Area (ha,
+2005)", International Food Policy Research Institute, Washington, DC.,
+and University of Minnesota, St. Paul, MN. Available online at http://
+harvestchoice.org/data/orts_i_h.
+--------------------------------------------------------------------------------------
+Code:	orts_r_h
+Label:	Rfd. oth. roots & tubers area '05
+Details:	Other Roots & Tubers Rainfed Harvested Area (ha, 2005). Spatially
+disaggregated production statistics of circa 2005 using the Spatial Production
+Allocation Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(orts_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(other) Roots and Tubers
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Other Roots & Tubers Rainfed Harvested Area (ha,
+2005)", International Food Policy Research Institute, Washington, DC.,
+and University of Minnesota, St. Paul, MN. Available online at http://
+harvestchoice.org/data/orts_r_h.
+--------------------------------------------------------------------------------------
+Code:	pige_h
+Label:	Pigeon pea area '05
+Details:	Pigeonpea Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(pige_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Pigeon Pea
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Pigeonpea Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/pige_h.
+--------------------------------------------------------------------------------------
+Code:	pige_r_h
+Label:	Rfd. Pigeon pea area '05
+Details:	Pigeonpea Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(pige_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Pigeon Pea
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Pigeonpea Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/pige_r_h.
+--------------------------------------------------------------------------------------
+Code:	plnt_h
+Label:	Plantain area '05
+Details:	Plantain Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(plnt_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Plantain
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Plantain Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/plnt_h.
+--------------------------------------------------------------------------------------
+Code:	plnt_r_h
+Label:	Rfd. plantain area '05
+Details:	Plantain Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(plnt_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Plantain
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Plantain Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/plnt_r_h.
+--------------------------------------------------------------------------------------
+Code:	pmil_h
+Label:	Pearl millet area '05
+Details:	Pearl Millet Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(pmil_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Pearl Millet
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Pearl Millet Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/pmil_h.
+--------------------------------------------------------------------------------------
+Code:	pmil_i_h
+Label:	Irr. pearl millet area '05
+Details:	Pearl Millet Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(pmil_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Pearl Millet
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Pearl Millet Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/pmil_i_h.
+--------------------------------------------------------------------------------------
+Code:	pmil_r_h
+Label:	Rfd. pearl millet area '05
+Details:	Pearl Millet Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(pmil_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Pearl Millet
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Pearl Millet Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/pmil_r_h.
+--------------------------------------------------------------------------------------
+Code:	pota_h
+Label:	Potato area '05
+Details:	Potato Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(pota_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Potato
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Potato Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/pota_h.
+--------------------------------------------------------------------------------------
+Code:	pota_i_h
+Label:	Irr. potato area '05
+Details:	Potato Irrigated Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(pota_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Potato
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Potato Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/pota_i_h.
+--------------------------------------------------------------------------------------
+Code:	pota_r_h
+Label:	Rfd. potato area '05
+Details:	Potato Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(pota_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Potato
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Potato Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/pota_r_h.
+--------------------------------------------------------------------------------------
+Code:	puls_h
+Label:	Pulses area '05
+Details:	Pulses Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(puls_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Pulses
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Pulses Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/puls_h.
+--------------------------------------------------------------------------------------
+Code:	puls_i_h
+Label:	Irr. pulses area '05
+Details:	Pulses Irrigated Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(puls_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Pulses
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Pulses Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/puls_i_h.
+--------------------------------------------------------------------------------------
+Code:	puls_r_h
+Label:	Rfd. pulses area '05
+Details:	Pulses Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(puls_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(all) Pulses
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Pulses Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/puls_r_h.
+--------------------------------------------------------------------------------------
+Code:	rape_h
+Label:	Rapeseed area '05
+Details:	Rapeseed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(rape_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Rapeseed
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Rapeseed Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/rape_h.
+--------------------------------------------------------------------------------------
+Code:	rape_i_h
+Label:	Irr. rapeseed area '05
+Details:	Rapeseed Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(rape_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Rapeseed
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Rapeseed Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/rape_i_h.
+--------------------------------------------------------------------------------------
+Code:	rape_r_h
+Label:	Rfd. rapeseed area '05
+Details:	Rapeseed Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(rape_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Rapeseed
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Rapeseed Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/rape_r_h.
+--------------------------------------------------------------------------------------
+Code:	rcof_h
+Label:	Coffee robusta area '05
+Details:	Coffee Robusta Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(rcof_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Coffee Robusta
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Coffee Robusta Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/rcof_h.
+--------------------------------------------------------------------------------------
+Code:	rcof_r_h
+Label:	Rfd. coffee robusta area '05
+Details:	Coffee Robusta Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(rcof_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Coffee Robusta
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Coffee Robusta Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/rcof_r_h.
+--------------------------------------------------------------------------------------
+Code:	rest_h
+Label:	Rest of crops area '05
+Details:	Rest of Crops Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(rest_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(rest of) Crops
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Rest of Crops Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/rest_h.
+--------------------------------------------------------------------------------------
+Code:	rest_i_h
+Label:	Irr. rest of crops area '05
+Details:	Rest of Crops Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(rest_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(rest of) Crops
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Rest of Crops Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/rest_i_h.
+--------------------------------------------------------------------------------------
+Code:	rest_r_h
+Label:	Rfd. rest of crops area '05
+Details:	Rest of Crops Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(rest_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	(rest of) Crops
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Rest of Crops Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/rest_r_h.
+--------------------------------------------------------------------------------------
+Code:	rice_h
+Label:	Rice area '05
+Details:	Rice Harvested Area (ha, 2005). Spatially disaggregated production statistics
+of circa 2005 using the Spatial Production Allocation Model (SPAM). Values are
+for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(rice_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Rice
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Rice Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/rice_h.
+--------------------------------------------------------------------------------------
+Code:	rice_i_h
+Label:	Irr. rice area '05
+Details:	Rice Irrigated Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(rice_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Rice
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Rice Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/rice_i_h.
+--------------------------------------------------------------------------------------
+Code:	rice_r_h
+Label:	Rfd. rice area '05
+Details:	Rice Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(rice_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Rice
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Rice Rainfed Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/rice_r_h.
+--------------------------------------------------------------------------------------
+Code:	sesa_h
+Label:	Sesame seed area '05
+Details:	Sesame Seed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(sesa_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Sesame Seed
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Sesame Seed Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/sesa_h.
+--------------------------------------------------------------------------------------
+Code:	sesa_i_h
+Label:	Irr. sesame seed area '05
+Details:	Sesame Seed Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(sesa_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Sesame Seed
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Sesame Seed Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/sesa_i_h.
+--------------------------------------------------------------------------------------
+Code:	sesa_r_h
+Label:	Rfd. sesame seed area '05
+Details:	Sesame Seed Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(sesa_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Sesame Seed
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Sesame Seed Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/sesa_r_h.
+--------------------------------------------------------------------------------------
+Code:	smil_h
+Label:	Small millet area '05
+Details:	Small Millet Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(smil_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Small Millet
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Small Millet Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/smil_h.
+--------------------------------------------------------------------------------------
+Code:	smil_i_h
+Label:	Irr. small millet area '05
+Details:	Small Millet Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(smil_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Small Millet
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Small Millet Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/smil_i_h.
+--------------------------------------------------------------------------------------
+Code:	smil_r_h
+Label:	Rfd. small millet area '05
+Details:	Small Millet Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(smil_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Small Millet
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Small Millet Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/smil_r_h.
+--------------------------------------------------------------------------------------
+Code:	sorg_h
+Label:	Sorghum area '05
+Details:	Sorghum Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(sorg_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Sorghum
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Sorghum Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/sorg_h.
+--------------------------------------------------------------------------------------
+Code:	sorg_i_h
+Label:	Irr. sorghum area '05
+Details:	Sorghum Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(sorg_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Sorghum
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Sorghum Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/sorg_i_h.
+--------------------------------------------------------------------------------------
+Code:	sorg_r_h
+Label:	Rfd. sorghum area '05
+Details:	Sorghum Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(sorg_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Sorghum
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Sorghum Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/sorg_r_h.
+--------------------------------------------------------------------------------------
+Code:	soyb_h
+Label:	Soybean area '05
+Details:	Soybean Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(soyb_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Soybean
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Soybean Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/soyb_h.
+--------------------------------------------------------------------------------------
+Code:	soyb_i_h
+Label:	Irr. soybean area '05
+Details:	Soybean Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(soyb_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Soybean
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Soybean Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/soyb_i_h.
+--------------------------------------------------------------------------------------
+Code:	soyb_r_h
+Label:	Rfd. soybean area '05
+Details:	Soybean Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(soyb_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Soybean
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Soybean Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/soyb_r_h.
+--------------------------------------------------------------------------------------
+Code:	sugc_h
+Label:	Sugar cane area '05
+Details:	Sugar Cane Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(sugc_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Sugar Cane
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Sugar Cane Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/sugc_h.
+--------------------------------------------------------------------------------------
+Code:	sugc_i_h
+Label:	Irr. sugar cane area '05
+Details:	Sugar Cane Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(sugc_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Sugar Cane
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Sugar Cane Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/sugc_i_h.
+--------------------------------------------------------------------------------------
+Code:	sugc_r_h
+Label:	Rfd. sugar cane area '05
+Details:	Sugar Cane Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(sugc_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Sugar Cane
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Sugar Cane Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/sugc_r_h.
+--------------------------------------------------------------------------------------
+Code:	sunf_h
+Label:	Sunflower area '05
+Details:	Sunflower Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(sunf_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	SunfLower
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Sunflower Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/sunf_h.
+--------------------------------------------------------------------------------------
+Code:	sunf_i_h
+Label:	Irr. sunflower area '05
+Details:	Sunflower Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(sunf_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	SunfLower
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Sunflower Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/sunf_i_h.
+--------------------------------------------------------------------------------------
+Code:	sunf_r_h
+Label:	Rfd. sunflower area '05
+Details:	Sunflower Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(sunf_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	SunfLower
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Sunflower Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/sunf_r_h.
+--------------------------------------------------------------------------------------
+Code:	swpo_h
+Label:	Sweet potato area '05
+Details:	Sweet Potato Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(swpo_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Sweet Potato
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Sweet Potato Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/swpo_h.
+--------------------------------------------------------------------------------------
+Code:	swpo_i_h
+Label:	Irr. sweet potato area '05
+Details:	Sweet Potato Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(swpo_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Sweet Potato
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Sweet Potato Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/swpo_i_h.
+--------------------------------------------------------------------------------------
+Code:	swpo_r_h
+Label:	Rfd. sweet potato area '05
+Details:	Sweet Potato Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(swpo_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Sweet Potato
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Sweet Potato Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/swpo_r_h.
+--------------------------------------------------------------------------------------
+Code:	teas_h
+Label:	Tea area '05
+Details:	Tea Harvested Area (ha, 2005). Spatially disaggregated production statistics
+of circa 2005 using the Spatial Production Allocation Model (SPAM). Values are
+for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(teas_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Tea
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Tea Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/teas_h.
+--------------------------------------------------------------------------------------
+Code:	teas_i_h
+Label:	Irr. tea area '05
+Details:	Tea Irrigated Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(teas_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Tea
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Tea Irrigated Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/teas_i_h.
+--------------------------------------------------------------------------------------
+Code:	teas_r_h
+Label:	Rfd. tea area '05
+Details:	Tea Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(teas_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Tea
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Tea Rainfed Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/teas_r_h.
+--------------------------------------------------------------------------------------
+Code:	temf_h
+Label:	Temperate fruits area '05
+Details:	Temperate Fruits Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(temf_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Temperate Fruits
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Temperate Fruits Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/temf_h.
+--------------------------------------------------------------------------------------
+Code:	temf_i_h
+Label:	Irr. temperate fruits area '05
+Details:	Temperate Fruits Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(temf_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Temperate Fruits
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Temperate Fruits Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/temf_i_h.
+--------------------------------------------------------------------------------------
+Code:	temf_r_h
+Label:	Rfd. temperate fruits area '05
+Details:	Temperate Fruits Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(temf_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Temperate Fruits
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Temperate Fruits Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/temf_r_h.
+--------------------------------------------------------------------------------------
+Code:	toba_h
+Label:	Tobacco area '05
+Details:	Tobacco Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(toba_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Tobacco
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Tobacco Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/toba_h.
+--------------------------------------------------------------------------------------
+Code:	toba_i_h
+Label:	Irr. tobacco area '05
+Details:	Tobacco Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(toba_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Tobacco
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Tobacco Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/toba_i_h.
+--------------------------------------------------------------------------------------
+Code:	toba_r_h
+Label:	Rfd. tobacco area '05
+Details:	Tobacco Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(toba_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Tobacco
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Tobacco Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/toba_r_h.
+--------------------------------------------------------------------------------------
+Code:	trof_h
+Label:	Tropical fruits area '05
+Details:	Tropical Fruits Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(trof_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Tropical Fruits
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Tropical Fruits Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/trof_h.
+--------------------------------------------------------------------------------------
+Code:	trof_i_h
+Label:	Irr. tropical fruits area '05
+Details:	Tropical Fruits Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(trof_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Tropical Fruits
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Tropical Fruits Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/trof_i_h.
+--------------------------------------------------------------------------------------
+Code:	trof_r_h
+Label:	Rfd. tropical fruits area '05
+Details:	Tropical Fruits Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(trof_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Tropical Fruits
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Tropical Fruits Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/trof_r_h.
+--------------------------------------------------------------------------------------
+Code:	vege_h
+Label:	Vegetables area '05
+Details:	Vegetable Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(vege_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Vegetables
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Vegetable Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/vege_h.
+--------------------------------------------------------------------------------------
+Code:	vege_i_h
+Label:	Irr. vegetables area '05
+Details:	Vegetable Irrigated Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(vege_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Vegetables
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Vegetable Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/vege_i_h.
+--------------------------------------------------------------------------------------
+Code:	vege_r_h
+Label:	Rfd. vegetables area '05
+Details:	Vegetable Rainfed Harvested Area (ha, 2005). Spatially disaggregated
+production statistics of circa 2005 using the Spatial Production Allocation
+Model (SPAM). Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(vege_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Vegetables
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Vegetable Rainfed Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/vege_r_h.
+--------------------------------------------------------------------------------------
+Code:	whea_h
+Label:	Wheat area '05
+Details:	Wheat Harvested Area (ha, 2005). Spatially disaggregated production statistics
+of circa 2005 using the Spatial Production Allocation Model (SPAM). Values are
+for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(whea_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Wheat
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Wheat Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/whea_h.
+--------------------------------------------------------------------------------------
+Code:	whea_i_h
+Label:	Irr. wheat area '05
+Details:	Wheat Irrigated Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(whea_i_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Wheat
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Wheat Irrigated Harvested Area (ha, 2005)",
+International Food Policy Research Institute, Washington, DC., and University
+of Minnesota, St. Paul, MN. Available online at http://harvestchoice.org/
+data/whea_i_h.
+--------------------------------------------------------------------------------------
+Code:	whea_r_h
+Label:	Rfd. wheat area '05
+Details:	Wheat Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(whea_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Wheat
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Wheat Rainfed Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/whea_r_h.
+--------------------------------------------------------------------------------------
+Code:	X
+Label:	Longitude
+Details:	Longitude of Gridcell Centroid. Longitude of 5-arc minute gridcell centroid.
+Type:	continuous
+Unit:	degree
+Version:	SChEF r2.2
+Aggregation Formula:	mean(X, na.rm=TRUE)
+Period:	2013
+Category:	Administrative
+Sub-category:	Raster Grid
+Item:	Grid
+Source:	HarvestChoice/International Food Policy Research Center (IFPRI), 2013.
+Contact:	m.bacou@cgiar.org
+Citation:	HarvestChoice, 2015. "Longitude of Gridcell Centroid", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/X.
+--------------------------------------------------------------------------------------
+Code:	Y
+Label:	Latitude
+Details:	Latitude of Gridcell Centroid. Latitude of 5-arc minute gridcell centroid.
+Type:	continuous
+Unit:	degree
+Version:	SChEF r2.2
+Aggregation Formula:	mean(Y, na.rm=TRUE)
+Period:	2013
+Category:	Administrative
+Sub-category:	Raster Grid
+Item:	Grid
+Source:	HarvestChoice/International Food Policy Research Center (IFPRI), 2013.
+Contact:	m.bacou@cgiar.org
+Citation:	HarvestChoice, 2015. "Latitude of Gridcell Centroid", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/Y.
+--------------------------------------------------------------------------------------
+Code:	yams_h
+Label:	Yam area '05
+Details:	Yam Harvested Area (ha, 2005). Spatially disaggregated production statistics
+of circa 2005 using the Spatial Production Allocation Model (SPAM). Values are
+for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(yams_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Yam
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Yam Harvested Area (ha, 2005)", International Food
+Policy Research Institute, Washington, DC., and University of Minnesota, St.
+Paul, MN. Available online at http://harvestchoice.org/data/yams_h.
+--------------------------------------------------------------------------------------
+Code:	yams_r_h
+Label:	Rfd. yam area '05
+Details:	Yam Rainfed Harvested Area (ha, 2005). Spatially disaggregated production
+statistics of circa 2005 using the Spatial Production Allocation Model (SPAM).
+Values are for 5 arc-minute grid cells.
+Type:	continuous
+Unit:	ha
+Version:	SChEF r2.5
+Aggregation Formula:	sum(yams_r_h, na.rm=TRUE)
+Period:	2005
+Category:	Agriculture
+Sub-category:	Harvested Area
+Item:	Yam
+Source:	You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo. 2014. Spatial
+Production Allocation Model (SPAM) 2005 v2.0.
+Contact:	u.wood-sichra@cgiar.org
+Citation:	HarvestChoice, 2015. "Yam Rainfed Harvested Area (ha, 2005)", International
+Food Policy Research Institute, Washington, DC., and University of Minnesota,
+St. Paul, MN. Available online at http://harvestchoice.org/data/yams_r_h.
+ 
+============================== Summary of License ===================================
+ 
+1. Data files are for your own, non-commercial use only.
+
+2. Any and all derived products (e.g., tables, figures, maps) generated using the
+enclosed data must be given due attribution according to the suggested citation
+supplied or, in its absence, refer to the guidelines obtained from
+http://harvestchoice.org/about/intellect
+
+3. None of the data may be distributed in digital or print form to third parties,
+including on User's web sites, without explicit permission from HarvestChoice or
+relevant Contributors to the HarvestChoice web site (contact hallaway@umn.edu).
+ 
+================================== Definitions ======================================
+ 
+Attribution:
+Attribute downloaded data and derived products using the suggested citation details
+distributed as metadata with the downloaded file. If attribution guidelines are absent
+in the metadata, refer to http://harvestchoice.org/about/intellect/ .
+ 
+"Data" include all databases, tables, graphics, figures, GIS files, bibliographic 
+references, and content obtained from HarvestChoice.
+ 
+"Non-commercial use" means that User may not sell or redistribute data or its 
+derivatives for commercial gain; e.g., selling or charging a fee for maps generated 
+using these data.
+ 
+Any of the above conditions can be waived if you get permission from HarvestChoice.
+ 
+THE MATERIAL IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ 
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+OUT OF OR IN CONNECTION WITH THE MATERIAL OR THE USE OR OTHER DEALINGS IN THE MATERIAL.
+ 
+Exclusive Remedy and Limitation of Liability: The entire liability of HarvestChoice 
+and User's exclusive remedy shall be to terminate the Agreement upon User returning 
+the Data and Related Materials to HarvestChoice.
+ 

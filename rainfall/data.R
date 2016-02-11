@@ -9,6 +9,8 @@
 # without any further transformation, but we need to pre-process district summaries for
 # extra speed using stats.cntr() below.
 
+# Note: also saving this file to shared Dropbox /_global_codes/R/ for documentation
+
 library(stringr)
 library(data.table)
 library(reshape2)
@@ -1893,6 +1895,11 @@ setnames(pdsi.svy, 12:34, paste0("pdsi", 1990:2012))
 pdsi.lbl <- paste0("Index - Y", 1990:2012)
 attr(pdsi.svy, "var.labels") <- c(attr, pdsi.lbl)
 write.dta(pdsi.svy, "./data/r15.10/svyL2Maps-PDSI-50km_1990-2012_r1.dta", version=12L)
+
+
+# Check on CRU resolution
+tmp <- brick("./data/cru_ts3.22.1901.2013.pre.dat.nc")
+tmp <- GDALinfo("./data/cru_ts3.22.1901.2013.pre.dat.nc", returnStats=F)
 
 
 

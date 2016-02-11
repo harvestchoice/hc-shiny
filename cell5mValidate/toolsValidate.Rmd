@@ -4,9 +4,9 @@ author: "Bacou, Melanie"
 date: "8/1/2015"
 runtime: shiny
 output: 
-html_document:
-fig_height: 6
-fig_width: 6
+  html_document:
+    fig_height: 6
+    fig_width: 6
 ---
 
 This document is part of a series of automated tests to validate [HarvestChoice](http://harvestchoice.org/data) 5-arc-minute spatial rasters for sub-Saharan Africa.

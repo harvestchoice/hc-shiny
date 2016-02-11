@@ -1,6 +1,6 @@
 #####################################################################################
-# Title: CRU and PDSI 1960-2013 Time Series across Districts
-# Date: December 2014
+# Title:   CRU and PDSI 1960-2013 Time Series across Districts
+# Date:    December 2014
 # Project: HarvestChoice/IFPRI
 # Authors: Bacou, Melanie <mel@mbacou.com>
 #####################################################################################

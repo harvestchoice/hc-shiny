@@ -42,6 +42,7 @@ library(stringr)
 Verify countries, admin-1, and admin-2 classification across SSA grid. For now this classification should be consistent with FAO GAUL 2008 (2009 eds), aside from Kenya for which we use the 2013 47-county classification. We can load GAUL at level-2 and compare with CELL5M.
 
 ```{r, eval=F}
+
 # Load GAUL admin-2
 g2 <- readRDS("../../cell5m/rdb/g2_2008v09.web.rds")
 g2.dt <- data.table(g2@data)
@@ -50,6 +51,7 @@ g2.dt[, rn := row.names(g2)]
 ```
 
 ```{r}
+
 # Show column names
 names(g2)
 
@@ -73,6 +75,7 @@ nrow(ken[ADM1_NAME_ALT!="buffer gridcell"])
 ### Look for Missing Admin Units
 
 ```{r}
+
 # For every country summarize the number of districts across provinces in GAUL and in CELL5M, and compare. We remove all "buffer gridcells" from the CELL5M summary.
 g2.admin <- g2.dt[, list(ADM0_NAME, ADM1_NAME, ADM2_NAME), 
   keyby=list(ADM0_CODE, ADM1_CODE, ADM2_CODE)]
@@ -92,6 +95,7 @@ unmatched[, unique(ADM0_NAME)]
 `r nrow(unmatched)` GAUL districts were not found in CELL5M across `r unmatched[, unique(ADM0_NAME)]` countries. We can map them.
 
 ```{r, fig.width=3, fig.height=3, warning=F}
+
 # Plot missing units in each country
 p <- lapply(unique(unmatched$ADM0_NAME), function(i) {
   u <- unmatched[ADM0_NAME==i, ADM2_CODE]
@@ -121,6 +125,7 @@ Because we keyed and matched GAUL and CELL5M on a combination of `ADM0_CODE`, `A
 Another way to check visually is to print all districts as a color-coded raster by country. We can display these layers in a Leaflet widget.
 
 ```{r, results="hide"}
+
 # Raster needs all character variables categorized into factors first
 dt[, `:=`(
   ADM0_NAME=factor(ADM0_NAME),
@@ -131,6 +136,7 @@ dt[, `:=`(
 ```
 
 ```{r, warning=F}
+
   # Convert CELL5M variables to multi-layer raster brick
   r <- SpatialPixelsDataFrame(dt[, list(X,Y)], data.frame(dt),
     proj4string=CRS("+init=epsg:4326"),  tolerance=0.0036002)

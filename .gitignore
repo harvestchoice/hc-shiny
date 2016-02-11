@@ -1,18 +1,15 @@
-/temp/
-/tmp/
-/dash/
-/dhs/data/
-/data/
-/docs/
-/out/
-/rdb/
-/json/
+*.nc
 *.pdf
 *.dta
+*.zip
+*.csv
+*.rds
+*.rda
+*.RData
+*.hdr
+*.bil
 .Rproj.user
 .project
 
-/rainfall/data/*
-/rainfall/wc0.5/*
 !/rainfall/data/g2*
 !/rainfall/data/*.rds
