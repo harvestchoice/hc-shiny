@@ -7,7 +7,20 @@
 #+LaTeX_CLASS: mel-article
 #+STARTUP: indent showstars
 
+** Interactive Visualizations
+
 A couple of visualization demos using RStudio Shiny framework:
 - [[http://tools.harvestchoice.org/rainfall][rainfall]] :: 1960-2013 CRU-TS 3.22 precipitation and PDSI for all districts in SSA
 - [[http://tools.harvestchoice.org/subnatpov][subnatpov]] :: sub-national expenditure, poverty and inequality estimates across 60 countries
 - [[http://tools.harvestchoice.org/cell5mValidate][cell5mValidate]] :: automated tests for HarvestChoice 5-arc-minute spatial rasters for SSA
+- [[http://tools.harvestchoice.org/dream][dream]] :: DREAM model core routine and documentation
+- [[http://tools.harvestchoice.org/cell5mBulk][cell5mBulk]] :: options to download HarvestChoice 5-arc-minute indicators for sub-Saharan Africa in bulk.
+
+
+
+** License
+
+This package is licensed to you under the terms of the [GNU General Public
+License](http://www.gnu.org/licenses/gpl.html) version 3 or later.
+
+Copyright 2013-2015 RStudio, Inc.
