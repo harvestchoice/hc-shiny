@@ -20,7 +20,6 @@ A couple of visualization demos using RStudio Shiny framework:
 
 ** License
 
-This package is licensed to you under the terms of the [GNU General Public
-License](http://www.gnu.org/licenses/gpl.html) version 3 or later.
+This package is licensed to you under the terms of the [[http://www.gnu.org/licenses/gpl.html][GNU General Public License]] version 3 or later.
 
-Copyright 2013-2015 RStudio, Inc.
+Copyright 2013-2016 IFPRI/HarvestChoice.
