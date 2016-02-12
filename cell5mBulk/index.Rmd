@@ -13,7 +13,7 @@ load("./tmp/cell5mBulk.RData")
 for (i in names(hcapi.bulk)) {
   print(h2(i))
   print(knitr::kable(hcapi.bulk[[i]][, .SD, .SDcols=2:5], row.names=F, 
-    col.names=c("Category", "Layers", "Contents (sample)", "Download"),
+    col.names=c("Category", "Indicators", "Contents (sample)", "Download"),
     align=c("l", "c", "l", "l")))
   cat("\n\n\n")
 
