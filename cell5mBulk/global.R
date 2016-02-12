@@ -8,7 +8,6 @@
 # Load common libraries
 library(data.table)
 library(hcapi3)
-library(shiny)
 
 
 # Load workspace
@@ -35,30 +34,27 @@ if( tmp!=hcapi.version | length(f)==0 ) {
 
   for( i in cat ) {
     vars <- vi[cat2==i, varCode]
-    # Generate CSV, STATA, and netCDF downloads with README
-    for( f in c("csv", "dta", "nc") ) {
-      tmp <-  hcapi(vars, format=f)
+    # Generate CSV, STATA, and netCDF downloads with README, LICENSE
+    for( f in c("csv", "dta", "asc") ) {
+      tmp <- hcapi(vars, format=f, path=tempdir())
       path <- paste0("../assets/bulk/", gsub(" ", "_", tolower(i), fixed=T), "-",
         format(Sys.Date(), "%y.%m.%d"), ".", f, ".zip")
       zip(path, tmp, flags="-9Xjm", zip="zip")
     }
   }
 
-  # Re-create persistent table of download links
+
+  # Create persistent table of download links
   f <- list.files("../assets/bulk")
-  t <- c("comma-separated values (csv)", "STATA 12 (dta)", "netCDF (nc)")
+  t <- c("ESRI ASCII Grid (.asc)", "comma-separated values (.csv)", "STATA 12 (.dta)")
 
   hcapi.bulk <- vi[cat2 %in% cat, .(.N,
-    desc=paste0(paste(varLabel[1:min(3, length(varLabel))], collapse="<br />"), " ..."),
-    url=paste0("<a href='http://tools.harvestchoice.org/assets/bulk/",
-      f[gsub("_", " ", f, fixed=T) %like% tolower(cat2)][1:3], "'>", t, "</a>", collapse="<br />")
+    desc=paste(paste(sample(varLabel, (min(3, length(varLabel)))), collapse="<br>"), "..."),
+    url=paste0('<a href="http://tools.harvestchoice.org/assets/bulk/',
+      f[gsub("_", " ", f, fixed=T) %like% tolower(cat2)][1:3], '">', t, '</a>', collapse='<br>')
   ), keyby=.(cat1, cat2)]
 
-  hcapi.bulk[, N := paste0("<div style='text-align:center;'>", N, "</div>")]
-  hcapi.bulk[, cat2 := paste0("<div style='white-space:pre;width: 160px'><strong>", cat2, "</strong></div>")]
-  hcapi.bulk[, url := paste0("<div style='white-space:pre;'>", url, "</div>")]
   hcapi.bulk <- split(hcapi.bulk, hcapi.bulk$cat1)
-
 }
 
 save(hcapi.version, hcapi.bulk, file="./tmp/cell5mBulk.RData")
