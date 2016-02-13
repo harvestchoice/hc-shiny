@@ -1,9 +1,11 @@
 #####################################################################################
-# Title: CRU and PDSI 1960-2013 Time Series across Districts
-# Date: December 2014
+# Title:   Bulk Data Downloads from HCAPI
+# Date:    February 2016
 # Project: HarvestChoice/IFPRI
 # Authors: Bacou, Melanie <mel@mbacou.com>
 #####################################################################################
+
+# This file checks for HCAPI data updates on Shiny server restart.
 
 # Load common libraries
 library(data.table)
@@ -34,8 +36,8 @@ if( tmp!=hcapi.version | length(f)==0 ) {
 
   for( i in cat ) {
     vars <- vi[cat2==i, varCode]
-    # Generate CSV, STATA, and netCDF downloads with README, LICENSE
-    for( f in c("csv", "dta", "asc") ) {
+    # Generate CSV, STATA, and EASRI ASCII grid with README, LICENSE
+    for( f in c("asc", "csv", "dta") ) {
       tmp <- hcapi(vars, format=f, path=tempdir())
       path <- paste0("../assets/bulk/", gsub(" ", "_", tolower(i), fixed=T), "-",
         format(Sys.Date(), "%y.%m.%d"), ".", f, ".zip")
