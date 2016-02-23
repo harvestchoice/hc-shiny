@@ -5,26 +5,23 @@
 # Authors: Bacou, Melanie <mel@mbacou.com>
 #####################################################################################
 
-# This file checks for HCAPI data updates on Shiny server restart.
+# This script checks for HCAPI data updates on Shiny server restart.
 
-# Load common libraries
 library(data.table)
 library(hcapi3)
 
-
-# Load workspace
 #setwd("./cell5mBulk")
 load("./tmp/cell5mBulk.RData")
 
-# Check on `hcapi3` package timestamp, and recreate bulk downloads as needed
+# Check `hcapi3` package timestamp, recreate bulk downloads as needed
 tmp <- hcapi.version
 hcapi.version <- packageVersion("hcapi3")
 
-# Also check if files exist
+# Also check if files currently exist
 f <- list.files("../assets/bulk", "*.csv", recursive=T)
 
-# If not, re-create
 if( tmp!=hcapi.version | length(f)==0 ) {
+  # If not, re-create
 
   # Clean up
   unlink("../assets/bulk/*")
@@ -36,8 +33,8 @@ if( tmp!=hcapi.version | length(f)==0 ) {
 
   for( i in cat ) {
     vars <- vi[cat2==i, varCode]
-    # Generate CSV, STATA, and EASRI ASCII grid with README, LICENSE
     for( f in c("asc", "csv", "dta") ) {
+      # Generate CSV, STATA, and ESRI ASCII grid with README and TERMS
       tmp <- hcapi(vars, format=f, path=tempdir())
       path <- paste0("../assets/bulk/", gsub(" ", "_", tolower(i), fixed=T), "-",
         format(Sys.Date(), "%y.%m.%d"), ".", f, ".zip")
@@ -45,18 +42,17 @@ if( tmp!=hcapi.version | length(f)==0 ) {
     }
   }
 
-
   # Create persistent table of download links
   f <- list.files("../assets/bulk")
   t <- c("ESRI ASCII Grid (.asc)", "comma-separated values (.csv)", "STATA 12 (.dta)")
 
   hcapi.bulk <- vi[cat2 %in% cat, .(.N,
-    desc=paste(paste(sample(varLabel, (min(3, length(varLabel)))), collapse="<br>"), "..."),
-    url=paste0('<a href="http://tools.harvestchoice.org/assets/bulk/',
-      f[gsub("_", " ", f, fixed=T) %like% tolower(cat2)][1:3], '">', t, '</a>', collapse='<br>')
+    desc = paste(paste(sample(varLabel, (min(3, length(varLabel)))), collapse="<br>"), "..."),
+    url  = paste0('<a href="http://tools.harvestchoice.org/assets/bulk/',
+      f[gsub("_", " ", f, fixed=T) %like% tolower(cat2)][1:3], '">', t, "</a>", collapse="<br>")
   ), keyby=.(cat1, cat2)]
 
   hcapi.bulk <- split(hcapi.bulk, hcapi.bulk$cat1)
+  save(hcapi.version, hcapi.bulk, file="./tmp/cell5mBulk.RData")
 }
 
-save(hcapi.version, hcapi.bulk, file="./tmp/cell5mBulk.RData")
