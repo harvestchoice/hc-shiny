@@ -66,7 +66,7 @@ body <- dashboardBody(
   tabItems(
 
     tabItem("About",
-      includeMarkdown("../cell5m/www/txtIntro.md")),
+      includeMarkdown("./www/txtIntro.md")),
 
     tabItem("Overview",
       br(),
@@ -125,7 +125,7 @@ body <- dashboardBody(
   fluidRow(
     column(12,
       hr(),
-      includeMarkdown("../cell5m/www/txtCredits.md")
+      includeMarkdown("./www/txtCredits.md")
     )
   )
 )

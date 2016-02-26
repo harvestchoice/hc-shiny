@@ -1,0 +1,72 @@
+---
+title:  "India - VDSA Meso Estimates for Bihar, Uttar Pradesh and Odisha"
+author: "BACOU, Melanie <mel@mbacou.com>"
+output:
+  html_document:
+    css: ../assets/bootstrap.css
+    fig_caption: yes
+    toc: yes
+---
+
+```{r, cache=T, echo=F}
+
+#load("./2015_bmgf/tmp/ind_bmgf_seg.RData")
+#save.image("./2015_bmgf/tmp/ind_bmgf_seg.RData")
+
+load("./tmp/ind_bmgf_seg.RData")
+
+# Merge in extra geo vars (classified in QGIS)
+tmp <- read.dbf("./tmp/IND_BMGF_adm2.dbf")
+tmp <- data.table(tmp)
+setkey(tmp, gdm_ID2)
+g2@data <- cbind(g2@data, tmp[g2@data$gadm_ID2, .(AEZ, hungama, imr100)])
+
+# Merge also into vdsa tables
+setkey(meso, DIST)
+setkey(tmp, vds_dst)
+
+
+
+
+# Theme
+ap <- axis_props(
+  axis=list(stroke="transparent"),
+  title=list(fill="#444", font="Pt Sans", fontSize=14),
+  labels=list(fill="#444", font="Pt Sans", fontSize=12),
+  ticks=list(stroke="transparent"),
+  grid=list(stroke="#e3e3e3", strokeWidth=.8))
+
+# Tooltips
+tt <- function(x) {
+  if(is.null(x)) return()
+  paste(sapply(x, format), collapse="<br />")
+}
+
+```
+
+# Biophysical Estimates
+
+## Rainfall
+
+
+```{r fig.cap="Long-Term Average Rainfall (mm)"}
+
+tmp <- meso[, lapply(.SD, mean, na.rm=T), .SDcols=12:23, keyby=STNAME]
+tmp <- melt(tmp, id.vars="STNAME", variable.name="month")
+levels(tmp$month) <- month.abb
+
+data.frame(tmp) %>%
+  ggvis(~month, ~value) %>%
+  group_by(STNAME) %>%  
+  layer_lines(strokeWidth:=2, strokeOpacity:=.8, stroke=~STNAME) %>%
+  add_axis("x", title="", properties=ap) %>%
+  add_axis("y", title="", properties=ap) %>%
+  add_legend(scales="stroke", title="State") %>%
+  set_options(height=340, width=480) %>%
+  add_tooltip(tt, on="hover")
+
+
+```
+
+## Evapotranspiration
+
