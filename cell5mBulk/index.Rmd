@@ -6,7 +6,6 @@ output:
     toc: no
 ---
 
-Bulk downloads generated from HarvestChoice Data API `r hcapi.version`.
 
 
 ```{r, echo=F, results='asis'}
@@ -22,3 +21,4 @@ for (i in names(hcapi.bulk)) {
 
 ```
 
+Bulk downloads generated from HarvestChoice Data API `r hcapi.version`.

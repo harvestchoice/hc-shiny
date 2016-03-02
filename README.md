@@ -1,14 +1,6 @@
----
-title:  "HarvestChoice Data Visualization Tools"
-author: "BACOU, Melanie <mel@bacou.com>"
-date:   "2016-02-28"
-output:
-  html_document:
-    css: ./assets/bootstrap.css
-    toc: no
----
 
 
+## HarvestChoice Data Visualization Tools
 
 Data query and visualization tools using R/Shiny framework:
 
