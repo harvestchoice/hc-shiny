@@ -243,8 +243,6 @@ shinyServer(function(input, output, session) {
 
     # Add layer
     leafletProxy("map", data=g) %>%
-      # Recenter map
-      fitBounds(ext[1,1], ext[2,1], ext[1,2], ext[2,2]) %>%
       clearShapes() %>%
 
       # Add polygons
@@ -255,9 +253,11 @@ shinyServer(function(input, output, session) {
       # Add legend
       addLegend("bottomright", layerId="lgd", opacity=1, pal=pal, values=~value,
         title=titleWrap(paste(varList[[values$var]]$name, input$opts, sep=" ")),
-        labFormat=labelFormat(digits=if(varList[[values$var]]$format=="0,0.0# %") 2 else 0))
+        labFormat=labelFormat(digits=if(varList[[values$var]]$format=="0,0.0# %") 2 else 0)) %>%
 
-    })
+      # Recenter map
+      fitBounds(ext[1,1], ext[2,1], ext[1,2], ext[2,2])
+  })
 
 
   # obsOpts - secondary observer
@@ -304,10 +304,10 @@ shinyServer(function(input, output, session) {
 
     # Add to map
     leafletProxy("map", data=g) %>%
-      fitBounds(ext[1,1]-1, ext[2,1]-1, ext[1,2]+1, ext[2,2]+1) %>%
       clearGroup("Selected") %>%
       addPolygons(group="Selected", smoothFactor=3,
-        color="yellow", opacity=0.7, fillColor="grey50")
+        color="yellow", opacity=0.7, fillColor="grey50") %>%
+      fitBounds(ext[1,1]-1, ext[2,1]-1, ext[1,2]+1, ext[2,2]+1)
   })
 
 
@@ -330,7 +330,7 @@ shinyServer(function(input, output, session) {
         # No ordered factor allowed
         g$soc_d30_qtl <- as.character(g$soc_d30_qtl)
         writeRasterZip(g, file, f, "ESRI Shapefile")
-        },
+      },
       pdf = { if (!file.exists(f)) {
         # Re-generate PDF map
         pdf(file=f, paper="letter")
