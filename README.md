@@ -9,7 +9,7 @@ Data query and visualization tools using R/Shiny framework:
 - [CELL5M Validation Tests](http://tools.harvestchoice.org/cell5mValidate) :: automated tests for HarvestChoice 5-arc-minute spatial rasters for SSA
 - [DREAM Model](http://tools.harvestchoice.org/dream) :: DREAM model core routine and documentation
 - [HarvestChoice CELL5M-SSA Bulk Download](http://harvestchoice.org/page/bulk) :: options to download HarvestChoice 5-arc-minute indicators for sub-Saharan Africa in bulk.
--[Population Hotspots in SSA](http://tools.harvestchoice.org/popTrends) :: 20-year population trends with distinction between coastal and hinterland areas 
+- [Population Hotspots in SSA](http://tools.harvestchoice.org/popTrends) :: 20-year population trends with distinction between coastal and hinterland areas 
 
 
 
