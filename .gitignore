@@ -8,6 +8,9 @@
 *.RData
 *.hdr
 *.bil
+*.tif
+*.tif*
+*data/
 .Rproj.user
 .project
 

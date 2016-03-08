@@ -78,13 +78,17 @@ shinyUI(fluidPage(
         ),
 
         tabPanel("References", icon=icon("file-text-o"),
-          column(3,
+          column(12,
             h3("Data Inventory"),
-            p("Showing the number of data points across countries and years at which
-              nationally-representative household surveys are available. Two maps for
-              the entire subcontinent are available for reference years 2005 and 2008.")),
-          column(9, br(), ggvisOutput("p4")),
-          column(12, includeMarkdown(".//www/txtDoco.md"), br())
+            p("Poverty estimates in this dashboard are derived from over 40
+nationally representative household surveys for sub-Saharan Africa. The graph below
+shows the number of data points (administrative units) across countries and years at
+which estimates are currently available. Two maps for the entire subcontinent were
+drawn for reference years 2005 and 2008."),
+            ggvisOutput("p4"),
+            hr(),
+            includeMarkdown("./www/txtDoco.md")
+          )
         )
       )
 

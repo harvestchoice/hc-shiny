@@ -1,8 +1,7 @@
 ---
-title: "HarvestChoice - CELL5M Data Validition"
+title:  "HarvestChoice - CELL5M Data Validition"
 author: "Bacou, Melanie"
-date: "7/31/2015"
-runtime: shiny
+date:   "7/31/2015"
 output: html_document
 ---
 
@@ -12,7 +11,7 @@ This document is part of a series of automated tests to validate HarvestChoice d
 
 **Contents**
 
-- [Administrative Classification](#administrative-classification)
+- [Administrative Classification](index.Rmd)
 - [Metadata Summary](viValidate.Rmd)
 - [Variable Inventory](viValidate.Rmd#variable-inventory)
 - [Analytical Features](toolsValidate.Rmd)
