@@ -111,12 +111,6 @@ gpw <- SpatialPointsDataFrame(gpw.dt[, .(INSIDE_X, INSIDE_Y)], data.frame(gpw.dt
   proj4string=CRS("+init=epsg:4326"))
 gpw.dt[, rn := row.names(gpw)]
 
-# Also load SSA district map
-g2 <- readRDS("../../hc-cell5m/rdb/g2_2014v15.rds")
-proj4string(g2)
-# "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
-g2 <- spTransform(g2, proj4string(gpw))
-
 # Map it to verify
 tm_shape(gpw) + tm_bubbles(alpha=.2)
 
@@ -150,8 +144,6 @@ writeRaster(urb, "./tmp/UrbanExtentAfrica2010_v1.tif",
   colorTables=list(c("green", "orange")),
   catNames=list(c("rural", "urban")))
 
-# Map it
-plot(urb)
 
 # Extract urban admin units
 # Note that buffer() doesn't work with beginCluster()
@@ -165,7 +157,7 @@ gpw.dt[, sum(ifelse(UN_2015_DS > 357, UN_2015_E, 0), na.rm=T)/sum(UN_2015_E, na.
 # [1] 0.3703164
 
 
-# Growth rate
+# Add growth rates
 gpw.dt[, URBAN := UN_2015_DS > 357]
 gpw.dt[, URBAN_PTS := tmp.pts > 0]
 gpw.dt[, GROWTH_20 := UN_2020_E-UN_2000_E]
