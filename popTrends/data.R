@@ -231,8 +231,11 @@ gpw.dt[NAME3=="30111909", GROWRATE_20 := 1]
 gpw.dt[ISOALPHA=="MWI", sum(UN_2020_E, na.rm=T)]
 # [1] 20022316
 
-# Save into `gpw` as well
-gpw@data <- data.frame(gpw.dt)
+# Correct empty strings
+gpw.dt[COUNTRYNM=="", COUNTRYNM := NA]
+gpw.dt[NAME1=="", NAME1 := NA]
+gpw.dt[NAME2=="", NAME2 := NA]
+gpw.dt[NAME3=="", NAME3 := NA]
 
 
 # Share of rural/urban population within 150km of coastline
@@ -264,6 +267,10 @@ gpw.dt[, `:=`(
   UN_2010_E=as.numeric(UN_2010_E),
   UN_2015_E=as.numeric(UN_2015_E),
   UN_2020_E=as.numeric(UN_2020_E))]
+
+# Save into `gpw` as well
+setkey(gpw.dt, rn)
+gpw@data <- data.frame(gpw.dt[row.names(gpw)])
 
 # Summarize - version 1
 gpw.sum1 <- gpw.dt[, lapply(.SD, sum, na.rm=T),
@@ -298,6 +305,9 @@ tmp[, ISOALPHA := "SSA"]
 gpw.sum2 <- rbind(gpw.sum2, tmp)
 
 
+#####################################################################################
+# Maps (using urban def. #2)
+#####################################################################################
 
 # Urban rates - SSA
 urb.rate1 <- gpw.sum1[, lapply(.SD,
@@ -360,8 +370,9 @@ save_tmap(pmap, "./www/popTrends_SSA_2000-2020.png", width=6, pointsize=10)
 
 # Leaflet map
 tmap_mode("view")
+gpw.urb2.m <- gpw.urb2[gpw.urb2$UN_2015_E >= 50000,] # | gpw.urb2$UN_2015_DS > 2000
 
-m <- tm_shape(gpw.urb2[gpw.urb2$UN_2015_E >= 80000,]) +
+m <- tm_shape(gpw.urb2.m) +
   tm_bubbles(col="GROWRATE_20", size="UN_2015_E", scale=1,
     palette="-Spectral", border.col="white", border.lwd=0.4,
     breaks=c(-20,0,.15,.3,.45,.6,.75,.9,1,26),
@@ -374,6 +385,44 @@ m <- tm_shape(gpw.urb2[gpw.urb2$UN_2015_E >= 80000,]) +
   tm_view(alpha=0.9, popup.all.data=T, bubble.size.fixed=T)
 
 m <- tmap_leaflet(m)
+
+
+#####################################################################################
+# Data Downloads (using urban def. #2)
+#####################################################################################
+
+attr(gpw.urb2.m@data, "var.labels") <- c(
+  "3-letter ISO country code",
+  "country name",
+  "admin level-1 name",
+  "admin level-2 name",
+  "admin level-3 name",
+  "urban area - density below 357 pp/sq. km.",
+  "urban area - per 2010 urban mask",
+  "is coastal area?",
+  "admin long.",
+  "admin lat.",
+  "admin long. - inside area",
+  "admin lat. - inside area",
+  "area sq. km.",
+  "water area, sq. km.",
+  "land area, sq. km.",
+  "2000 pop. headcount",
+  "2005 pop. headcount",
+  "2010 pop. headcount",
+  "2015 projected pop. headcount",
+  "2020 projected pop. headcount",
+  "2000 pop. density, sq. km.",
+  "2005 pop. density, sq. km.",
+  "2010 pop. density, sq. km.",
+  "2015 projected pop. density, sq. km.",
+  "2020 projected pop. density, sq. km.",
+  "2000-2020 pop. gain/loss",
+  "2000-2020 pop. growth rate")
+
+write.csv(gpw.urb2.m@data, "./www/popTrends_SSA_2000-2020.csv", na="", row.names=F)
+write.dta(gpw.urb2.m@data, "./www/popTrends_SSA_2000-2020.dta", version=12L)
+writeOGR(gpw.urb2.m, "./www", "popTrends_SSA_2000-2020", "ESRI Shapefile", overwrite=T)
 
 
 
@@ -409,7 +458,7 @@ p1 <- function(iso3="SSA") {
 
   p <- data.frame(d) %>%
     ggvis(~variable, ~value) %>%
-    add_axis("x", title="", title_offset=40, properties=ap) %>%
+    add_axis("x", title="", properties=ap) %>%
     add_axis("y", title="", format=".2s", properties=ap) %>%
     group_by(URBAN_PTS, DIST150km) %>%
     layer_points(shape=~URBAN_PTS, fill=~DIST150km, stroke:="#fff") %>%
@@ -420,7 +469,7 @@ p1 <- function(iso3="SSA") {
     add_legend("shape", title="Urban/Rural") %>%
     add_legend("fill", title="Location", properties=legend_props(legend=list(y=60))) %>%
     set_options(height=320, width="auto", resizable=F, duration=0)
-    #add_tooltip(tt, on="hover")
+  #add_tooltip(tt, on="hover")
 
   return(p)
 }
@@ -436,7 +485,7 @@ p2 <- function(iso3="SSA") {
 
   p <- data.frame(d) %>%
     ggvis(~variable, ~value) %>%
-    add_axis("x", title="", title_offset=40, properties=ap) %>%
+    add_axis("x", title="", properties=ap) %>%
     add_axis("y", title="", format="%", properties=ap) %>%
     group_by(DIST150km) %>%
     layer_points(fill=~DIST150km, stroke:="#fff") %>%
@@ -444,7 +493,7 @@ p2 <- function(iso3="SSA") {
     scale_ordinal("stroke", range=pal) %>%
     scale_ordinal("fill", range=pal) %>%
     hide_legend("stroke") %>%
-    add_legend("fill", title="Urban/Rural") %>%
+    add_legend("fill", title="Location") %>%
     set_options(height=320, width="auto", resizable=F) %>%
     add_tooltip(tt, on="hover")
 
@@ -455,21 +504,25 @@ p2 <- function(iso3="SSA") {
 # p3 - Top urban areas and growth rate in/outside coastal areas
 p3 <- function(iso3="SSA") {
 
-  d <- gpw.dt[, .SD, .SDcols=c(4:8, 19:28, 34:37)]
+  d <- gpw.dt[, .SD, .SDcols=c(4:7, 19:28, 34:37)]
   d <- d[URBAN_PTS==T]
   d[, DIST150km := factor(DIST150km, levels=c(F,T), labels=c("hinterland", "coast"))]
-  if(iso3 != "SSA") d <- d[ISOALPHA==iso3]
-  d <- d[order(-UN_2015_E)][1:10]
+  if(iso3 != "SSA") d <- d[ISOALPHA==iso3] else d <- d[UN_2015_E >= 100000]
+  d[order(-GROWRATE_20), rank := 1:.N, by=DIST150km]
+  d <- d[rank <= 10][order(-rank)]
+  d[COUNTRYNM=="Democratic Republic of the Congo", COUNTRYNM := "Congo, Dem. Rep."]
+  d[, NAME := ordered(tools::toTitleCase(tolower(paste(COUNTRYNM, NAME2, sep=" - "))))]
 
   p <- data.frame(d) %>%
-    ggvis(~DIST150km, ~factor(paste(NAME2, NAME3, sep=" - "))) %>%
-    add_axis("x", title="", title_offset=40, properties=ap) %>%
+    ggvis(y=~NAME) %>%
+    add_axis("x", title="", format=".2s", properties=ap) %>%
     add_axis("y", title="", properties=ap) %>%
-    layer_points(fillOpacity=~GROWRATE_20, size=~UN_2015_E, stroke:="#fff") %>%
-    add_legend("size", title="Urban Population") %>%
-    add_legend("fillOpacity", title="20-year Growth Rate", properties=legend_props(legend=list(y=60))) %>%
-    set_options(height=320, width="auto", resizable=F, duration=0)
-    # add_tooltip(tt, on="hover")
+    layer_rects(x=0, x2=~GROWTH_20, fill=~DIST150km, height=band(),
+      stroke:="#FFF", fillOpacity:=0.8) %>%
+    scale_ordinal("fill", range=pal) %>%
+    add_legend("fill", title="Location") %>%
+    set_options(height=420, width="auto", resizable=F) %>%
+    add_tooltip(tt, on="hover")
 
   return(p)
 }

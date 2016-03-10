@@ -1,6 +1,6 @@
 ## About
 
-The map shows all urban areas above 80,000 inhabitants as of 2015. Bubble sizes represent relative city sizes, and the color intensity is proportional to the projected 2000-2020 population gain (or loss) based on estimates from CIESIN SEDAC Global Population of the World ([GPWv4](http://beta.sedac.ciesin.columbia.edu/data/set/gpw-v4-admin-unit-center-points-population-estimates/data-download)). Country totals are calibrated to UN population projections. 
+The map shows all urban areas over 50,000 inhabitants (2015). Bubble sizes represent relative city sizes, and the color intensity is proportional to the projected 2000-2020 population gain (or loss) based on estimates from CIESIN SEDAC Global Population of the World ([GPWv4](http://beta.sedac.ciesin.columbia.edu/data/set/gpw-v4-admin-unit-center-points-population-estimates/data-download)). Country totals are calibrated to UN population projections. 
 
 Urban areas are defined per [IFPRI/HarvestChoice Urban Extent of Africa 2010](http://dx.doi.org/10.7910/DVN/RUNZJD). This spatial classification yields an estimated **32% urban rate in 2015** (5 points lower than the 37% urban rate reported by the World Bank for 2014).
 

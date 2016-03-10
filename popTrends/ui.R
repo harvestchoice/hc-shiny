@@ -39,7 +39,7 @@ shinyUI(fluidPage(
       br(),
       wellPanel(
         selectInput("selectISO3", "Select a Country", iso, selected="SSA"),
-        helpText("Update all the graphs on this page for the selected country.")),
+        helpText("select a country to narrow results for the graphs and map on this page.")),
       includeMarkdown("./www/txtIntro.md")
     ),
 
@@ -55,22 +55,24 @@ shinyUI(fluidPage(
 
     column(4,
       h4("Urbanization Rate", tags$small("2000-2020 (percent)")),
-      p("Trends in urbanization rate between coastal and inland areas."),
+      p("Quinquennial changes in urbanization rates in Africa's coastal and inland areas."),
       br(),
       ggvisOutput("p2")),
 
     column(6,
-      h4("Major Urban Hotspots by Country"),
+      h4("Major Urban Hotspots"),
+      p("Net population gain in top 10 fastest growing urban areas."),
       ggvisOutput("p3")
     ),
 
     column(3,
       br(),br(),
       wellPanel(
-        selectInput("fileType", "Choose Export Format", choices=c(
+        selectInput("fileType", "Export Map/Data", choices=c(
           `ESRI Shapefile`="shp", CSV="csv", STATA="dta", `PNG Document (map only)`="png"), selected="csv"),
         downloadButton("saveData", "Save Layer"),
-        helpText("Use the download options above to export the map data.")
+        helpText("Use the download options above to export the map data (all urban
+          areas above 50,000 in size). A print map is also available.")
       )
     )
 
