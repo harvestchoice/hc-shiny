@@ -35,9 +35,9 @@ library(data.table)
 library(rgdal)
 library(rgeos)
 library(tmap)
-library(hcapi3)
 library(raster)
 library(ggvis)
+library(hcapi3)
 
 setwd("~/Projects/shiny/popTrends")
 load("./tmp/popTrends.RData")
@@ -238,6 +238,7 @@ gpw.dt[NAME2=="", NAME2 := NA]
 gpw.dt[NAME3=="", NAME3 := NA]
 
 
+
 # Share of rural/urban population within 150km of coastline
 # Load Africa coastline
 coast <- curl_download(
@@ -248,19 +249,33 @@ coast <- readOGR("./data", "africa_coastline_vmap0")
 proj4string(coast)
 # [1] "+proj=longlat +datum=NAD27 +no_defs +ellps=clrk66 +nadgrids=@conus,@alaska,@ntv2_0.gsb,@ntv1_can.dat"
 
-# Reproject to equidistant
+# Reproject to equidistant (for gDistance(), but not for dist2Line())
 coast <- spTransform(coast, CRS("+init=epsg:3786"))
 gpw <- spTransform(gpw, proj4string(coast))
 
 # Map these layers to check
-tm_shape(gpw) + tm_bubbles(alpha=.3) + tm_shape(coast) + tm_lines()
+tmap_mode("plot")
+tm_shape(gpw[gpw$ISOALPHA=="GHA",], is.master=T, projection="merc") + tm_bubbles() +
+  tm_shape(coast) + tm_lines() + tm_scale_bar(width=0.8)
+
 
 # Mark units within 150km of coastline
-dist150k <- rep(0, nrow(gpw))
 dist150k <- sapply(row.names(gpw), function(x) gWithinDistance(gpw[x,], coast, 150*1000))
 gpw.dt[, DIST150km := dist150k]
 
-# Correct possible interger overflow
+# Re-compute coastal distance (Karen suggests 50km?)
+dist80k <- rep(F, nrow(gpw))
+dist80k <- sapply(row.names(gpw), function(x) gWithinDistance(gpw[x,], coast, 80*1000))
+gpw.dt[, DIST80k := dist80k]
+
+
+
+# Try to use geosphere::dist2Line instead
+# dist <- dist2Line(gpw, coast)
+# => way too slow
+
+
+# Correct interger overflow
 gpw.dt[, `:=`(
   UN_2000_E=as.numeric(UN_2000_E),
   UN_2005_E=as.numeric(UN_2005_E),
@@ -272,7 +287,13 @@ gpw.dt[, `:=`(
 setkey(gpw.dt, rn)
 gpw@data <- data.frame(gpw.dt[row.names(gpw)])
 
-# Summarize - version 1
+# Add iso list
+iso <- hcapi3::iso
+iso <- iso[order(names(iso))]
+iso <- iso[iso %in% c("SSA", unique(gpw.dt$ISOALPHA))]
+iso <- iso[iso != "SYC"]
+
+# Summarize by country - version 1
 gpw.sum1 <- gpw.dt[, lapply(.SD, sum, na.rm=T),
   .SDcols=names(gpw.dt) %like% "_E",
   keyby=.(ISOALPHA, URBAN, DIST150km)]
@@ -288,7 +309,7 @@ tmp[, GROWRATE_20 := (UN_2020_E-UN_2000_E)/UN_2000_E]
 tmp[, ISOALPHA := "SSA"]
 gpw.sum1 <- rbind(gpw.sum1, tmp)
 
-# Summarize - version 2
+# Summarize by country - version 2
 gpw.sum2 <- gpw.dt[, lapply(.SD, sum, na.rm=T),
   .SDcols=names(gpw.dt) %like% "_E",
   keyby=.(ISOALPHA, URBAN_PTS, DIST150km)]
@@ -304,10 +325,6 @@ tmp[, GROWRATE_20 := (UN_2020_E-UN_2000_E)/UN_2000_E]
 tmp[, ISOALPHA := "SSA"]
 gpw.sum2 <- rbind(gpw.sum2, tmp)
 
-
-#####################################################################################
-# Maps (using urban def. #2)
-#####################################################################################
 
 # Urban rates - SSA
 urb.rate1 <- gpw.sum1[, lapply(.SD,
@@ -331,6 +348,58 @@ urb.rate2.c <- gpw.sum2[, lapply(.SD,
   by=.(ISOALPHA, DIST150km), .SDcols=c(2,4:8)]
 urb.rate2.c[, URBAN_PTS := NULL]
 
+
+#####################################################################################
+# GPWv4 Population Rasters
+#####################################################################################
+# Get summaries using original raster layers instead of admin centerpoints
+
+gp <- c(
+  "http://beta.sedac.ciesin.columbia.edu/downloads/data/gpw-v4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2000.zip",
+  "http://beta.sedac.ciesin.columbia.edu/downloads/data/gpw-v4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2005.zip",
+  "http://beta.sedac.ciesin.columbia.edu/downloads/data/gpw-v4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2010.zip",
+  "http://beta.sedac.ciesin.columbia.edu/downloads/data/gpw-v4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2015.zip",
+  "http://beta.sedac.ciesin.columbia.edu/downloads/data/gpw-v4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2020.zip"
+)
+
+g <- "./data/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2000.zip"
+
+gp <- lapply(gp, function(x) {
+  g <- curl_download(x, paste0("./data/", x))
+  g <- unzip(g, exdir="./data")
+  g <- raster(g[4])
+})
+
+gp <- brick(gp)
+gp <- crop(gp, World)
+gp <- mask (gp, World, filename="./data/gpw-v4-2000-2020-SSA.grd")
+
+# Only urban areas (using Joe's mask)
+gp.urb <- overlay(urb, gp, fun=function(x,y) x*y, filename="gpw-v4-urban-SSA.grd")
+
+# Rasterize coastline
+gp.coast <- rasterize(coast, gp[[1]], 1, fun="first")
+
+# Distance to nearest cell that's not NA
+gp.dist <- distance(gp.coast, filename="./data/gpw-v4-distance-to-coastline-SSA.grd")
+
+# Classify coastline cells
+maxValue(gp.dist)
+m <- matrix(c(0,50,1, 50,,0), ncols=2, byrow=T)
+gp.dist.50km <- reclassify(gp.dist, m, filename="./data/gpw-v4-distance-50km-SSA.grd")
+
+# Get country ISO3
+gp.iso <- extract(World, gp)
+gp.iso <- World[gp.iso, 1:5]
+
+# Combine all
+gp <- brick(list(gp, gp.urb, gp.dist, gp.dist.50km, gp.iso), filename="./data/gpw-v4-2000-2020-SSA.grd")
+gp <- data.table(as.data.frame(gp))
+
+
+#####################################################################################
+# Maps (using urban def. #2)
+#####################################################################################
 
 # Map - Version 1
 gpw.urb1 <- gpw.dt[URBAN==T]
@@ -437,7 +506,7 @@ ap <- axis_props(
   ticks=list(stroke="transparent"),
   grid=list(stroke="#e3e3e3", strokeWidth=1))
 
-pal <- c("#6EB89A", "#E05D5A")
+pal <- c("#6EB89A", "#E05D58")
 
 # Tooltips
 tt <- function(x) {
@@ -506,8 +575,8 @@ p3 <- function(iso3="SSA") {
 
   d <- gpw.dt[, .SD, .SDcols=c(4:7, 19:28, 34:37)]
   d <- d[URBAN_PTS==T]
-  d[, DIST150km := factor(DIST150km, levels=c(F,T), labels=c("hinterland", "coast"))]
   if(iso3 != "SSA") d <- d[ISOALPHA==iso3] else d <- d[UN_2015_E >= 100000]
+  d[, DIST150km := factor(DIST150km, levels=c(F,T), labels=c("hinterland", "coast"))]
   d[order(-GROWRATE_20), rank := 1:.N, by=DIST150km]
   d <- d[rank <= 10][order(-rank)]
   d[COUNTRYNM=="Democratic Republic of the Congo", COUNTRYNM := "Congo, Dem. Rep."]
@@ -521,11 +590,13 @@ p3 <- function(iso3="SSA") {
       stroke:="#FFF", fillOpacity:=0.8) %>%
     scale_ordinal("fill", range=pal) %>%
     add_legend("fill", title="Location") %>%
-    set_options(height=420, width="auto", resizable=F) %>%
+    set_options(height=400, width="auto", resizable=F) %>%
     add_tooltip(tt, on="hover")
 
   return(p)
 }
+
+
 
 
 rm(tmp, d, iso3)

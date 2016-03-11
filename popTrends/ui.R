@@ -22,15 +22,7 @@ shinyUI(fluidPage(
   ),
 
   fluidRow(style="position: relative;",
-
-    leafletOutput("map", height=420),
-
-    conditionalPanel(condition="input.btn>0",
-      absolutePanel(class="panel panel-default",
-        bottom=20, right=20, width=220, height="auto",
-        div(class="panel-body", uiOutput("details"))
-      )
-    )
+    leafletOutput("map", height=420)
   ),
 
   fluidRow(
@@ -39,7 +31,7 @@ shinyUI(fluidPage(
       br(),
       wellPanel(
         selectInput("selectISO3", "Select a Country", iso, selected="SSA"),
-        helpText("select a country to narrow results for the graphs and map on this page.")),
+        helpText("Select a country to narrow results for the graphs and map on this page.")),
       includeMarkdown("./www/txtIntro.md")
     ),
 
@@ -55,7 +47,7 @@ shinyUI(fluidPage(
 
     column(4,
       h4("Urbanization Rate", tags$small("2000-2020 (percent)")),
-      p("Quinquennial changes in urbanization rates in Africa's coastal and inland areas."),
+      p("Quinquennial changes in urbanization rates in coastal and inland areas."),
       br(),
       ggvisOutput("p2")),
 

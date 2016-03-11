@@ -30,15 +30,13 @@ shinyServer(function(input, output, session) {
     # Charts
     p1(values$iso3) %>% bind_shiny("p1")
     p2(values$iso3) %>% bind_shiny("p2")
-    p3(values$iso3) %>% bind_shiny("p3")
+    try(p3(values$iso3) %>% bind_shiny("p3"))
 
     # Recenter
-    if(values$iso3 != "SSA") {
-      ext <- bbox(gpw.urb2[gpw.urb2$ISOALPHA==values$iso3,])
-      leafletProxy("map") %>%
-        fitBounds(ext[1,1], ext[2,1], ext[1,2], ext[2,2])
-    }
-
+    if(values$iso3 != "SSA") ext <- bbox(gpw.urb2[gpw.urb2$ISOALPHA==values$iso3,])
+    else ext <- bbox(gpw.urb2)
+    leafletProxy("map") %>%
+      fitBounds(ext[1,1], ext[2,1], ext[1,2], ext[2,2])
 
   })
 

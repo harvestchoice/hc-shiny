@@ -1,5 +1,5 @@
 ---
-title: "DREAM Model in R"
+title: "DREAM Model - Main"
 author: "You, Liangzhi (IFPRI); Bacou, Melanie (IFPRI)"
 date: "Updated on Jan. 29, 2016"
 runtime: shiny
