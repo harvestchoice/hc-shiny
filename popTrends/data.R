@@ -39,7 +39,7 @@ library(raster)
 library(ggvis)
 library(hcapi3)
 
-setwd("~/Projects/shiny/popTrends")
+setwd("~/Projects/hc-shiny/popTrends")
 load("./tmp/popTrends.RData")
 
 # SSA country boundaries for plotting
@@ -238,7 +238,7 @@ gpw.dt[NAME2=="", NAME2 := NA]
 gpw.dt[NAME3=="", NAME3 := NA]
 
 
-
+#####################################################################################
 # Share of rural/urban population within 150km of coastline
 # Load Africa coastline
 coast <- curl_download(
@@ -263,36 +263,54 @@ tm_shape(gpw[gpw$ISOALPHA=="GHA",], is.master=T, projection="merc") + tm_bubbles
 dist150k <- sapply(row.names(gpw), function(x) gWithinDistance(gpw[x,], coast, 150*1000))
 gpw.dt[, DIST150km := dist150k]
 
+# Within 80km of cosatline
 # Re-compute coastal distance (Karen suggests 50km?)
-dist80k <- rep(F, nrow(gpw))
-dist80k <- sapply(row.names(gpw), function(x) gWithinDistance(gpw[x,], coast, 80*1000))
-gpw.dt[, DIST80k := dist80k]
-
-
-
 # Try to use geosphere::dist2Line instead
 # dist <- dist2Line(gpw, coast)
 # => way too slow
 
+# Use 4 cores to speed up above
+library(doParallel)
+cl <- makeCluster(detectCores())
+registerDoParallel(cl)
 
-# Correct interger overflow
+clusterExport(cl, c("gpw", "coast"))
+clusterEvalQ(cl, library(rgeos))
+rn.split <- clusterSplit(cl, row.names(gpw))
+
+# gWithinDistance 80km
+m <- clusterApply(cl, x=rn.split,
+  fun=function(x) sapply(x, function(i) gWithinDistance(gpw[i,], coast, 80*1000)))
+
+stopCluster(cl)
+dist80k <- do.call(c, m)
+rm(m)
+gpw.dt[, DIST80k := dist80k]
+
+
+# Correct integer overflow
 gpw.dt[, `:=`(
-  UN_2000_E=as.numeric(UN_2000_E),
-  UN_2005_E=as.numeric(UN_2005_E),
-  UN_2010_E=as.numeric(UN_2010_E),
-  UN_2015_E=as.numeric(UN_2015_E),
-  UN_2020_E=as.numeric(UN_2020_E))]
+    UN_2000_E=as.numeric(UN_2000_E),
+    UN_2005_E=as.numeric(UN_2005_E),
+    UN_2010_E=as.numeric(UN_2010_E),
+    UN_2015_E=as.numeric(UN_2015_E),
+    UN_2020_E=as.numeric(UN_2020_E))]
 
 # Save into `gpw` as well
 setkey(gpw.dt, rn)
 gpw@data <- data.frame(gpw.dt[row.names(gpw)])
 
-# Add iso list
+
+
+#####################################################################################
+# Make ISO3 list for UI
 iso <- hcapi3::iso
 iso <- iso[order(names(iso))]
 iso <- iso[iso %in% c("SSA", unique(gpw.dt$ISOALPHA))]
 iso <- iso[iso != "SYC"]
 
+
+#####################################################################################
 # Summarize by country - version 1
 gpw.sum1 <- gpw.dt[, lapply(.SD, sum, na.rm=T),
   .SDcols=names(gpw.dt) %like% "_E",
@@ -328,23 +346,23 @@ gpw.sum2 <- rbind(gpw.sum2, tmp)
 
 # Urban rates - SSA
 urb.rate1 <- gpw.sum1[, lapply(.SD,
-  function(x) sum(URBAN*x, na.rm=T)/sum(x, na.rm=T)),
+    function(x) sum(URBAN*x, na.rm=T)/sum(x, na.rm=T)),
   .SDcols=c(2,4:8)]
 urb.rate1[, URBAN := NULL]
 
 urb.rate2 <- gpw.sum2[, lapply(.SD,
-  function(x) sum(URBAN_PTS*x, na.rm=T)/sum(x, na.rm=T)),
+    function(x) sum(URBAN_PTS*x, na.rm=T)/sum(x, na.rm=T)),
   .SDcols=c(2,4:8)]
 urb.rate2[, URBAN_PTS := NULL]
 
 # Urban rates - coastal
 urb.rate1.c <- gpw.sum1[, lapply(.SD,
-  function(x) sum(URBAN*x, na.rm=T)/sum(x, na.rm=T)),
+    function(x) sum(URBAN*x, na.rm=T)/sum(x, na.rm=T)),
   by=.(ISOALPHA, DIST150km), .SDcols=c(2,4:8)]
 urb.rate1.c[, URBAN := NULL]
 
 urb.rate2.c <- gpw.sum2[, lapply(.SD,
-  function(x) sum(URBAN_PTS*x, na.rm=T)/sum(x, na.rm=T)),
+    function(x) sum(URBAN_PTS*x, na.rm=T)/sum(x, na.rm=T)),
   by=.(ISOALPHA, DIST150km), .SDcols=c(2,4:8)]
 urb.rate2.c[, URBAN_PTS := NULL]
 
@@ -362,13 +380,15 @@ gp <- c(
   "http://beta.sedac.ciesin.columbia.edu/downloads/data/gpw-v4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2020.zip"
 )
 
-g <- "./data/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2000.zip"
-
 gp <- lapply(gp, function(x) {
-  g <- curl_download(x, paste0("./data/", x))
-  g <- unzip(g, exdir="./data")
-  g <- raster(g[4])
-})
+    g <- curl_download(x, paste0("./data/", x))
+    g <- unzip(g, exdir="./data")
+    g <- raster(g[4])
+  })
+
+gp <- raster("./data/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals_2000.tif")
+res(gp)
+# [1] 0.008333333 0.008333333
 
 gp <- brick(gp)
 gp <- crop(gp, World)
@@ -384,8 +404,7 @@ gp.coast <- rasterize(coast, gp[[1]], 1, fun="first")
 gp.dist <- distance(gp.coast, filename="./data/gpw-v4-distance-to-coastline-SSA.grd")
 
 # Classify coastline cells
-maxValue(gp.dist)
-m <- matrix(c(0,50,1, 50,,0), ncols=2, byrow=T)
+m <- matrix(c(0,50,1, 50,maxValue(gp.dist),0), ncols=2, byrow=T)
 gp.dist.50km <- reclassify(gp.dist, m, filename="./data/gpw-v4-distance-50km-SSA.grd")
 
 # Get country ISO3
@@ -395,6 +414,23 @@ gp.iso <- World[gp.iso, 1:5]
 # Combine all
 gp <- brick(list(gp, gp.urb, gp.dist, gp.dist.50km, gp.iso), filename="./data/gpw-v4-2000-2020-SSA.grd")
 gp <- data.table(as.data.frame(gp))
+
+
+#####################################################################################
+# Adjust South Africa and Namibia granularity
+#####################################################################################
+# In these countries the data comes at admin-3 or admin-4, so much smaller admin
+# unit sizes that would crowd the print map too much. We need to cluster them up.
+
+# Are there other countries with admin-3 level estimates?
+gpw.dt[, length(unique(NAME3)), by=ISOALPHA][order(-V1)]
+#    ISOALPHA    V1
+# 1:      MWI 12645
+# 2:      NAM  5475
+# 3:      TZA  3387
+
+gpw.dt[, .N, by=ISOALPHA][order(-N)]
+
 
 
 #####################################################################################
@@ -457,7 +493,7 @@ m <- tmap_leaflet(m)
 
 
 #####################################################################################
-# Data Downloads (using urban def. #2)
+# Data Downloads
 #####################################################################################
 
 attr(gpw.urb2.m@data, "var.labels") <- c(
@@ -496,7 +532,7 @@ writeOGR(gpw.urb2.m, "./www", "popTrends_SSA_2000-2020", "ESRI Shapefile", overw
 
 
 #####################################################################################
-# Charts (using urban def. #2)
+# Charts (using urban def. #2 and 80km cutoff)
 #####################################################################################
 # Theme
 ap <- axis_props(
@@ -517,14 +553,14 @@ tt <- function(x) {
 
 # p1 - Pop trends x 4
 p1 <- function(iso3="SSA") {
-
+  
   d <- melt(gpw.sum2, id.vars=1:3, measure.vars=4:8)
   levels(d$variable)[1:5] <- c(2000, 2005, 2010, 2015, 2020)
   if(iso3 != "SSA") d <- d[ISOALPHA==iso3]
   d <- d[, .(value=sum(value, na.rm=T)), by=.(URBAN_PTS, DIST150km, variable)]
   d[, URBAN_PTS := factor(URBAN_PTS, levels=c(F,T), labels=c("rural", "urban"))]
   d[, DIST150km := factor(DIST150km, levels=c(F,T), labels=c("hinterland", "coast"))]
-
+  
   p <- data.frame(d) %>%
     ggvis(~variable, ~value) %>%
     add_axis("x", title="", properties=ap) %>%
@@ -539,19 +575,19 @@ p1 <- function(iso3="SSA") {
     add_legend("fill", title="Location", properties=legend_props(legend=list(y=60))) %>%
     set_options(height=320, width="auto", resizable=F, duration=0)
   #add_tooltip(tt, on="hover")
-
+  
   return(p)
 }
 
 
 # p2 - Urbanization rates x 2
 p2 <- function(iso3="SSA") {
-
+  
   d <- melt(urb.rate2.c, id.vars=1:2)
   d <- d[ISOALPHA==iso3]
   levels(d$variable) <- c(2000, 2005, 2010, 2015, 2020)
   d[, DIST150km := factor(DIST150km, levels=c(F,T), labels=c("hinterland", "coast"))]
-
+  
   p <- data.frame(d) %>%
     ggvis(~variable, ~value) %>%
     add_axis("x", title="", properties=ap) %>%
@@ -565,14 +601,14 @@ p2 <- function(iso3="SSA") {
     add_legend("fill", title="Location") %>%
     set_options(height=320, width="auto", resizable=F) %>%
     add_tooltip(tt, on="hover")
-
+  
   return(p)
-
+  
 }
 
 # p3 - Top urban areas and growth rate in/outside coastal areas
 p3 <- function(iso3="SSA") {
-
+  
   d <- gpw.dt[, .SD, .SDcols=c(4:7, 19:28, 34:37)]
   d <- d[URBAN_PTS==T]
   if(iso3 != "SSA") d <- d[ISOALPHA==iso3] else d <- d[UN_2015_E >= 100000]
@@ -581,7 +617,7 @@ p3 <- function(iso3="SSA") {
   d <- d[rank <= 10][order(-rank)]
   d[COUNTRYNM=="Democratic Republic of the Congo", COUNTRYNM := "Congo, Dem. Rep."]
   d[, NAME := ordered(tools::toTitleCase(tolower(paste(COUNTRYNM, NAME2, sep=" - "))))]
-
+  
   p <- data.frame(d) %>%
     ggvis(y=~NAME) %>%
     add_axis("x", title="", format=".2s", properties=ap) %>%
@@ -592,7 +628,14 @@ p3 <- function(iso3="SSA") {
     add_legend("fill", title="Location") %>%
     set_options(height=400, width="auto", resizable=F) %>%
     add_tooltip(tt, on="hover")
+  
+  return(p)
+}
 
+# p4 - Urbanization trends across countries and locations
+p4 <- function()  {
+  
+  
   return(p)
 }
 
