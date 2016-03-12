@@ -19,14 +19,14 @@ vars <- list(
   # CRU 3.22 precipitation time series (from 1901 onwards)
   pre=list(
     name="Precipitation (mm)",
-    path="./data/cru_ts3.22.1901.2013.pre.dat.nc",
+    path="../../hc-data/CRU_TS.3.22/cru_ts3.22.1901.2013.pre.dat.nc",
     tm=seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month"),
     pal=rev(c("#2F6FBF", "#69DB4D", "#F9EF58", "#DC5207", "#830000"))),
 
   # CRU 3.22 temperatures time series (from 1901 onwards)
   tmp=list(
     name="Temperature (C)",
-    path="./data/cru_ts3.22.1901.2013.tmp.dat.nc",
+    path="../../hc-data/CRU_TS.3.22/cru_ts3.22.1901.2013.tmp.dat.nc",
     tm=seq(as.Date("1901-01-16"), as.Date("2013-12-16"), "month"),
     pal=c("#801FEF", "#0000FF", "#4169E1", "#1C90FF", "#00BFFF", "#8CCDEF", "#FFFFC8",
       "#FFE131", "#FFAA00", "#FF6E00", "#FF0000", "#C80000", "#FFB1B1")
@@ -35,7 +35,7 @@ vars <- list(
   # PDSI (from 1850 onwards)
   pdsi=list(
     name="Palmer Drought Severity Index (-10, 10)",
-    path="./data/pdsisc.monthly.maps.1850-2012.nc",
+    path="../../hc-data/CRU_TS.3.22/pdsisc.monthly.maps.1850-2012.nc",
     tm=seq(as.Date("1850-01-01"), as.Date("2012-12-31"), "month"),
     pal=c("#FF9900", "#FFFF66", "#FFFFFF", "#99FF99", "#009900")
   ),
@@ -43,7 +43,7 @@ vars <- list(
   # ERA Total Precipitation (from 1970 onwards)
   eratp=list(
     name="ERA Synoptic Monthly Mean Precipitation (mm/day)",
-    path="./data/era-interim.monthly.pre.water.1979-2014.nc",
+    path="../../hc-data/CRU_TS.3.22/era-interim.monthly.pre.water.1979-2014.nc",
     tm=seq(as.Date("1979-01-01"), as.Date("2014-12-01"), "month"),
     pal=c("#FFFFD9", "#EDF8B1", "#C7E9B4", "#7FCDBB", "#41B6C4",
       "#1D91C0", "#225EA8", "#253494", "#081D58")
@@ -67,7 +67,7 @@ names(d) <- sapply(vars, `[[`, "name")
 d <- d[1:3]
 
 # Load all monthly districts stats (already intersected with GAUL 2014v15)
-data <- readRDS("./data/dt2.rds")
+data <- readRDS("./tmp/dt2.rds")
 
 # Load GAUL 2014 district boundaries
 g2 <- readRDS("/home/projects/hc-cell5m/rdb/g2_2014v15.web.rds")
