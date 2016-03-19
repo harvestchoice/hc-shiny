@@ -1,5 +1,5 @@
 #####################################################################################
-# Title:   Map Population Hotspots 2000-2020 or 1990-2015
+# Title:   Map Urban Population Hotspots 2000-2020 or 1990-2015
 # Date:    March 2016
 # Project: SDA for PIM
 # Author:  Bacou, Melanie <mel@mbacou.com>
@@ -263,7 +263,7 @@ tm_shape(gpw[gpw$ISOALPHA=="GHA",], is.master=T, projection="merc") + tm_bubbles
 dist150k <- sapply(row.names(gpw), function(x) gWithinDistance(gpw[x,], coast, 150*1000))
 gpw.dt[, DIST150km := dist150k]
 
-# Within 80km of cosatline
+# Within 80km of coastline
 # Re-compute coastal distance (Karen suggests 50km?)
 # Try to use geosphere::dist2Line instead
 # dist <- dist2Line(gpw, coast)
@@ -553,14 +553,14 @@ tt <- function(x) {
 
 # p1 - Pop trends x 4
 p1 <- function(iso3="SSA") {
-  
+
   d <- melt(gpw.sum2, id.vars=1:3, measure.vars=4:8)
   levels(d$variable)[1:5] <- c(2000, 2005, 2010, 2015, 2020)
   if(iso3 != "SSA") d <- d[ISOALPHA==iso3]
   d <- d[, .(value=sum(value, na.rm=T)), by=.(URBAN_PTS, DIST150km, variable)]
   d[, URBAN_PTS := factor(URBAN_PTS, levels=c(F,T), labels=c("rural", "urban"))]
   d[, DIST150km := factor(DIST150km, levels=c(F,T), labels=c("hinterland", "coast"))]
-  
+
   p <- data.frame(d) %>%
     ggvis(~variable, ~value) %>%
     add_axis("x", title="", properties=ap) %>%
@@ -575,19 +575,19 @@ p1 <- function(iso3="SSA") {
     add_legend("fill", title="Location", properties=legend_props(legend=list(y=60))) %>%
     set_options(height=320, width="auto", resizable=F, duration=0)
   #add_tooltip(tt, on="hover")
-  
+
   return(p)
 }
 
 
 # p2 - Urbanization rates x 2
 p2 <- function(iso3="SSA") {
-  
+
   d <- melt(urb.rate2.c, id.vars=1:2)
   d <- d[ISOALPHA==iso3]
   levels(d$variable) <- c(2000, 2005, 2010, 2015, 2020)
   d[, DIST150km := factor(DIST150km, levels=c(F,T), labels=c("hinterland", "coast"))]
-  
+
   p <- data.frame(d) %>%
     ggvis(~variable, ~value) %>%
     add_axis("x", title="", properties=ap) %>%
@@ -601,14 +601,14 @@ p2 <- function(iso3="SSA") {
     add_legend("fill", title="Location") %>%
     set_options(height=320, width="auto", resizable=F) %>%
     add_tooltip(tt, on="hover")
-  
+
   return(p)
-  
+
 }
 
 # p3 - Top urban areas and growth rate in/outside coastal areas
 p3 <- function(iso3="SSA") {
-  
+
   d <- gpw.dt[, .SD, .SDcols=c(4:7, 19:28, 34:37)]
   d <- d[URBAN_PTS==T]
   if(iso3 != "SSA") d <- d[ISOALPHA==iso3] else d <- d[UN_2015_E >= 100000]
@@ -617,7 +617,7 @@ p3 <- function(iso3="SSA") {
   d <- d[rank <= 10][order(-rank)]
   d[COUNTRYNM=="Democratic Republic of the Congo", COUNTRYNM := "Congo, Dem. Rep."]
   d[, NAME := ordered(tools::toTitleCase(tolower(paste(COUNTRYNM, NAME2, sep=" - "))))]
-  
+
   p <- data.frame(d) %>%
     ggvis(y=~NAME) %>%
     add_axis("x", title="", format=".2s", properties=ap) %>%
@@ -628,14 +628,14 @@ p3 <- function(iso3="SSA") {
     add_legend("fill", title="Location") %>%
     set_options(height=400, width="auto", resizable=F) %>%
     add_tooltip(tt, on="hover")
-  
+
   return(p)
 }
 
 # p4 - Urbanization trends across countries and locations
 p4 <- function()  {
-  
-  
+
+
   return(p)
 }
 
