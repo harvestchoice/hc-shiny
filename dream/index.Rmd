@@ -1,13 +1,14 @@
 ---
 title: "DREAM - Model Documentation"
 author: "You, Liangzhi (IFPRI); Bacou, Melanie (IFPRI)"
-date: "Updated on Jan. 29, 2016"
+date: "Updated on March 21, 2016"
 runtime: shiny
 output:
   html_document:
     fig_caption: yes
     fig_width: 5
     toc: yes
+    toc_float: yes
 ---
 
 Model sets, parameters, and equations are documented below. The model code in R and default variables and parameters are [here](dream.Rmd). To run a sample simulation click [sample scenario](sample.Rmd).

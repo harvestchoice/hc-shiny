@@ -8,6 +8,7 @@ output:
     fig_caption: yes
     fig_width: 4
     toc: yes
+    toc_float: yes
 ---
 
 
