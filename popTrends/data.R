@@ -57,7 +57,7 @@ gpw <- fread(gpw[1])
 save(gpw, file="./data/gpw-v4-admin-unit-center-points-population-estimates-csv-global.rds")
 
 # Load Joe's 2010 urban mask
-urb <- raster("./data/UrbanExtentAfrica2010_v1.tif")
+urb <- raster("../../hc-data/UrbanMask_SSA_2010/UrbanExtentAfrica2010_v1.tif")
 
 # Load SSA from hcapi3, keep only SSA
 gpw <- gpw[ISOALPHA %in% iso]
@@ -367,53 +367,79 @@ urb.rate2.c <- gpw.sum2[, lapply(.SD,
 urb.rate2.c[, URBAN_PTS := NULL]
 
 
+
+
 #####################################################################################
 # GPWv4 Population Rasters
 #####################################################################################
 # Get summaries using original raster layers instead of admin centerpoints
-
 gp <- c(
-  "http://beta.sedac.ciesin.columbia.edu/downloads/data/gpw-v4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2000.zip",
-  "http://beta.sedac.ciesin.columbia.edu/downloads/data/gpw-v4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2005.zip",
-  "http://beta.sedac.ciesin.columbia.edu/downloads/data/gpw-v4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2010.zip",
-  "http://beta.sedac.ciesin.columbia.edu/downloads/data/gpw-v4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2015.zip",
-  "http://beta.sedac.ciesin.columbia.edu/downloads/data/gpw-v4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2020.zip"
-)
+  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2000.zip",
+  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2005.zip",
+  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2010.zip",
+  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2015.zip",
+  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2020.zip")
 
 gp <- lapply(gp, function(x) {
-    g <- curl_download(x, paste0("./data/", x))
-    g <- unzip(g, exdir="./data")
-    g <- raster(g[4])
-  })
+  #g <- curl_download(x, paste0("../../hc-data/GPWv4/", x))
+  g <- unzip(x, exdir="../../hc-data/GPWv4")
+})
 
-gp <- raster("./data/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals_2000.tif")
+gp <- c(
+  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals_2000.tif",
+  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals_2005.tif",
+  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals_2010.tif",
+  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals_2015.tif",
+  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals_2020.tif")
+
+gp <- stack(gp)
 res(gp)
 # [1] 0.008333333 0.008333333
 
-gp <- brick(gp)
-gp <- crop(gp, World)
-gp <- mask (gp, World, filename="./data/gpw-v4-2000-2020-SSA.grd")
 
-# Only urban areas (using Joe's mask)
-gp.urb <- overlay(urb, gp, fun=function(x,y) x*y, filename="gpw-v4-urban-SSA.grd")
+# Start cluster processing (uses 8 cores on AWS)
+beginCluster()
+
+gp <- crop(gp, World)
+
+minValue(gp)
+# [1] 0 0 0 0 0
+maxValue(gp)
+# [1]  99519.57 108967.70 141715.28 183506.39 940130.44
+
+World <- spTransform(World, proj4string(gp))
+gp <- mask(gp, World, filename="../../hc-data/GPWv4/gpw-v4-2000-20-SSA.grd")
 
 # Rasterize coastline
-gp.coast <- rasterize(coast, gp[[1]], 1, fun="first")
+gp.coast <- rasterize(coast, gp[[1]], 1, fun="first", filename="../../hc-data/GPWv4/coastline-SSA.grd")
 
 # Distance to nearest cell that's not NA
-gp.dist <- distance(gp.coast, filename="./data/gpw-v4-distance-to-coastline-SSA.grd")
+gp.dist <- distance(gp.coast, filename="../../hc-data/GPWv4/coastline-distance-SSA.grd")
 
-# Classify coastline cells
-m <- matrix(c(0,50,1, 50,maxValue(gp.dist),0), ncols=2, byrow=T)
-gp.dist.50km <- reclassify(gp.dist, m, filename="./data/gpw-v4-distance-50km-SSA.grd")
+# Classify coastline cells 80km
+m <- matrix(c(0, 80, 1,   80, maxValue(gp.dist), 0), ncols=2, byrow=T)
+gp.dist.80km <- clusterR(gp.dist, reclassify,
+  args=list(rcl=m, datatype="INT2S", filename="../../hc-data/GPWv4/coastline-distance-80km-SSA.grd"))
+
+# Only urban areas (using Joe's mask)
+# gp.urb <- overlay(urb, gp, fun=function(x,y) x*y, filename="gpw-v4-urban-SSA.grd")
 
 # Get country ISO3
 gp.iso <- extract(World, gp)
 gp.iso <- World[gp.iso, 1:5]
 
-# Combine all
-gp <- brick(list(gp, gp.urb, gp.dist, gp.dist.50km, gp.iso), filename="./data/gpw-v4-2000-2020-SSA.grd")
-gp <- data.table(as.data.frame(gp))
+# Get World Bank urban population rates for 2000
+# Classify urban areas country by country
+
+
+# Convert all rasters to data.table
+gp <- data.table(as.data.frame(stack(list(gp, gp.urb, gp.coast, gp.dist, gp.dist.80km, gp.iso))))
+
+# Export for reuse
+saveRDS(gp, file="../../hc-data/GPWv4/gpw-v4-dt.rds")
+
+# End cluster processing
+endCluster()
 
 
 #####################################################################################
