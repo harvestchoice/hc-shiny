@@ -18,7 +18,7 @@ library(rgdal)
 #####################################################################################
 
 library(maptools)
-setwd("/home/projects/hc-data")
+setwd("~/Projects/hc-data")
 
 load("../hc-cell5m/rdb/g0.rda")
 pre <- brick("./CRU_TS.3.22/cru_ts3.22.1901.2013.pre.dat.nc")
@@ -42,7 +42,7 @@ write.csv(dt.year, "./JC/CRU.SSA.1901-2013.csv", na="", row.names=F)
 #####################################################################################
 # For Eduardo WB
 
-setwd("/home/projects/hc-data")
+setwd("~/Projects/hc-data")
 library(rgdal)
 library(raster)
 library(data.table)
@@ -244,7 +244,7 @@ library(data.table)
 library(rgdal)
 library(hcapi3)
 
-setwd("/home/projects/hc-data")
+setwd("~/Projects/hc-data")
 load("../hc-shiny/rainfall/tmp/rainfall_2014v15.RData")
 
 gha <- getData(country="GHA", level=2)
@@ -447,7 +447,7 @@ library(data.table)
 library(rgdal)
 library(hcapi3)
 
-setwd("/home/projects/hc-data")
+setwd("~/Projects/hc-data")
 load("../hc-shiny/rainfall/tmp/rainfall_2014v15.RData")
 
 # Import AR village locations
@@ -510,7 +510,7 @@ library(data.table)
 library(rgdal)
 library(hcapi3)  # only available on Buster
 
-setwd("/home/projects/hc-data")
+setwd("~/Projects/hc-data")
 
 # Load GLSS5 survey map (110 districts)
 gha <- readOGR("./out/DSG", "gha-glss5-map_L2")
@@ -880,8 +880,8 @@ library(raster)
 library(data.table)
 library(hcapi3)
 
-setwd("/home/projects/hc-data")
-load("home/shiny/rainfall/tmp/rainfall_2014v15.RData")
+setwd("~/Projects/hc-data")
+load("../hc-shiny/rainfall/tmp/rainfall_2014v15.RData")
 
 # Import AR village locations
 ar <- readRDS("./data/ARPointsZoI_2015.07.28.rds")
@@ -934,7 +934,7 @@ saveRDS(ar, "./out/AR/ARPointsZoI_2015.07.28.rds")
 # 2015.09.19 Process biovars across AR Malawi households
 #####################################################################################
 
-setwd("/home/projects/hc-data")
+setwd("~/Projects/hc-data")
 
 # Import AR village locations
 ar <- readRDS("./out/AR/MWI-HH-Coordinates.rds")
@@ -986,7 +986,7 @@ saveRDS(ar, "./out/AR/MWI-HH-Coordinates_bio.rds")
 #####################################################################################
 # 2015.10.25 Process biovars across district survey maps
 #####################################################################################
-setwd("/home/projects/hc-data")
+setwd("~/Projects/hc-data")
 
 # Generate biovars from CRU 3.22
 # These are needed to generate bioclimatic variables
@@ -1124,7 +1124,7 @@ library(rgdal)
 library(rgeos)
 library(leaflet)
 
-setwd("/home/projects/hc-data")
+setwd("~/Projects/hc-data")
 
 m <- readOGR("./HUC", "HUC_Name_clip")
 s <- m[1:30,]
@@ -1140,7 +1140,7 @@ writeOGR(s, "./HUC", "HUC_Name_clip_web", "ESRI Shapefile", overwrite_layer=T)
 #####################################################################################
 # 2015.11.11 Re-run biovars above across district survey maps from 1990-2013
 #####################################################################################
-setwd("/home/projects/hc-data")
+setwd("~/Projects/hc-data")
 load("./out/r15.10/svyL2Maps.RData")
 
 library(data.table)

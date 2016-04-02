@@ -13,7 +13,7 @@ library(rgdal)
 library(curl)
 
 
-setwd("/home/projects/hc-data")
+setwd("~/Projects/hc-data")
 
 # Download latest revision to PDSI
 pdsi <- curl_download("http://www.cgd.ucar.edu/cas/catalog/climind/pdsisc.monthly.maps.1850-2014.fawc=1.r2.5x2.5.ipe=2.nc.gz",
