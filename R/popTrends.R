@@ -39,8 +39,8 @@ library(raster)
 library(ggvis)
 library(hcapi3)
 
-setwd("~/Projects/hc-shiny/popTrends")
-load("./tmp/popTrends.RData")
+setwd("~/Projects/hc-data")
+load("./out/popTrends/popTrends.RData")
 
 # SSA country boundaries for plotting
 data(World)
@@ -49,15 +49,15 @@ World <- World[World$continent=="Africa",]
 # Load GPWv4
 gpw <- curl_download(
   "http://beta.sedac.ciesin.columbia.edu/downloads/data/gpw-v4/gpw-v4-admin-unit-center-points-population-estimates/gpw-v4-admin-unit-center-points-population-estimates-csv-global.zip",
-  "./data/gpw-v4-admin-unit-center-points-population-estimates-csv-global.zip")
+  "./GPWv4/gpw-v4-admin-unit-center-points-population-estimates-csv-global.zip")
 gpw <- unzip(gpw, exdir="./data")
 gpw <- fread(gpw[1])
 
 # Keep global layer for re-use
-save(gpw, file="./data/gpw-v4-admin-unit-center-points-population-estimates-csv-global.rds")
+save(gpw, file="./out/popTrends/gpw-v4-admin-unit-center-points-population-estimates-csv-global.rds")
 
 # Load Joe's 2010 urban mask
-urb <- raster("../../hc-data/UrbanMask_SSA_2010/UrbanExtentAfrica2010_v1.tif")
+urb <- raster("./UrbanMask_SSA_2010/UrbanMask_SSA_2010/UrbanExtentAfrica2010_v1.tif")
 
 # Load SSA from hcapi3, keep only SSA
 gpw <- gpw[ISOALPHA %in% iso]
@@ -140,9 +140,11 @@ tmap_mode("plot")
 qtm(urb, raster="UrbanExtentAfrica2010_v1")
 
 # Save for re-use
-writeRaster(urb, "./tmp/UrbanExtentAfrica2010_v1.tif",
+writeRaster(urb, "./out/popTrends/UrbanExtentAfrica2010_v1_class.tif",
   colorTables=list(c("green", "orange")),
   catNames=list(c("rural", "urban")))
+
+#urb <- raster("./out/popTrends/UrbanExtentAfrica2010_v1_class.tif")
 
 
 # Extract urban admin units
@@ -243,9 +245,9 @@ gpw.dt[NAME3=="", NAME3 := NA]
 # Load Africa coastline
 coast <- curl_download(
   "http://omap.africanmarineatlas.org/BASE/data/coast/vmap0/africa_coastline_vmap0.zip",
-  "./data/africa_coastline_vmap0.zip")
-coast <- unzip(coast, exdir="./data")
-coast <- readOGR("./data", "africa_coastline_vmap0")
+  "./GPWv4/africa_coastline_vmap0.zip")
+coast <- unzip(coast, exdir="./GPWv4")
+coast <- readOGR("./GPWv4", "africa_coastline_vmap0")
 proj4string(coast)
 # [1] "+proj=longlat +datum=NAD27 +no_defs +ellps=clrk66 +nadgrids=@conus,@alaska,@ntv2_0.gsb,@ntv1_can.dat"
 
@@ -290,11 +292,11 @@ gpw.dt[, DIST80k := dist80k]
 
 # Correct integer overflow
 gpw.dt[, `:=`(
-    UN_2000_E=as.numeric(UN_2000_E),
-    UN_2005_E=as.numeric(UN_2005_E),
-    UN_2010_E=as.numeric(UN_2010_E),
-    UN_2015_E=as.numeric(UN_2015_E),
-    UN_2020_E=as.numeric(UN_2020_E))]
+  UN_2000_E=as.numeric(UN_2000_E),
+  UN_2005_E=as.numeric(UN_2005_E),
+  UN_2010_E=as.numeric(UN_2010_E),
+  UN_2015_E=as.numeric(UN_2015_E),
+  UN_2020_E=as.numeric(UN_2020_E))]
 
 # Save into `gpw` as well
 setkey(gpw.dt, rn)
@@ -346,23 +348,23 @@ gpw.sum2 <- rbind(gpw.sum2, tmp)
 
 # Urban rates - SSA
 urb.rate1 <- gpw.sum1[, lapply(.SD,
-    function(x) sum(URBAN*x, na.rm=T)/sum(x, na.rm=T)),
+  function(x) sum(URBAN*x, na.rm=T)/sum(x, na.rm=T)),
   .SDcols=c(2,4:8)]
 urb.rate1[, URBAN := NULL]
 
 urb.rate2 <- gpw.sum2[, lapply(.SD,
-    function(x) sum(URBAN_PTS*x, na.rm=T)/sum(x, na.rm=T)),
+  function(x) sum(URBAN_PTS*x, na.rm=T)/sum(x, na.rm=T)),
   .SDcols=c(2,4:8)]
 urb.rate2[, URBAN_PTS := NULL]
 
 # Urban rates - coastal
 urb.rate1.c <- gpw.sum1[, lapply(.SD,
-    function(x) sum(URBAN*x, na.rm=T)/sum(x, na.rm=T)),
+  function(x) sum(URBAN*x, na.rm=T)/sum(x, na.rm=T)),
   by=.(ISOALPHA, DIST150km), .SDcols=c(2,4:8)]
 urb.rate1.c[, URBAN := NULL]
 
 urb.rate2.c <- gpw.sum2[, lapply(.SD,
-    function(x) sum(URBAN_PTS*x, na.rm=T)/sum(x, na.rm=T)),
+  function(x) sum(URBAN_PTS*x, na.rm=T)/sum(x, na.rm=T)),
   by=.(ISOALPHA, DIST150km), .SDcols=c(2,4:8)]
 urb.rate2.c[, URBAN_PTS := NULL]
 
@@ -372,74 +374,278 @@ urb.rate2.c[, URBAN_PTS := NULL]
 #####################################################################################
 # GPWv4 Population Rasters
 #####################################################################################
+setwd("~/Projects/hc-data")
+load("./out/popTrends/popTrends.RData")
+
+# Good enough to run the analysis at 10km resolution
+# Load CELL5M-SSA grid
+load("./CELL5M/cell5m.rda")
+grid <- SpatialPixelsDataFrame(dt[, .(X,Y)], data.frame(dt[, .(CELL5M, ISO3, X, Y)]),
+  proj4string=CRS("+init=epsg:4326"))
+rm(dt)
+plot(raster(grid, layer="ISO3"))
+
 # Get summaries using original raster layers instead of admin centerpoints
 gp <- c(
-  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2000.zip",
-  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2005.zip",
-  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2010.zip",
-  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2015.zip",
-  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals-2020.zip")
-
-gp <- lapply(gp, function(x) {
-  #g <- curl_download(x, paste0("../../hc-data/GPWv4/", x))
-  g <- unzip(x, exdir="../../hc-data/GPWv4")
-})
-
-gp <- c(
-  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals_2000.tif",
-  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals_2005.tif",
-  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals_2010.tif",
-  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals_2015.tif",
-  "../../hc-data/GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals_2020.tif")
+  "./GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals_2000.tif",
+  "./GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals_2005.tif",
+  "./GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals_2010.tif",
+  "./GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals_2015.tif",
+  "./GPWv4/gpw-v4-population-count-adjusted-to-2015-unwpp-country-totals_2020.tif")
 
 gp <- stack(gp)
 res(gp)
 # [1] 0.008333333 0.008333333
+res(brick(grid))
+# [1] 0.08333333 0.08333333
+names(gp) <- c("gpw2000", "gpw2005", "gpw2010", "gpw2015", "gpw2020")
 
+# We also need land and water areas to re-generate densities at 10km
+gpl <- c(
+  "./GPWv4/gpw-v4-land-water-area_land.tif",
+  "./GPWv4/gpw-v4-land-water-area_water.tif")
 
-# Start cluster processing (uses 8 cores on AWS)
-beginCluster()
+gpl <- stack(gpl)
+res(gpl)
+names(gpl) <- c("land", "water")
 
-gp <- crop(gp, World)
+gp <- crop(gp, grid)
+extent(gp)
+# class       : Extent
+# xmin        : -25.5
+# xmax        : 72.58333
+# ymin        : -47.08333
+# ymax        : 27.75
 
 minValue(gp)
 # [1] 0 0 0 0 0
 maxValue(gp)
-# [1]  99519.57 108967.70 141715.28 183506.39 940130.44
+#[1]  97064.98  76170.12  90288.20 106393.51 940130.44
+plot(raster(gp, "gpw2000"))
 
-World <- spTransform(World, proj4string(gp))
-gp <- mask(gp, World, filename="../../hc-data/GPWv4/gpw-v4-2000-20-SSA.grd")
+gpl <- crop(gpl, grid)
+extent(gpl)
 
-# Rasterize coastline
-gp.coast <- rasterize(coast, gp[[1]], 1, fun="first", filename="../../hc-data/GPWv4/coastline-SSA.grd")
+minValue(gpl)
+# [1] 0 0
+maxValue(gpl)
+# [1] 0.8605588 0.8610033
 
-# Distance to nearest cell that's not NA
-gp.dist <- distance(gp.coast, filename="../../hc-data/GPWv4/coastline-distance-SSA.grd")
+plot(gpl)
+# Note that the land raster is total area minus water bodies
 
-# Classify coastline cells 80km
-m <- matrix(c(0, 80, 1,   80, maxValue(gp.dist), 0), ncols=2, byrow=T)
-gp.dist.80km <- clusterR(gp.dist, reclassify,
-  args=list(rcl=m, datatype="INT2S", filename="../../hc-data/GPWv4/coastline-distance-80km-SSA.grd"))
+# These layers are at 1km resolution, let's resample all to CELL5M grid to speed things up
+gp <- aggregate(gp, fact=10, fun=sum, na.rm=T, filename="./CELL5M/cell5m_gpw-v4-SSA.tif")
+res(gp)
+gp.dt <- extract(gp, grid)
+gp.dt <- as.data.table(gp.dt)
+setnames(gp.dt, c("gpw2000", "gpw2005", "gpw2010", "gpw2015", "gpw2020"))
+gp.dt <- cbind(as.data.table(grid@data), gp.dt)
+gp.dt[, prettyNum(sum(gpw2015, na.rm=T)), keyby=ISO3]
 
-# Only urban areas (using Joe's mask)
-# gp.urb <- overlay(urb, gp, fun=function(x,y) x*y, filename="gpw-v4-urban-SSA.grd")
+gpl <- aggregate(gpl, fact=10, fun=sum, na.rm=T, filename="./CELL5M/cell5m_gpw-v4-land-SSA.tif")
+res(gpl)
+gpl.dt <- extract(gpl, grid)
+gpl.dt <- as.data.table(gpl.dt)
+setnames(gpl.dt, c("land", "water"))
+gp.dt <- cbind(gp.dt, gpl.dt)
+rm(gpl.dt)
 
-# Get country ISO3
-gp.iso <- extract(World, gp)
-gp.iso <- World[gp.iso, 1:5]
+summary(gp.dt$land)
+#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
+#    0.00   81.01   83.60   81.43   85.26   86.06    5147
 
-# Get World Bank urban population rates for 2000
+summary(gp.dt$gpw2000)
+#   Min.   1st Qu.    Median      Mean   3rd Qu.      Max.      NA's
+#    0.0      72.7     505.3    2254.0    1692.0 1881000.0      6058
+
+
+# Note that Tom Hengl has a 5km distance to coastline raster ready made at
+# http://spatial-analyst.net/worldmaps/dcoast.zip
+# Units are in degrees not km
+dcoast <- curl_download("http://spatial-analyst.net/worldmaps/dcoast.zip", "./Worldgrids/dcoast.zip")
+dcoast <- unzip(dcoast, exdir="./Worldgrids")
+dcoast <- raster(dcoast[2])
+#dcoast <- raster("./Worldgrids/dcoast.tif")
+dcoast <- crop(dcoast, grid)
+
+extent(dcoast)
+res(dcoast)
+# [1] 0.05 0.05 => 5km
+res(gp)
+# [1] 0.008333333 0.008333333 => 1km
+plot(dcoast)
+
+dcoast <- aggregate(dcoast, fact=2, fun=mean, na.rm=T, filename="./CELL5M/cell5m_dcoast-SSA.tif", overwrite=T)
+res(dcoast)
+dcoast.dt <- extract(dcoast, grid)
+dcoast.dt <- as.data.table(dcoast.dt)
+setnames(dcoast.dt, "dcoast")
+
+gp.dt <- cbind(gp.dt, dcoast.dt)
+rm(dcoast.dt)
+summary(gp.dt$dcoast)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+# -4.098   2.345   5.785   6.230   9.735  16.620
+
+# Use 8x 5-arc-minute pixels to approximate 80km, i.e. 0.08333333*8
+km80 <- 0.08333333*8
+gp.dt[, dcoast80km := ifelse(dcoast <= km80, "coastal", "inland")]
+
+# Map it
+tmp <- SpatialPixelsDataFrame(gp.dt[, .(X,Y)], data.frame(gp.dt),
+  proj4string=CRS("+init=epsg:4326"))
+
+tm_shape(tmp) + tm_raster("dcoast80km")
+# => looks good
+
+
+# Make densities, note that GPW4 land and water layers are in sq. km.
+gp.dt[, `:=`(
+  gpw2000dens=gpw2000/land,
+  gpw2005dens=gpw2005/land,
+  gpw2010dens=gpw2010/land,
+  gpw2015dens=gpw2015/land,
+  gpw2020dens=gpw2020/land)]
+
+
+# Get World Bank urbanization rates for 2000
 # Classify urban areas country by country
+wb <- fread("./out/popTrends/wb_urbanization.csv")
+setnames(wb, 5:9, c("Y1990", "Y2000", "Y2005", "Y2010", "Y2015"))
+setnames(wb, "Country Code", "ISO3")
+wb <- wb[`Series Code` != ""]
+wb[, `:=`(
+  Y1990=as.numeric(Y1990),
+  Y2000=as.numeric(Y2000),
+  Y2005=as.numeric(Y2005),
+  Y2010=as.numeric(Y2010),
+  Y2015=as.numeric(Y2015))]
+
+gp.dt[!ISO3 %in% wb$ISO3, unique(ISO3)]
+#  [1] "ESH" "XX0" "XX1" "COD" "XX2" "IOT" "SHN" "ATF" "MYT" "REU"
+# British Indian Ocean Territory
+# French Southern Territories
+# Mayotte
+# Saint Helena
+
+# Let's merge and apply standard urbanization rates
+setkey(wb, ISO3)
+setkey(gp.dt, ISO3)
+gp.dt$urbrate2000 <- wb[gp.dt][, Y2000]
+
+# Recode missing
+gp.dt[ISO3=="ESH", urbrate2000 := wb[ISO3=="MAR", Y2000]]
+gp.dt[ISO3 %in% c("REU", "IOT", "ATF", "MYT", "SHN"),
+  urbrate2000 := wb[ISO3=="MDG", Y2000]]
+gp.dt[ISO3=="COD", urbrate2000 := wb[ISO3=="ZAR", Y2000]]
+
+gp.dt[is.na(urbrate2000), .N, by=ISO3]
+# ISO3   N
+# 1:  XX0 239
+# 2:  XX1  24
+# 3:  XX2  43
+
+tm_shape(tmp[tmp$ISO3 %like% "XX",]) + tm_raster("gpw2000")
+gp.dt[ISO3 %like% "XX", urbrate2000 := wb[ISO3=="SSD", Y2000]]
 
 
-# Convert all rasters to data.table
-gp <- data.table(as.data.frame(stack(list(gp, gp.urb, gp.coast, gp.dist, gp.dist.80km, gp.iso))))
+# Classify urban areas based on 2000 urbanization rates
+setorder(gp.dt, ISO3, -gpw2000dens)
+gp.dt[, urban := cumsum(ifelse(is.na(gpw2000), 0, gpw2000))/sum(gpw2000, na.rm=T), by=ISO3]
+gp.dt[, urban := ifelse(urban < urbrate2000/100, "urban", "rural")]
+gp.dt[, sum(ifelse(urban=="urban", gpw2000, 0), na.rm=T)/sum(gpw2000, na.rm=T), keyby=ISO3]
+# => looks good
+gp.dt[urban=="urban", urbdens := min(gpw2000dens, na.rm=T), by=ISO3]
+gp.dt[, urbdens := mean(urbdens, na.rm=T), by=ISO3]
+gp.dt[, `:=`(
+  urb2000=ifelse(gpw2000dens >= urbdens, "urban", "rural"),
+  urb2005=ifelse(gpw2005dens >= urbdens, "urban", "rural"),
+  urb2010=ifelse(gpw2010dens >= urbdens, "urban", "rural"),
+  urb2015=ifelse(gpw2015dens >= urbdens, "urban", "rural"),
+  urb2020=ifelse(gpw2020dens >= urbdens, "urban", "rural"))]
+
+gp.dt[urb2000!=urban, .N, by=ISO3]
+# Note that curiously using this method there are urban areas that move into rural areas
+
+gp.dt[, sum(urb2000=="urban", na.rm=T)/.N, by=ISO3]
+gp.dt[, sum(urb2020=="urban", na.rm=T)/.N, by=ISO3]
+
+# Add abs. pop gain/loss and growth rate
+gp.dt[, growrate_20 := ifelse(gpw2000==0 & gpw2020>0, 1, (gpw2020-gpw2000)/gpw2000)]
+gp.dt[, growth_20 := gpw2020-gpw2000]
+
+gp.dt[, mean(growrate_20*100, na.rm=T), by=.(dcoast80km, urban)]
 
 # Export for reuse
-saveRDS(gp, file="../../hc-data/GPWv4/gpw-v4-dt.rds")
+saveRDS(gp.dt, file="./out/popTrends/gpw-v4-dt.rds")
 
-# End cluster processing
-endCluster()
+
+# Summarize across countries for charting
+tmp <- gp.dt[, .(gpw2000=sum(gpw2000, na.rm=T)), keyby=.(ISO3, dcoast80km, urb2000)]
+tmp2 <- gp.dt[, .(gpw2005=sum(gpw2005, na.rm=T)), keyby=.(ISO3, dcoast80km, urb2005)]
+tmp3 <- gp.dt[, .(gpw2010=sum(gpw2010, na.rm=T)), keyby=.(ISO3, dcoast80km, urb2010)]
+tmp4 <- gp.dt[, .(gpw2015=sum(gpw2015, na.rm=T)), keyby=.(ISO3, dcoast80km, urb2015)]
+tmp5 <- gp.dt[, .(gpw2020=sum(gpw2020, na.rm=T)), keyby=.(ISO3, dcoast80km, urb2020)]
+
+setnames(tmp, 3:4, c("urban", "PN"))
+setnames(tmp2, 3:4, c("urban", "PN"))
+setnames(tmp3, 3:4, c("urban", "PN"))
+setnames(tmp4, 3:4, c("urban", "PN"))
+setnames(tmp5, 3:4, c("urban", "PN"))
+
+tmp[, year := 2000]
+tmp2[, year := 2005]
+tmp3[, year := 2010]
+tmp4[, year := 2015]
+tmp5[, year := 2020]
+
+gp.dt.iso3 <- rbind(tmp, tmp2, tmp3, tmp4, tmp5)
+rm(tmp, tmp2, tmp3, tmp4, tmp5)
+
+# Add total SSA
+tmp <- gp.dt.iso3[, .(PN=sum(PN, na.rm=T)), by=.(dcoast80km, urban, year)]
+tmp[, ISO3 := "SSA"]
+gp.dt.iso3 <- rbind(gp.dt.iso3, tmp)
+
+# Graphs
+data.frame(gp.dt.iso3[!is.na(urban) & ISO3=="SSA"]) %>%
+  ggvis(~factor(year), ~PN) %>%
+  add_axis("x", title="", properties=ap) %>%
+  add_axis("y", title="", format=".2s", properties=ap) %>%
+  group_by(urban, dcoast80km) %>%
+  layer_points(shape=~urban, fill=~dcoast80km, stroke:="#fff") %>%
+  layer_lines(stroke=~dcoast80km) %>%
+  scale_ordinal("stroke", range=pal) %>%
+  scale_ordinal("fill", range=pal) %>%
+  hide_legend("stroke") %>%
+  add_legend("shape", title="Urban/Rural") %>%
+  add_legend("fill", title="Location", properties=legend_props(legend=list(y=60))) %>%
+  set_options(height=320, width="auto", resizable=F, duration=0)
+
+
+
+
+#####################################################################################
+# Save 1km GPWv4 pop counts for SSA for re-use
+gp <- mask(gp, World, filename="./out/popTrends/gpw-v4-SSA.tif")
+#gp <- raster("./out/popTrends/gpw-v4-SSA.tif")
+
+# Rasterize coastline
+coast <- spTransform(coast, proj4string(gp))
+gp.coast <- rasterize(coast, gp[[1]], 1, fun="first", datatype="INT2S",
+  filename="./out/popTrends/coastline-SSA.tif", overwrite=T)
+
+minValue(gp.coast)
+# [1] 1
+maxValue(gp.coast)
+# [1] 1
+extent(gp.coast)
+plot(gp.coast)
+
+# Distance to nearest cell that's not NA
+gp.dist <- distance(gp.coast, filename="./out/popTrends/coastline-distance-SSA.tif")
+# => way too slow, quit
 
 
 #####################################################################################
@@ -669,4 +875,4 @@ p4 <- function()  {
 
 
 rm(tmp, d, iso3)
-save.image("./tmp/popTrends.RData")
+save.image("./out/popTrends/popTrends.RData")
