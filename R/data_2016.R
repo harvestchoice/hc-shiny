@@ -378,7 +378,7 @@ tm_shape(l2[l2$svyCode=="uga2013",], is.master=T) + tm_fill("svyL2Nm") +
 ###############################################
 ## SRTM
 #
-# Generate altitude and slope (update survey maps)
+# Generate altitude and slope
 
 iso3 <- unique(as.character(l2$ISO3))
 iso3[17] <- "SDN"
@@ -426,29 +426,188 @@ srtm.lbl <- c(l2.lbl,
   "slope (degree, median)", "slope (degree, min)", "slope (degree, max)")
 attr(l2.srtm, "var.labels") <- srtm.lbl
 setkey(l2.srtm, svyCode, svyL1Cd, svyL2Cd)
-write.dta(l2.srtm, "./out/r16.05/svyL2Maps-SRTM.dta", convert.factors="string", version=12L)
+write.dta(l2.srtm, "./out/r16.05/svyL2Maps-SRTM.dta",
+  convert.factors="string", version=12L)
 
 
 
 ###############################################
-## CRU_TS 3.23
+## UDEL v4.01
 #
-# Download most recent version (requires authentication), BADC FTP site doesn't work
-# http://browse.ceda.ac.uk/browse/badc/cru/data/cru_ts/cru_ts_3.23/data
-
-pre <- brick("./CRU_TS.3.23/pre/cru_ts3.23.1901.1910.pre.dat.nc.gz")
-
-
-# Resolution
 # Note that NCER re-analysis and CMAP are also at 2.5 degree, GPCC is also at 30-min
 # similar to WorldClim.
 # http://www.esrl.noaa.gov/psd/data/gridded/data.ncep.reanalysis.surface.html
 # The NOAA-CIRES Twentieth Century Reanalysis (V2c) is at 2 degree
+# We choose to use UDEL v4.01 instead:
+# Willmott, C. J. and K. Matsuura (2001) Terrestrial Air Temperature and
+# Precipitation: Monthly and Annual Time Series (1950 - 1999),
+# http://climate.geog.udel.edu/~climate/html_pages/README.ghcn_ts2.html.
+#
+# We have the option to weight the biovars by cropland (not done below)
 
+pre <- brick("./UDEL/precip.mon.total.v401.nc")
+temp <- brick("./UDEL/air.mon.mean.v401.nc")
+
+res(pre)
+# [1] 0.5 0.5 => 50km
+res(temp)
+# [1] 0.5 0.5
+l2 <- spTransform(l2, proj4string(pre))
+pre <- crop(pre, l2)
+temp <- crop(temp, l2)
+
+# Doco says 1901/01 - 2014/12
+names(pre)[1:10]
+tail(names(pre), 10)
+dim(pre)
+# [1]  125  101 1380
+tm <- seq(as.Date("1900-01-01"), as.Date("2014-12-31"), "month")
+pre <- setZ(pre, tm, "month")
+temp <- setZ(temp, tm, "month")
+
+# Keep 1950/01-2014/12
+pre <- subset(pre, 601:1380)
+temp <- subset(temp, 601:1380)
+
+# Extract monthly mean and total precipitation
+tmp <- extract(pre, l2, fun=mean, na.rm=T, small=T)
+dim(tmp)
+# [1] 2078 780
+tmp <- data.table(rn=row.names(l2), tmp)
+tmp <- melt(tmp, id.vars=c("rn"), variable.name="month", value.name="pre_mean", variable.factor=F)
+tmp[, month := as.Date(month)]
+l2.udel <- tmp
+
+tmp <- extract(pre, l2, fun=sum, na.rm=T, small=T)
+tmp <- data.table(rn=row.names(l2), tmp)
+setnames(tmp, 2:781, format(tm[601:1380], "%Y-%m-%d"))
+tmp <- melt(tmp, id.vars=c("rn"), variable.name="month", value.name="pre_total", variable.factor=F)
+tmp[, month := as.Date(month)]
+setkey(l2.udel, rn, month)
+setkey(tmp, rn, month)
+l2.udel$pre_total <- tmp[l2.udel][, pre_total]
+
+summary(l2.udel$month)
+#         Min.      1st Qu.       Median         Mean      3rd Qu.         Max.
+# "1950-01-01" "1966-03-24" "1982-06-16" "1982-06-16" "1998-09-08" "2014-12-01"
+summary(l2.udel$pre_mean)
+#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
+#    0.00    1.51    6.92    9.43   14.80  111.80  252720
+summary(l2.udel$pre_total)
+#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
+#    0.00    2.92   12.95   33.04   33.18 2175.00  245700
+
+# Extract monthly mean, min and max temperature
+tmp <- extract(temp, l2, fun=mean, na.rm=T, small=T)
+tmp <- data.table(rn=row.names(l2), tmp)
+setnames(tmp, 2:781, format(tm[601:1380], "%Y-%m-%d"))
+tmp <- melt(tmp, id.vars=c("rn"), variable.name="month", value.name="temp_mean", variable.factor=F)
+tmp[, month := as.Date(month)]
+setkey(tmp, rn, month)
+l2.udel$temp_mean <- tmp[l2.udel][, temp_mean]
+
+tmp <- extract(temp, l2, fun=min, na.rm=T, small=T)
+tmp <- data.table(rn=row.names(l2), tmp)
+setnames(tmp, 2:781, format(tm[601:1380], "%Y-%m-%d"))
+tmp <- melt(tmp, id.vars=c("rn"), variable.name="month", value.name="temp_min", variable.factor=F)
+tmp[, month := as.Date(month)]
+setkey(tmp, rn, month)
+l2.udel$temp_min <- tmp[l2.udel][, temp_min]
+
+tmp <- extract(temp, l2, fun=max, na.rm=T, small=T)
+tmp <- data.table(rn=row.names(l2), tmp)
+setnames(tmp, 2:781, format(tm[601:1380], "%Y-%m-%d"))
+tmp <- melt(tmp, id.vars=c("rn"), variable.name="month", value.name="temp_max", variable.factor=F)
+tmp[, month := as.Date(month)]
+setkey(tmp, rn, month)
+l2.udel$temp_max <- tmp[l2.udel][, temp_max]
+
+summary(l2.udel$temp_mean)
+#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
+#   -2.20   18.70   21.50   21.58   24.50   37.74  252720
+summary(l2.udel$temp_min)
+#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
+#      -4      17      20     Inf      24     Inf  245700
+summary(l2.udel$temp_max)
+
+# Note that the minimum and maximum of a numeric empty set are +Inf and -Inf (in this order!),
+# so means that some of the survey units are not covered by the rasters at all. Can
+# we map those?
+tmp.l2 <- SpatialPolygonsDataFrame(l2, data.frame(l2.udel[month==max(l2.udel$month)]), match.ID="rn")
+tmap_mode("view")
+qtm(tmp, fill="pre_mean")
+qtm(tmp, fill="temp_mean")
+qtm(tmp, fill="temp_min")
+
+
+# Convert cm/month to mm/month
+l2.udel[, `:=`(
+  pre_mean=pre_mean*10,
+  pre_total=pre_total*10)]
+
+# Yearly summary
+l2.udel.year <- l2.udel[, .(
+  pre_mean=mean(pre_mean, na.rm=T), # mean monthly rain over the year
+  pre_total=sum(pre_mean, na.rm=T), # total rain over the year
+  temp_mean=mean(temp_mean, na.rm=T),
+  temp_min=min(temp_min, na.rm=T),
+  temp_max=max(temp_max, na.rm=T)), by=.(rn, year=year(month))]
+
+# 30-year seasonal summary
+l2.udel.jandec <- l2.udel[month %between% c("1984-Jan-01", "2014-Dec-31"), .(
+  pre_mean=mean(pre_mean, na.rm=T), # mean monthly rain
+  pre_total=mean(pre_total, na.rm=T), # monthly mean of total rain over the year
+  temp_mean=mean(temp_mean, na.rm=T),
+  temp_min=min(temp_min, na.rm=T),
+  temp_max=max(temp_max, na.rm=T)), by=.(rn, month=month(month))]
+
+# Can we also process 19 long-term biovars?
+# dismo::biovars() process 12 layers of monthly data, but requires tmin and tmax
+# which does not seem to be available at that resolution, only from CRU_TS at 5 degree
+
+# Export
+setkey(l2.udel, rn)
+setkey(l2.dt, rn)
+setkey(l2.dt.yearly, rn)
+l2.udel <- l2.dt[, .SD, .SDcols=1:7][l2.udel]
+l2.udel.year <- l2.dt[, .SD, .SDcols=1:7][l2.udel.year]
+l2.udel.jandec <- l2.dt[, .SD, .SDcols=1:7][l2.udel.jandec]
+
+attr(l2.udel, "var.labels") <-c(l2.lbl[1:7],
+  "month",
+  "precipitation (mean, mm/month)",
+  "precipitation (total rain over the entire area, mm/month)",
+  "temperature (mean, deg C)",
+  "temperature (min, deg C)",
+  "temperature (max, deg C)")
+
+attr(l2.udel.year, "var.labels") <-c(l2.lbl,
+  "year",
+  "precipitation (monthly mean over the year, mm/month)",
+  "precipitation (total rain over the year, mm/year)",
+  "temperature (mean over the year, deg C)",
+  "temperature (min over the year, deg C)",
+  "temperature (max over the year, deg C)")
+
+attr(l2.udel.jandec, "var.labels") <-c(l2.lbl,
+  "month",
+  "precipitation (30-year mean for that month, mm/month)",
+  "precipitation (30-year monthly rain over the entire area, mm/month)",
+  "temperature (30-year mean, deg C)",
+  "temperature (30-year min, deg C)",
+  "temperature (30-year max, deg C)")
+
+
+write.dta(l2.udel, "./out/r16.05/svyL2Maps-UDEL_monthly_1950-2014.dta",
+  convert.factors="string", version=12L)
+write.dta(l2.udel.year, "./out/r16.05/svyL2Maps-UDEL_yearly_1950-2014.dta",
+  convert.factors="string", version=12L)
+write.dta(l2.udel.jandec, "./out/r16.05/svyL2Maps-UDEL_seasonal_1984-2014.dta",
+  convert.factors="string", version=12L)
 
 
 ###############################################
-## WorldClim
+## TODO WorldClim
 #
 # Also get 12 monthly files for tmin, tmax, prec over 1950-2000
 tmin.wc <- apply(l2, 1, function(x) getData("worldclim", var="tmin", res=0.5, lon=x["X"], lat=x["Y"], path="./WorldClim_0.5"))
@@ -493,17 +652,20 @@ bio.mth.lbl <- c(
   paste0("precipitation", " - ", month.abb, " (mm)"))
 
 attr(bio.wc.mth, "var.labels") <- c(attr, bio.mth.lbl)
-write.dta(bio.wc.mth, "./out/r16.05/svyL2Maps-WorldClim-1km_month_1950-2000.dta", version=12L)
+write.dta(bio.wc.mth, "./out/r16.05/svyL2Maps-WorldClim-1km_month_1950-2000.dta",
+  convert.factors="string", version=12L)
 
 
 ###############################################
 ## LandScan 2012
 #
 # Might also need rural population density (should apply GPWv4 land/water mask first
-# to generate density, and the classify according to WDI country rates).
-pop <- raster("./LandScan_2012/lspop2012/w001001.adf")
-wdi <- fread("./LandScan_2012/wdi/sp.rur.totl.zs_Indicator_en_csv_v2.csv")
+# to generate density, and then classify according to WDI country rates).
+# Note that I had to redownload from IFPRI G:\ drive, pop count and densities were not
+# plotting all right (seemed inverted)
+pop <- raster("./LandScan_2012/RasterGISbinary/lspop2012.flt")
 land <- raster("./GPWv4/gpw-v4-land-water-area_land.tif")
+wdi <- fread("./LandScan_2012/wdi/sp.rur.totl.zs_Indicator_en_csv_v2.csv")
 
 # Simple pop sum
 proj4string(pop)
@@ -512,11 +674,28 @@ pop <- crop(pop, l2)
 tmp <- extract(pop, l2, fun=sum, na.rm=T, small=T)
 l2.pop <- data.table(rn=row.names(l2), PN12_TOT=tmp)
 
+# TODO Scale to WDI 2012
+wdi.pop <- read.csv("./WDI/API_SP.POP.TOTL_DS2_en_csv_v2.csv", header=T)
+wdi.pop <- data.table(wdi.pop)
+wdi.pop[Country.Code=="NGA"]
+l2.pop.iso3 <- l2.pop[, .(ls=sum(PN12_TOT, na.rm=T)), by=.(ISO3, svyCode)]
+setkey(wdi.pop, Country.Code)
+setkey(l2.pop, ISO3)
+l2.pop.iso3$wdi <- wdi.pop[l2.pop.iso3][, X2012]
+l2.pop.iso3[, fact := wdi/ls]
+setkey(l2.pop.iso3, ISO3)
+setkey(l2.pop, ISO3)
+l2.pop$fact <- l2.pop.iso3[l2.pop][, fact]
+
 # Verify
+l2$PN12_TOT <- NULL
+l2$PD12_TOT <- NULL
+l2.dt <- data.table(l2@data)
+l2.dt[, rn := row.names(l2)]
 setkey(l2.pop, rn)
 setkey(l2.dt, rn)
 l2.pop <- l2.dt[l2.pop]
-l2.pop[, sum(PN12_TOT, na.rm=T), by=ISO3]
+l2.pop[, sum(PN12_TOT, na.rm=T), by=ISO3][order(V1)]
 # => OK
 
 # Land area: the total area of a surface represented by a given pixel in a uniform
@@ -528,6 +707,14 @@ l2.pop[, sum(PN12_TOT, na.rm=T), by=ISO3]
 # grid measures the water area (including permanent ice and water) of a pixel in
 # square kilometers. The land area plus the water area of a pixel equal the total
 # surface area of that pixel.
+# There are a number of more highly-modeled methods, including dasymetric modeling and
+# smart interpolation (Hay et al., 2005), that incorporate additional geographic data.
+# These data are used to produce weight matrices for determining how to apportion
+# population by pixel. Several global data products use ancillary data in their
+# spatial modeling, incorporating remotely sensed data on land cover, urban extent,
+# accessibility, or all of the above in order to delineate population surfaces
+# (Bhaduri et al., 2002; Balk et al., 2006; Tatem et al., 2007). GPWv4, however, uses
+# the areal-weighting approach.
 proj4string(land)
 land <- crop(land, l2)
 tm_shape(l2) + tm_borders() + tm_shape(land) + tm_raster(alpha=.5)
@@ -535,42 +722,82 @@ tmp <- extract(land, l2, fun=sum, na.rm=T, small=T)
 setkey(l2.pop, rn)
 l2.pop[row.names(l2), land_area_km := tmp]
 l2.pop[, PD12_TOT := PN12_TOT/land_area_km]
+l2.pop[PN12_TOT==0, PD12_TOT := 0]
+l2.pop[, PN12_TOT_WDI := PN12_TOT*fact]
+l2.pop[, PD12_TOT_WDI := PN12_TOT_WDI/land_area_km]
+l2.pop[land_area_km==0, PD12_TOT_WDI := 0]
+
+# Verify again
+l2.pop[, sum(PN12_TOT_WDI, na.rm=T), by=ISO3]
+l2.pop[, fact := NULL]
+
+# Plot these results
+tmp.m <- SpatialPolygonsDataFrame(l2, data.frame(l2.pop), match.ID="rn")
+tm_shape(tmp.m) + tm_fill("PD12_TOT_WDI", style="kmeans", n=9)
+# => looks ok
+
+# Export
+attr(l2.pop, "var.labels") <- c(l2.lbl,
+  "land area (sq. km. GPWv4 land mask)",
+  "population (pp, 2012, LandScan)",
+  "population density (pp/sq. km., 2012, LandScan)",
+  "population sacled to WDI (pp, 2012, LandScan)",
+  "population density scaled to WDI (pp/sq. km., 2012, LandScan)")
+write.dta(l2.pop, "./out/r16.05/svyL2Maps-LandScan2012.dta",
+  convert.factors="string", version=12L)
 
 
-# Rural pop density: need to get the density of each pixel, then classify pixels into
+###############################################
+# TODO Rural pop density: need to get the density of each pixel, then classify pixels into
 # urban/rural according to published WDI country rates.
 popdens <- pop/land
-writeRaster(popdens, "./LandScan_2012/lspop2012_density.tif")
-popdens <- raster("./LandScan_2012/lspop2012_density.tif")
-summary(popdens)
+popdens <- mask(popdens, pop, maskvalue=0, updatevalue=0)
+popdens <- mask(popdens, land, maskvalue=0, updatevalue=0)
+popdens <- mask(popdens, pop, maskvalue=NA, updatevalue=NA)
+popdens <- mask(popdens, land, maskvalue=NA, updatevalue=NA)
 
+# Verify
+pop <- setMinMax(pop)
+minValue(pop)
+# [1] 0
+maxValue(pop)
+# [1] 99412
+minValue(popdens)
+# [1] 0
+maxValue(popdens)
+# [1] 88751130
+# => note that this seems to give erroneous densities
+
+tm_shape(pop) + tm_raster(style="kmeans", n=9)
+tm_shape(popdens) + tm_raster(style="kmeans", n=9)
+
+writeRaster(popdens, "./LandScan_2012/lspop2012_density.tif", overwrite=T)
+popdens <- raster("./LandScan_2012/lspop2012_density.tif")
 
 iso3 <- l2.dt[, unique(ISO3)]
-rural <- wdi[`Country Code` %in% iso3, .(ISO3=`Country Code`, rurate=as.numeric(`2014`))]
+rural <- wdi[`Country Code` %in% iso3, .(ISO3=`Country Code`, rate=as.numeric(`2014`)/100)]
 
-for (i in iso3 ) {
-  tmp.l2 <- l2[l2$ISO3==i,]
-  tmp <- mask(crop(popdens, tmp.l2), tmp.l2)
-  tmp.pop <- as.vector(tmp)
-  tmp.pop <- sort(tmp.pop)
-  cutoff <- pop.dt[cumsum(pop.dt) >= totpop*rural.rate][1]
+r.rural <- lapply(iso3, function(x) {
+  tmp.m <- l2[l2$ISO3==x,]
+  tmp.r <- mask(crop(popdens, tmp.m), tmp.m)
+  tmp.v <- as.vector(tmp.r)
+  tmp.v <- sort(tmp.v)
+  cutoff <- tmp.v[cumsum(tmp.v) >= tmp.v*rural[ISO3==x, rate]]
   cutoff
 
   # Classify 0-rural/1-urban areas using cutoff value
-  m <- c(0, cutoff, 0, cutoff, max(pop.dt)+1, 1)
-  m <- matrix(popdens, ncol=3, byrow=T)
-  pop.rur <- reclassify(popdens, m, include.lowest=T)
+  m <- c(0, cutoff, 1, cutoff, max(tmp.v)+1, 0)
+  m <- matrix(m, ncol=3, byrow=T)
+  tmp.rur <- reclassify(tmp.r, m, include.lowest=T)
 
   # Add levels
-  rat <- data.frame(ID=0:1, levels=c("rural", "urban"))
-  levels(pop.rur) <- rat
-
-  # Count urban/rural pop
-
-}
+  rat <- data.frame(ID=0:1, levels=c("urban", "rural"))
+  levels(tmp.rur) <- rat
+  return(tmp.rur)
+})
 
 
 
-rm(cl, tmp, i, x, y, svy.split, iso3)
+rm(cl, tmp, tmp.m, tmp.r, i, x, y, svy.split, iso3, l2.pop.iso3)
 save.image("./out/r16.05/svyL2Maps_r16.05.RData")
 
