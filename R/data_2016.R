@@ -442,11 +442,27 @@ write.dta(l2.srtm, "./out/r16.05/svyL2Maps-SRTM.dta",
 # Willmott, C. J. and K. Matsuura (2001) Terrestrial Air Temperature and
 # Precipitation: Monthly and Annual Time Series (1950 - 1999),
 # http://climate.geog.udel.edu/~climate/html_pages/README.ghcn_ts2.html.
+# http://www.esrl.noaa.gov/psd/data/gridded/data.UDel_AirT_Precip.html
 #
 # We have the option to weight the biovars by cropland (not done below)
 
-pre <- brick("./UDEL/precip.mon.total.v401.nc")
-temp <- brick("./UDEL/air.mon.mean.v401.nc")
+#pre <- brick("./UDEL/precip.mon.total.v401.nc")
+#temp <- brick("./UDEL/air.mon.mean.v401.nc")
+pre <- brick("./UDEL/precip.mon.total.v401.epsg4326.nc")
+temp <- brick("./UDEL/air.mon.mean.v401.epsg4326.nc")
+
+spplot(pre[["X2010.12.01"]])
+spplot(temp[["X2010.12.01"]])
+
+# Note that UDEL longtitudes are from 0, 360 instead of -180, 180. Use `rotate()`.
+#system("gdalwarp -t_srs WGS84 -wo SOURCE_EXTRA=1000 -multi -dstnodata None \
+#   --config CENTER_LONG 0 -of netCDF \
+#   precip.mon.total.v401.nc  precip.mon.total.v401.WGS84.nc")
+# system("ncks -d lon,340.0,100.0 -d lat,-50.0,50.0 precip.mon.total.v401.nc precip.mon.total.v401.SSA.nc")
+# => these solutions don't work
+
+pre <- rotate(pre, filename="./UDEL/precip.mon.total.v401.epsg4326.nc")
+temp <- rotate(temp, filename="./UDEL/air.mon.mean.v401.epsg4326.nc")
 
 res(pre)
 # [1] 0.5 0.5 => 50km
@@ -460,7 +476,7 @@ temp <- crop(temp, l2)
 names(pre)[1:10]
 tail(names(pre), 10)
 dim(pre)
-# [1]  125  101 1380
+# [1]  125  136 1380
 tm <- seq(as.Date("1900-01-01"), as.Date("2014-12-31"), "month")
 pre <- setZ(pre, tm, "month")
 temp <- setZ(temp, tm, "month")
@@ -470,10 +486,11 @@ pre <- subset(pre, 601:1380)
 temp <- subset(temp, 601:1380)
 
 # Extract monthly mean and total precipitation
-tmp <- extract(pre, l2, fun=mean, na.rm=T, small=T)
+tmp <- extract(pre, l2, fun=mean, na.rm=T)
 dim(tmp)
 # [1] 2078 780
 tmp <- data.table(rn=row.names(l2), tmp)
+setnames(tmp, 2:781, format(tm[601:1380], "%Y-%m-%d"))
 tmp <- melt(tmp, id.vars=c("rn"), variable.name="month", value.name="pre_mean", variable.factor=F)
 tmp[, month := as.Date(month)]
 l2.udel <- tmp
@@ -529,21 +546,33 @@ summary(l2.udel$temp_min)
 #    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
 #      -4      17      20     Inf      24     Inf  245700
 summary(l2.udel$temp_max)
-
-# Note that the minimum and maximum of a numeric empty set are +Inf and -Inf (in this order!),
-# so means that some of the survey units are not covered by the rasters at all. Can
-# we map those?
-tmp.l2 <- SpatialPolygonsDataFrame(l2, data.frame(l2.udel[month==max(l2.udel$month)]), match.ID="rn")
-tmap_mode("view")
-qtm(tmp, fill="pre_mean")
-qtm(tmp, fill="temp_mean")
-qtm(tmp, fill="temp_min")
-
+#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
+#   -Inf      20      23    -Inf      25      39  245700
 
 # Convert cm/month to mm/month
 l2.udel[, `:=`(
   pre_mean=pre_mean*10,
   pre_total=pre_total*10)]
+
+# Note that the minimum and maximum of a numeric empty set are +Inf and -Inf (in this order),
+# so means that some of the survey units are not covered by the rasters at all. Can
+# we map those?
+tmp.l2 <- SpatialPolygonsDataFrame(l2, data.frame(l2.udel[month==max(l2.udel$month)]), match.ID="rn")
+
+tmap_mode("view")
+tm_shape(tmp.l2) + tm_fill("temp_mean", colorNA="grey", palette="-Spectral") +
+  tm_shape(temp) + tm_raster("X2014.12.01", palette="-Spectral")
+
+# Also check SPEI
+tmp.l2 <- SpatialPolygonsDataFrame(l2, data.frame(l2.spei[month==max(l2.spei$month)]), match.ID="rn")
+tm_shape(tmp.l2) + tm_fill("spei", colorNA="grey", palette="-Spectral")
+# => seems ok
+
+# Also check SRTM
+tmp.l2 <- SpatialPolygonsDataFrame(l2, data.frame(l2.srtm), match.ID="rn")
+tm_shape(tmp.l2) + tm_fill("alt_med", colorNA="grey", palette="-Spectral")
+# => seems ok
+
 
 # Yearly summary
 l2.udel.year <- l2.udel[, .(
@@ -554,7 +583,7 @@ l2.udel.year <- l2.udel[, .(
   temp_max=max(temp_max, na.rm=T)), by=.(rn, year=year(month))]
 
 # 30-year seasonal summary
-l2.udel.jandec <- l2.udel[month %between% c("1984-Jan-01", "2014-Dec-31"), .(
+l2.udel.jandec <- l2.udel[month %between% c("1984-01-01", "2014-12-31"), .(
   pre_mean=mean(pre_mean, na.rm=T), # mean monthly rain
   pre_total=mean(pre_total, na.rm=T), # monthly mean of total rain over the year
   temp_mean=mean(temp_mean, na.rm=T),
@@ -568,7 +597,8 @@ l2.udel.jandec <- l2.udel[month %between% c("1984-Jan-01", "2014-Dec-31"), .(
 # Export
 setkey(l2.udel, rn)
 setkey(l2.dt, rn)
-setkey(l2.dt.yearly, rn)
+setkey(l2.udel.yearly, rn)
+setkey(l2.udel.jandec, rn)
 l2.udel <- l2.dt[, .SD, .SDcols=1:7][l2.udel]
 l2.udel.year <- l2.dt[, .SD, .SDcols=1:7][l2.udel.year]
 l2.udel.jandec <- l2.dt[, .SD, .SDcols=1:7][l2.udel.jandec]
@@ -581,7 +611,7 @@ attr(l2.udel, "var.labels") <-c(l2.lbl[1:7],
   "temperature (min, deg C)",
   "temperature (max, deg C)")
 
-attr(l2.udel.year, "var.labels") <-c(l2.lbl,
+attr(l2.udel.year, "var.labels") <-c(l2.lbl[1:7],
   "year",
   "precipitation (monthly mean over the year, mm/month)",
   "precipitation (total rain over the year, mm/year)",
@@ -589,7 +619,7 @@ attr(l2.udel.year, "var.labels") <-c(l2.lbl,
   "temperature (min over the year, deg C)",
   "temperature (max over the year, deg C)")
 
-attr(l2.udel.jandec, "var.labels") <-c(l2.lbl,
+attr(l2.udel.jandec, "var.labels") <-c(l2.lbl[1:7],
   "month",
   "precipitation (30-year mean for that month, mm/month)",
   "precipitation (30-year monthly rain over the entire area, mm/month)",
