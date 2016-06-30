@@ -509,10 +509,10 @@ summary(l2.udel$month)
 # "1950-01-01" "1966-03-24" "1982-06-16" "1982-06-16" "1998-09-08" "2014-12-01"
 summary(l2.udel$pre_mean)
 #    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
-#    0.00    1.51    6.92    9.43   14.80  111.80  252720
+#   0.000   1.230   6.587   9.180  14.570 111.800    7800
 summary(l2.udel$pre_total)
-#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
-#    0.00    2.92   12.95   33.04   33.18 2175.00  245700
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+# 0.00    2.44   12.41   31.57   32.47 2175.00
 
 # Extract monthly mean, min and max temperature
 tmp <- extract(temp, l2, fun=mean, na.rm=T, small=T)
@@ -540,28 +540,64 @@ setkey(tmp, rn, month)
 l2.udel$temp_max <- tmp[l2.udel][, temp_max]
 
 summary(l2.udel$temp_mean)
-#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
-#   -2.20   18.70   21.50   21.58   24.50   37.74  252720
+#     Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
+#    -2.20   19.20   22.50   22.46   25.78   38.50    7800
 summary(l2.udel$temp_min)
-#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
-#      -4      17      20     Inf      24     Inf  245700
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+#   -4      18      22     Inf      25     Inf
 summary(l2.udel$temp_max)
-#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
-#   -Inf      20      23    -Inf      25      39  245700
+#  Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+#  -Inf      20      24    -Inf      26      40
+
+# Where are the missing values?
+bad.na <- l2.udel[is.na(pre_mean), unique(rn)]
+#       rn   N
+#  1: 1042 780
+#  2: 1043 780
+#  3: 1044 780
+#  4: 1045 780
+#  5: 1046 780
+#  6: 1048 780 => all same as "1047"
+#  7:  107 780 => 153
+#  8:  294 780 => 295
+#  9:   31 780 => 138
+# 10:  431 780 => 383
+
+# Impute all missing values (in all years)
+bad.repl <- c(rep("1047", 6), "153", "295", "138", "383")
+bad.na <- data.table(rn=bad.na, repl=bad.repl)
+setkey(bad.na, repl)
+setkey(l2.udel, rn)
+bad.na <- l2.udel[bad.na]
+bad.na <- bad.na[, .SD, .SDcols=c("rn", "i.rn", "month", "pre_mean", "temp_mean")]
+setnames(bad.na, c("rn", "i.rn"), c("repl", "rn"))
+
+setkey(bad.na, rn, month)
+setkey(l2.udel, rn, month)
+l2.udel <- bad.na[l2.udel]
+l2.udel[is.na(i.pre_mean), i.pre_mean := pre_mean]
+l2.udel[is.na(i.temp_mean), i.temp_mean := temp_mean]
+l2.udel[, pre_mean := NULL]
+l2.udel[, temp_mean := NULL]
+setnames(l2.udel, c("i.pre_mean", "i.temp_mean"), c("pre_mean", "temp_mean"))
+l2.udel[, repl := NULL]
+
+# Verify
+summary(l2.udel$pre_mean)
+summary(l2.udel$temp_mean)
 
 # Convert cm/month to mm/month
 l2.udel[, `:=`(
   pre_mean=pre_mean*10,
   pre_total=pre_total*10)]
 
-# Note that the minimum and maximum of a numeric empty set are +Inf and -Inf (in this order),
-# so means that some of the survey units are not covered by the rasters at all. Can
-# we map those?
+# Verify
 tmp.l2 <- SpatialPolygonsDataFrame(l2, data.frame(l2.udel[month==max(l2.udel$month)]), match.ID="rn")
+writeOGR(tmp.l2, "./out/r16.05", "svyL2Maps-UDEL", "ESRI Shapefile", overwrite=T)
 
-tmap_mode("view")
-tm_shape(tmp.l2) + tm_fill("temp_mean", colorNA="grey", palette="-Spectral") +
-  tm_shape(temp) + tm_raster("X2014.12.01", palette="-Spectral")
+tm_shape(tmp.l2) +
+  tm_polygons("pre_mean", colorNA="grey", border.col="black", palette="Spectral", n=12) +
+  tm_shape(pre) + tm_raster("X1380", palette="-Spectral")
 
 # Also check SPEI
 tmp.l2 <- SpatialPolygonsDataFrame(l2, data.frame(l2.spei[month==max(l2.spei$month)]), match.ID="rn")
@@ -633,56 +669,6 @@ write.dta(l2.udel, "./out/r16.05/svyL2Maps-UDEL_monthly_1950-2014.dta",
 write.dta(l2.udel.year, "./out/r16.05/svyL2Maps-UDEL_yearly_1950-2014.dta",
   convert.factors="string", version=12L)
 write.dta(l2.udel.jandec, "./out/r16.05/svyL2Maps-UDEL_seasonal_1984-2014.dta",
-  convert.factors="string", version=12L)
-
-
-###############################################
-## TODO WorldClim
-#
-# Also get 12 monthly files for tmin, tmax, prec over 1950-2000
-tmin.wc <- apply(l2, 1, function(x) getData("worldclim", var="tmin", res=0.5, lon=x["X"], lat=x["Y"], path="./WorldClim_0.5"))
-tmax.wc <- apply(l2, 1, function(x) getData("worldclim", var="tmax", res=0.5, lon=x["X"], lat=x["Y"], path="./WorldClim_0.5"))
-tpre.wc <- apply(l2, 1, function(x) getData("worldclim", var="prec", res=0.5, lon=x["X"], lat=x["Y"], path="./WorldClim_0.5"))
-
-# I assume each tile covers the entire admin unit, but maybe I should combine the tiles
-# first into 1 single raster instead? Let's try to map them to check
-tm_shape(l2[1,]) + tm_fill("#000") +
-  tm_shape(raster(tmin.wc[[1]], layer=1)) %>% tm_raster()
-# => tiles are very large indeed, so code below is fine
-
-tmin.wc.l2 <-  lapply(1:length(bio.wc), function(i) extract(tmin.wc[[i]], l2[i,],
-  fun=mean, na.rm=T, small=T))
-tmax.wc.l2 <-  lapply(1:length(bio.wc), function(i) extract(tmax.wc[[i]], l2[i,],
-  fun=mean, na.rm=T, small=T))
-tpre.wc.l2 <-  lapply(1:length(bio.wc), function(i) extract(tpre.wc[[i]], l2[i,],
-  fun=mean, na.rm=T, small=T))
-
-# Monthly summaries
-# Values are listed across admin units for each 12 months in 1990-2000 period
-tmin.wc.l2[[1]]
-# tmin1_25 tmin2_25 tmin3_25 tmin4_25 tmin5_25 tmin6_25 tmin7_25 tmin8_25 tmin9_25
-# [1,] 202.2451 215.1861 220.9259 221.9773 222.3661 216.6641 213.6172 208.0666 215.1513
-# tmin10_25 tmin11_25 tmin12_25
-# [1,]  214.5855  216.0756  209.3404
-tmin.wc.l2 <- do.call(rbind, tmin.wc.l2)
-tmax.wc.l2 <- do.call(rbind, tmax.wc.l2)
-tpre.wc.l2 <- do.call(rbind, tpre.wc.l2)
-
-tmin.wc.l2 <- cbind(l2.map@data, tmin.wc.l2)
-setnames(tmin.wc.l2, 12:23, paste0("tmin_", substr(month.name, 1, 3)))
-setnames(tmax.wc.l2, paste0("tmax_", substr(month.name, 1, 3)))
-setnames(tpre.wc.l2, paste0("tpre_", substr(month.name, 1, 3)))
-
-bio.wc.mth <- cbind(tmin.wc.l2, tmax.wc.l2, tpre.wc.l2)
-
-# Export monthly means
-bio.mth.lbl <- c(
-  paste0("min. temp.", " - ", month.abb, " (degree C*10)"),
-  paste0("max. temp.", " - ", month.abb, " (degree C*10)"),
-  paste0("precipitation", " - ", month.abb, " (mm)"))
-
-attr(bio.wc.mth, "var.labels") <- c(attr, bio.mth.lbl)
-write.dta(bio.wc.mth, "./out/r16.05/svyL2Maps-WorldClim-1km_month_1950-2000.dta",
   convert.factors="string", version=12L)
 
 
@@ -825,6 +811,56 @@ r.rural <- lapply(iso3, function(x) {
   levels(tmp.rur) <- rat
   return(tmp.rur)
 })
+
+
+###############################################
+## TODO WorldClim
+#
+# Also get 12 monthly files for tmin, tmax, prec over 1950-2000
+tmin.wc <- apply(l2, 1, function(x) getData("worldclim", var="tmin", res=0.5, lon=x["X"], lat=x["Y"], path="./WorldClim_0.5"))
+tmax.wc <- apply(l2, 1, function(x) getData("worldclim", var="tmax", res=0.5, lon=x["X"], lat=x["Y"], path="./WorldClim_0.5"))
+tpre.wc <- apply(l2, 1, function(x) getData("worldclim", var="prec", res=0.5, lon=x["X"], lat=x["Y"], path="./WorldClim_0.5"))
+
+# I assume each tile covers the entire admin unit, but maybe I should combine the tiles
+# first into 1 single raster instead? Let's try to map them to check
+tm_shape(l2[1,]) + tm_fill("#000") +
+  tm_shape(raster(tmin.wc[[1]], layer=1)) %>% tm_raster()
+# => tiles are very large indeed, so code below is fine
+
+tmin.wc.l2 <-  lapply(1:length(bio.wc), function(i) extract(tmin.wc[[i]], l2[i,],
+  fun=mean, na.rm=T, small=T))
+tmax.wc.l2 <-  lapply(1:length(bio.wc), function(i) extract(tmax.wc[[i]], l2[i,],
+  fun=mean, na.rm=T, small=T))
+tpre.wc.l2 <-  lapply(1:length(bio.wc), function(i) extract(tpre.wc[[i]], l2[i,],
+  fun=mean, na.rm=T, small=T))
+
+# Monthly summaries
+# Values are listed across admin units for each 12 months in 1990-2000 period
+tmin.wc.l2[[1]]
+# tmin1_25 tmin2_25 tmin3_25 tmin4_25 tmin5_25 tmin6_25 tmin7_25 tmin8_25 tmin9_25
+# [1,] 202.2451 215.1861 220.9259 221.9773 222.3661 216.6641 213.6172 208.0666 215.1513
+# tmin10_25 tmin11_25 tmin12_25
+# [1,]  214.5855  216.0756  209.3404
+tmin.wc.l2 <- do.call(rbind, tmin.wc.l2)
+tmax.wc.l2 <- do.call(rbind, tmax.wc.l2)
+tpre.wc.l2 <- do.call(rbind, tpre.wc.l2)
+
+tmin.wc.l2 <- cbind(l2.map@data, tmin.wc.l2)
+setnames(tmin.wc.l2, 12:23, paste0("tmin_", substr(month.name, 1, 3)))
+setnames(tmax.wc.l2, paste0("tmax_", substr(month.name, 1, 3)))
+setnames(tpre.wc.l2, paste0("tpre_", substr(month.name, 1, 3)))
+
+bio.wc.mth <- cbind(tmin.wc.l2, tmax.wc.l2, tpre.wc.l2)
+
+# Export monthly means
+bio.mth.lbl <- c(
+  paste0("min. temp.", " - ", month.abb, " (degree C*10)"),
+  paste0("max. temp.", " - ", month.abb, " (degree C*10)"),
+  paste0("precipitation", " - ", month.abb, " (mm)"))
+
+attr(bio.wc.mth, "var.labels") <- c(attr, bio.mth.lbl)
+write.dta(bio.wc.mth, "./out/r16.05/svyL2Maps-WorldClim-1km_month_1950-2000.dta",
+  convert.factors="string", version=12L)
 
 
 
