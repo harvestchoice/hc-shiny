@@ -11,7 +11,7 @@ output:
     toc_float: yes
 ---
 
-Model sets, parameters, and equations are documented below. The model code in R and default variables and parameters are [here](dream.Rmd). To run a sample simulation click [sample scenario](sample.Rmd).
+Model sets, parameters, and equations are documented below. The model code in R and default variables and parameters are [here](dream.Rmd).
 
 *************************************************************************************
 

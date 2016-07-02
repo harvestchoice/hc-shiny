@@ -12,7 +12,7 @@ output:
 ---
 
 
-Model sets, parameters, and equations are defined below. To run a sample simulation click [sample scenario](sample.Rmd). To read through the model [documentation](index.Rmd).
+Model sets, parameters, and equations are defined below. The model is run using default values. Model [documentation](index.Rmd).
 
 *************************************************************************************
 
@@ -20,7 +20,7 @@ Model sets, parameters, and equations are defined below. To run a sample simulat
 
 # Helper
 showme <- function(x) { 
-  rhandsontable(x[1,,], paste0("Y", per-1), readOnly=T, width="80%", height=100) %>%
+  rhandsontable(x[1,,], paste0("Y", per-1), readOnly=T, height=100) %>%
     hot_cols(type="numeric", format="0,0.#", renderer=convertNA())
 }
 

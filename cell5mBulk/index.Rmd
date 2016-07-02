@@ -2,7 +2,7 @@
 title:  ""
 output:
   html_document:
-    css: /home/projects/shiny/assets/bootstrap.css
+    css: /home/projects/hc-shiny/assets/bootstrap.css
     toc: no
 ---
 

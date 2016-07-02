@@ -6,10 +6,10 @@
 #####################################################################################
 
 library(data.table)
+library(leaflet)
 library(tmap)
 library(ggvis)
 library(foreign)
 library(rgdal)
-library(leaflet)
 
 load("./tmp/popTrends.RData")
