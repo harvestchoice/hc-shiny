@@ -1140,13 +1140,14 @@ writeOGR(s, "./HUC", "HUC_Name_clip_web", "ESRI Shapefile", overwrite_layer=T)
 #####################################################################################
 # 2015.11.11 Re-run biovars above across district survey maps from 1990-2013
 #####################################################################################
-setwd("~/Projects/hc-data")
-load("./out/r15.10/svyL2Maps.RData")
 
 library(data.table)
 library(reshape2)
 library(dismo)
 library(foreign)
+
+setwd("~/Projects/hc-data")
+load("./out/r15.10/svyL2Maps_r15.10.RData")
 
 # Generate biovars year by year
 bio <- lapply(seq(1, 648, 12), function(i) biovars(
@@ -1301,5 +1302,5 @@ tmp <- GDALinfo("./CRU_TS.3.22/cru_ts3.22.1901.2013.pre.dat.nc", returnStats=F)
 
 
 # Save all
-save.image(file="./out/r15.10/svyL2Maps.RData")
+save.image(file="./out/r15.10/svyL2Maps_r15.10.RData")
 
