@@ -267,9 +267,11 @@ pal.elev <- c(
   "#f5f4f2",
   "#f5f4f2")
 
+bad <- c("Chibanga", "Mungulula", "Chingoma", "Kafa", "Kholongo", "Kanzizila", "Kazizila", "Lutangu", "Maondo", "Munguli", "Mwangano", "Ntaisa", "Simalumba",
+  # Others from looking at the map
+  "Sinoya", "")
+
 # Save all
-save.image("./2016.06/ARPoints.RData")
-
-
+save.image("/home/Projects/hc-shiny/ar/data/ARPoints.RData")
 
 

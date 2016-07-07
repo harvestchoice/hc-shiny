@@ -10,4 +10,4 @@ library(leaflet)
 library(raster)
 
 # Load data
-load("../../hc-data/out/AR/2016.06/ARPoints.RData")
+load("./data/ARPoints.RData")

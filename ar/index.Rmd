@@ -1,25 +1,31 @@
 ---
 title: "Africa RISING Locations"
 author: "Zambia"
-date: "Updated on 7/7/2016"
+date: "DRAFT 7/7/2016"
 output: html_document
 ---
 
-Currently showing `r dim(ar[ar$country_id=="ZMB",])[1]` camps and `r dim(zmb)[1]` villages. Village points are colored by camp.
+Currently showing `r dim(ar[ar$country_id=="ZMB",])[1]` camps and `r dim(zmb)[1]` villages. Village points are colored by camp (i.e. each camp is a different color).
 
 
 ```{r, echo=F}
 
-bad <- c("Chibanga", "Mungulula", "Chingoma", "Kafa", "Kholongo", "Kanzizila", "Kazizila", "Lutangu", "Maondo", "Munguli", "Mwangano", "Ntaisa", "Simalumba")
-
 # Generate leaflet map
 leaflet(width="100%", height=640) %>%
   setView(30,-13, 6) %>%
-  addProviderTiles("OpenTopoMap") %>%
+  addTiles(urlTemplate="https://2.aerial.maps.api.here.com/maptile/2.1/maptile/newest/hybrid.day/{z}/{x}/{y}/256/png8?app_id=ViVS62MmsdTJSzwXMlHb&app_code=bsODmSCzkVqEMR8TnGPHdw",
+    attribution="&copy; HERE maps, 2014 DigitalGlobe.",
+    group="HERE Hybrid Day") %>%
+  addTiles(urlTemplate="http://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+    attribution="&copy; OpenStreetMap, SRTM | &copy; OpenTopoMap (CC-BY-SA)",
+    group="OpenTopoMap") %>%
+  addTiles(urlTemplate="http://server.arcgisonline.com/ArcGIS/rest/services/Specialty/DeLorme_World_Base_Map/MapServer/tile/{z}/{y}/{x}",
+    attribution="Tiles &copy; Esri &mdash; Copyright: &copy;2012 DeLorme",
+    group="ESRI DeLorme") %>%
   
   # Add rasters
-  addRasterImage(alt, opacity=.6, group="Altitude", colors="RdYlBu") %>%
-  addRasterImage(strat.zmb, opacity=.6, group="Stratification", colors=pal.elev) %>%
+  addRasterImage(alt, opacity=.8, group="Altitude", colors="RdYlBu") %>%
+  addRasterImage(strat.zmb, opacity=.8, group="Stratification", colors=pal.elev) %>%
   
   # Add camps
   addMarkers(data=ar[ar$country_id=="ZMB",],
@@ -31,7 +37,7 @@ leaflet(width="100%", height=640) %>%
       site_desc, sep="<br>"),    
     options=markerOptions(riseOnHover=T)) %>%
   
-    # Add villages
+  # Add villages
   addCircleMarkers(data=zmb,
     fillColor=~colorFactor("Spectral", NULL)(site_desc), 
     group="Villages",
@@ -45,6 +51,20 @@ leaflet(width="100%", height=640) %>%
     #clusterOptions=markerClusterOptions(),
     options=markerOptions(riseOnHover=T)) %>%
   
+  # Add non-Zambia locations
+  addCircleMarkers(data=ar[ar$country_id!="ZMB",],
+    fillColor="grey40", 
+    group="Other AR Locations",
+    label=~paste(village_id, 
+      paste("Village:", village), paste("District:", district), sep=" | "), 
+    popup=~paste(
+      paste("Region:", region), 
+      paste("District:", district),
+      paste("Village:", village), sep="<br>"),
+    color="white", weight=1, fillOpacity=1, radius=5,
+    #clusterOptions=markerClusterOptions(),
+    options=markerOptions(riseOnHover=T)) %>%    
+  
   # # Legend
   # addLegend(title="Zambia",
   #   opacity=1,
@@ -55,15 +75,18 @@ leaflet(width="100%", height=640) %>%
   # addLegend(title="Camps",
   #   opacity=1, pal="Spectral",
   #   position="bottomleft", 
-  #   values=aslevels(zmb$site_desc),
-  #   labels=levels(zmb$site_desc))  %>%  
-  
-  # Add layer control
-  hideGroup(c("Altitude", "Stratification")) %>%
-  addLayersControl(overlayGroups=c("Villages", "Camps", "Altitude", "Stratification"),
-    options=layersControlOptions(collapsed=F)) %>%
-  addScaleBar("bottomright")
+#   values=aslevels(zmb$site_desc),
+#   labels=levels(zmb$site_desc))  %>%  
 
+  # Add layer control
+  hideGroup(c("OpenTopoMap", "HERE Hybrid Day", "Altitude", "Stratification")) %>%
+  
+  addLayersControl(
+    baseGroups=c("OpenTopoMap", "HERE Hybrid Day", "ESRI DeLorme"),
+    overlayGroups=c("Villages", "Camps", "Other AR Locations", "Altitude", "Stratification"),
+    options=layersControlOptions(collapsed=F)) %>%
+  addMiniMap(zoomLevelFixed=4, autoToggleDisplay=F) %>%
+  addScaleBar("bottomright")
 
 
 ```
