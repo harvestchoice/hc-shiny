@@ -91,3 +91,6 @@ leaflet(width="100%", height=640) %>%
 
 ```
 
+
+<small>Source on [GitHub](https://github.com/harvestchoice/hc-shiny/tree/master/ar)</small>.
+
