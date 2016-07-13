@@ -225,7 +225,7 @@ zmb <- readOGR("./2016.06", "af_site_points_ZMB")
 names(ar)[c(8,13,15)] <- c("megasite_id", "coordinator", "lastUpdated")
 names(zmb)[c(2,11)] <- c("megasite_id", "lastUpdated")
 ar$site_desc <- gsub("..", ".", ar$site_desc, fixed=T)
-ar$site_desc <- gsub(" 1 villages", " 1 village", ar$site_desc, fixed=T)
+ar$site_desc <- gsub(". 1 villages", ". 1 village", ar$site_desc, fixed=T)
 
 # Load SRTM altitude raster for ZMB
 alt <- raster("./ZMB/ZMB_msk_alt.vrt")
