@@ -218,11 +218,14 @@ setwd("~/Projects/hc-data/out/AR")
 
 # Load latest AR maps, and Zambia village locations
 ar <- readOGR("./2016.06", "af_site_points")
+ar <- readRDS("./2016.06/af_site_points.rds")
 zmb <- readOGR("./2016.06", "af_site_points_ZMB")
 
 # Clean up field names
 names(ar)[c(8,13,15)] <- c("megasite_id", "coordinator", "lastUpdated")
-names(zmb)[c(1,12,17)] <- c("megasite_id", "coordinator", "lastUpdated")
+names(zmb)[c(2,11)] <- c("megasite_id", "lastUpdated")
+ar$site_desc <- gsub("..", ".", ar$site_desc, fixed=T)
+ar$site_desc <- gsub(" 1 villages", " 1 village", ar$site_desc, fixed=T)
 
 # Load SRTM altitude raster for ZMB
 alt <- raster("./ZMB/ZMB_msk_alt.vrt")
@@ -267,11 +270,12 @@ pal.elev <- c(
   "#f5f4f2",
   "#f5f4f2")
 
-bad <- c("Chibanga", "Mungulula", "Chingoma", "Kafa", "Kholongo", "Kanzizila", "Kazizila", "Lutangu", "Maondo", "Munguli", "Mwangano", "Ntaisa", "Simalumba",
+bad <- c("Chingoma", "Kafa", "Lutangu", "Maondo", "Munguli", "Mwangano", "Ntaisa", "Simalumba",
   # Others from looking at the map
-  "Sinoya", "")
+  "Sinoya", "Chilembwe", "Chivwala", "Chilasa", "Mulungavyela", "Kapayika", "Robert",
+  "Chipapika", "Matemanga", "Jali Jali", "Mahemu")
 
 # Save all
-save.image("/home/Projects/hc-shiny/ar/data/ARPoints.RData")
+save.image("/home/projects/hc-shiny/ar/data/ARPoints.RData")
 
 
