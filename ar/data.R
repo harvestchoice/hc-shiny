@@ -216,7 +216,7 @@ library(raster)
 setwd("~/Projects/hc-data/out/AR")
 
 # Load latest AR maps, and Zambia village locations
-ar <- readOGR("./2016.06", "af_site_points")
+ar <- readOGR("./2016.06", "af_site_points") # descriptions are truncated in DBF file
 ar <- readRDS("./2016.06/af_site_points.rds")
 zmb <- readOGR("./2016.06", "af_site_points_ZMB")
 

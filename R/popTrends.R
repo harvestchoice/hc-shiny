@@ -707,7 +707,7 @@ save_tmap(pmap, "./www/popTrends_SSA_2000-2020.png", width=6, pointsize=10)
 
 # Leaflet map
 tmap_mode("view")
-gpw.urb2.m <- gpw.urb2[gpw.urb2$UN_2015_E >= 50000,] # | gpw.urb2$UN_2015_DS > 2000
+gpw.urb2.m <- gpw.urb2[gpw.urb2$UN_2015_E > 2000,] # | gpw.urb2$UN_2015_DS >= 50000
 
 m <- tm_shape(gpw.urb2.m) +
   tm_bubbles(col="GROWRATE_20", size="UN_2015_E", scale=1,
@@ -876,3 +876,4 @@ p4 <- function()  {
 
 rm(tmp, d, iso3)
 save.image("./out/popTrends/popTrends.RData")
+save.image("/home/projects/hc-shiny/popTrends/tmp/popTrends.RData")
