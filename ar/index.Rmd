@@ -5,9 +5,6 @@ date: "DRAFT 7/12/2016"
 output: html_document
 ---
 
-Currently showing `r dim(ar[ar$country_id=="ZMB",])[1]` camps and `r dim(zmb)[1]` villages. Village points are colored by camp (i.e. each camp is a different color). In bright red on the map and in the table below are villages with -- possibly -- bad coordinates (please check and report back).
-
-
 ```{r, echo=F, cache=T}
 
 library(rgdal)
@@ -17,6 +14,13 @@ library(rhandsontable)
 
 # Load data
 load("./data/ARPoints.RData")
+
+```
+
+Currently showing `r nrow(ar[ar$country_id=="ZMB",])` camps and `r nrow(zmb)` villages. Village points are colored by camp (i.e. each camp is a different color). In bright red on the map and in the table below are villages with -- possibly -- bad coordinates (please check and report back).
+
+
+```{r, echo=F, cache=T}
 
 # Generate leaflet map
 leaflet(width="100%", height=640) %>%
