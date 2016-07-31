@@ -5,9 +5,9 @@
 # Authors: Bacou, Melanie <mel@mbacou.com>
 #####################################################################################
 
-# USe this script to check for HCAPI data updates on Shiny server restart. If the version
+# Use this script to check for HCAPI data updates on Shiny server restart. If the version
 # is incremented or files are missing then all data archives are re-generated (takes
-# 20 min).
+# around 20 min).
 
 library(data.table)
 library(hcapi3)

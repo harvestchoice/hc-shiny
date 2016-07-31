@@ -1,0 +1,11 @@
+base
+shiny
+rmarkdown
+sp
+rgdal
+foreign
+data.table
+rhandsontable
+Matrix
+spdep
+tmap

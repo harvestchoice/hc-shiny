@@ -1,0 +1,183 @@
+---
+title: "SSA Poverty - Spatial Regression"
+author: "IFPRI/HarvestChoice"
+date: "DRAFT 7/31/2016"
+output: 
+  html_notebook: 
+    fig_height: 6
+---
+
+```{r, warning=F, cache=T}
+
+library(rgdal)
+library(foreign)
+library(data.table)
+library(rhandsontable)
+library(spdep)
+library(tmap)
+
+# Load districts and attributes
+g2 <- readOGR("./data", "svyMaps_2016.06.22_sara")
+dt2 <- read.dta("./data/SSApoverty_Dist_forGWR.12.dta")
+
+# Keep STATA labels
+dt2.lbl <- data.table(varCode=names(dt2), varLabel=attr(dt2, "var.labels"))
+setkey(dt2.lbl, varCode)
+dt2 <- data.table(dt2)
+
+# Merge attributes to shapefile
+g2.dt <- data.table(g2@data)
+g2.dt[, rn22 := as.character(rn)]
+g2.dt[, rn := row.names(g2)]
+
+# Recode Ethiopia woredas
+dt2[svyCode=="eth2010", svyL2Cd := svyL1Cd * 10000 + svyL2Cd]
+
+setkey(g2.dt, ISO3, svyCode, svyL1Cd, svyL2Cd)
+setkey(dt2, ISO3, svyCode, svyL1Cd, svyL2Cd)
+
+# Any unmatched?
+dt2[!g2.dt][, .N, by=svyCode]
+
+# Remove `rn` from Sara's vars
+dt2[, rn := NULL]
+
+# Seems okay, so merge
+g2.dt <- dt2[g2.dt]
+
+# Check names
+names(g2.dt)[names(g2.dt) %like% "rn"]
+
+
+
+```
+
+```{r spat, warning=F}
+
+# Neighbor list
+nb2 <- poly2nb(g2, row.names=paste(g2$ISO3, g2$rn, sep="."))
+nb2
+
+```
+
+
+Plot contiguities for e.g. Ghana
+
+
+```{r}
+# Plot contiguities (e.g. GHA)
+gha <- g2[g2$ISO3=="GHA",]
+gha.dt <- g2.dt[ISO3=="GHA"]
+gha <- SpatialPolygonsDataFrame(gha, data.frame(gha.dt), match.ID="rn")
+coords.gha <- coordinates(gha)
+nb2.gha <- poly2nb(gha)
+
+plot(gha, border="grey",
+  main=list("Contiguity - Ghana (170 districts)"))
+plot(nb2.gha, coords.gha, col="blue", add=T)
+legend("bottomleft", 
+  legend=capture.output(summary(nb2.gha))[1:7], cex=.6)
+
+
+```
+
+```{r, cache=T}
+
+# Save distance matrix (W=row standardized) to STATA
+w2 <- nb2mat(nb2, style="W", zero.policy=T)
+w2 <- as.data.frame(w2)
+attr(w2, "var.labels") <- paste(g2$svyCode, g2$svyL1Cd, g2$svyL2Cd, sep=".")
+write.dta(w2, "./data/SSApoverty_continguity.dta", version=12)
+
+```
+
+
+```{r}
+
+# Spatial weights for SSA (and Ghana only)
+#w2 <- nb2listw(nb2)
+w.gha <- nb2listw(nb2.gha)
+
+# Explanatory vars
+var <- c("spei_lt", "L1_speihishock", "L1_speiloshock")
+
+# Plot to identify districts with missing values (Ghana only)
+tmap_mode("view")
+qtm(gha, fill=var[1])
+
+# Impute missing values with regional median
+tmp <- gha.dt[, lapply(.SD, median, na.rm=T), by=svyL1Cd, .SDcols=var]
+setnames(tmp, 2:4, paste(names(tmp), "imp", sep="_"))
+setkey(tmp, svyL1Cd)
+setkey(gha.dt, svyL1Cd)
+gha.dt <- tmp[gha.dt]
+
+gha.dt[is.na(spei_lt), spei_lt := spei_lt_imp]
+gha.dt[is.na(L1_speihishock), L1_speihishock := L1_speihishock_imp]
+gha.dt[is.na(L1_speiloshock), L1_speiloshock := L1_speiloshock_imp]
+
+```
+
+
+```{r}
+
+# Moran plots of explanatory vars (e.g. Ghana)
+gha <- SpatialPolygonsDataFrame(gha, data.frame(gha.dt), match.ID="rn")
+
+for(i in var) {
+  moran.plot(gha@data[[i]], w.gha, zero.policy=T,
+    xlab=dt2.lbl[i, varLabel], 
+    ylab=paste("Spatially Lagged", dt2.lbl[i, varLabel]),
+    labels=gha$svyL2Nm)
+}
+
+```
+
+
+
+```{r}
+
+# Compare models
+m1 <- lm(pcexp_ppp_m~spei_lt+L1_speihishock+L1_speiloshock, 
+  data=gha.dt)
+m1s <- sacsarlm(pcexp_ppp_m~spei_lt+L1_speihishock+L1_speiloshock, 
+  data=gha.dt, w.gha, zero.policy=T)
+
+# Results
+summary(m1)
+summary(m1s)
+
+```
+
+
+
+```{r}
+
+# Label 20 districts at random
+rnd <- sample(1:170, 20)
+```
+
+```{r}
+
+# Simple LM
+plot(m1@model$pcexp_ppp_m, m1$fitted.values,
+  main="Simple LM", 
+  xlab="pcexp_ppp_m~spei_lt+L1_speihishock+L1_speiloshock",
+  cex=.5, pch=16)
+
+text(m1@model$pcexp_ppp_m[rnd], m1$fitted.values[rnd], 
+  labels=gha.dt[!is.na(pcexp_ppp_m)][rnd, svyL2Nm],
+  cex=.6, pos=4)
+
+# SARAR
+plot(m1s$y, m1s$fitted.values,
+  main="SAC/SARAR LM", 
+  xlab="pcexp_ppp_m~spei_lt+L1_speihishock+L1_speiloshock",
+  cex=.5, pch=16)
+
+text(m1s$y[rnd], m1s$fitted.values[rnd], 
+  labels=gha.dt[!is.na(pcexp_ppp_m)][rnd, svyL2Nm],
+  cex=.6, pos=4)
+
+```
+

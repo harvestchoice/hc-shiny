@@ -107,8 +107,7 @@ leaflet(width="100%", height=640) %>%
 #   labels=levels(zmb$site_desc))  %>%  
 
   # Add layer controls
-  hideGroup(c("OpenTopoMap", "HERE Hybrid Day", "Altitude", "Stratification", 
-    "Villages (problems?)")) %>%
+  hideGroup(c("OpenTopoMap", "HERE Hybrid Day", "Altitude", "Stratification", "Villages (problems?)")) %>%
   addLayersControl(
     baseGroups=c("OpenTopoMap", "HERE Hybrid Day", "ESRI DeLorme"),
     overlayGroups=c("Villages", "Villages (problems?)", "Camps", "Other AR Locations", 
