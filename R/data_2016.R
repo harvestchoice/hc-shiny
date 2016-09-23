@@ -1025,7 +1025,7 @@ out[, lapply(.SD, summary), .SDcols=10:14]
 # 7: 22645.000 22620.000 22620.000 22620.000 22620.000
 
 # There are a bunch of empty values (some are okay due to Zanzibar islands and Lake Victoria)
-tmp <- out[is.na(spei03), .N, keyby=.(svyCode, year(month), svyL2Cd)]
+tmp <- out[is.na(spei03), .N, keyby=.(svyCode, rn)]
 tmp <- out[is.na(spei03), unique(rn)]
 
 tmap_mode("view")
@@ -1034,7 +1034,24 @@ tm_shape(spei[["X2014.01.16"]]) + tm_raster() +
   tm_shape(g2.out[g2.out$rn %in% tmp,], is.master=T) + tm_polygons("svyL1Nm") +
   tm_layout(legend.outside=T)
 
-# TODO looks at missing values
+# Look at missing values, and impute using nearest admin unit
+tm_shape(g2.out[g2.out$svyCode=="tza2007",]) + tm_polygons()
+
+bad <- c("235", "313", "132", "133", "134", "135", "30", "31", "28", "29", "43", "44",
+  "90", "94", "1351", "2271", "2721", "2731", "2741", "2751", "2761", "2771", "2781",
+  "2791", "2801", "2811", "260", "931", "58")
+
+impute <- c("241", "422", "91", "91", "91", "91", "91", "91", "131", "131", "131", "131",
+  "57", "96", "1821", "1141", "1981", "1141", "1141", "1141", "1981", "1141", "1141",
+  "1981", "1141", "1981", "280", "3100", "59")
+
+for (i in 1:29) out[rn==bad[i], `:=`(
+  spei03 = out[rn==impute[i], spei03],
+  spei06 = out[rn==impute[i], spei06],
+  spei12 = out[rn==impute[i], spei12],
+  spei24 = out[rn==impute[i], spei24],
+  spei48 = out[rn==impute[i], spei48])]
+
 
 
 g2.lbl <- c("ISO3 code", "survey code",
@@ -1049,7 +1066,7 @@ attr(out, "var.labels") <- c(g2.lbl, "month",
   "SPEI 24-month scale (mean)",
   "SPEI 48-month scale (mean)")
 
-write.dta(out, "./out/2016.09/svyL2Maps-SPEIbase.2.4_1950-2014_monthly.dta",
+write.dta(out, "./out/2016.09/svyL2Maps-SPEIbase.2.4_1950-2014_monthly_imputed.dta",
   convert.factors="string", version=12L)
 
 
