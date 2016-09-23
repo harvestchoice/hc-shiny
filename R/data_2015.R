@@ -805,7 +805,7 @@ tmn <- subset(tmn, 709:1356)
 tmx <- subset(tmx, 709:1356)
 
 # Intersect with districts map
-l2.map <- readOGR("./r15.10", "svyL2Maps_r1")
+l2.map <- readOGR("./2015.10", "svyL2Maps_r1")
 l2.map <- spTransform(l2.map, proj4string(pre))
 l2.map.dt <- data.table(l2.map@data)
 
@@ -907,13 +907,13 @@ attr(bio, "var.labels") <- c(attr, bio.lbl)
 attr(bio.svy, "var.labels") <- c(attr, bio.svy.lbl)
 attr(bio.mth, "var.labels") <- c(attr, bio.mth.lbl)
 
-write.dta(bio, "./out/r15.10/svyL2Maps-CRU.3.22_1960-2013_r1.dta", version=12L)
-write.dta(bio.svy, "./out/r15.10/svyL2Maps-CRU.3.22_2000-2010_year_r1.dta", version=12L)
-write.dta(bio.mth, "./out/r15.10/svyL2Maps-CRU.3.22.dta_1960-2013_month_r1.dta", version=12L)
+write.dta(bio, "./out/2015.10/svyL2Maps-CRU.3.22_1960-2013_r1.dta", version=12L)
+write.dta(bio.svy, "./out/2015.10/svyL2Maps-CRU.3.22_2000-2010_year_r1.dta", version=12L)
+write.dta(bio.mth, "./out/2015.10/svyL2Maps-CRU.3.22.dta_1960-2013_month_r1.dta", version=12L)
 
 
 # Save all
-save.image(file="./out/r15.10/svyL2Maps.RData")
+save.image(file="./out/2015.10/svyL2Maps.RData")
 
 
 
@@ -948,7 +948,7 @@ library(dismo)
 library(foreign)
 
 setwd("~/Projects/hc-data")
-load("./out/r15.10/svyL2Maps_r15.10.RData")
+load("./out/2015.10/svyL2Maps_2015.10.RData")
 
 # Generate biovars year by year
 bio <- lapply(seq(1, 648, 12), function(i) biovars(
@@ -981,7 +981,7 @@ bio.svy.lbl <- c(
   paste0(bio.lbl[15], " Y", 1990:2013))
 
 attr(bio.svy, "var.labels") <- c(attr, bio.svy.lbl)
-write.dta(bio.svy, "./out/r15.10/svyL2Maps-CRU.3.22_1990-2013_year_r1.dta", version=12L)
+write.dta(bio.svy, "./out/2015.10/svyL2Maps-CRU.3.22_1990-2013_year_r1.dta", version=12L)
 
 
 # We also need WorldClim biovars at 1km 1990-2000
@@ -1010,7 +1010,7 @@ setnames(bio.wc.l2, 12:30, paste0("bio", 1:19))
 
 # Export period means
 attr(bio.wc.l2, "var.labels") <- c(attr, bio.lbl)
-write.dta(bio.wc.l2, "./out/r15.10/svyL2Maps-WorldClim-1km_1950-2000_r1.dta", version=12L)
+write.dta(bio.wc.l2, "./out/2015.10/svyL2Maps-WorldClim-1km_1950-2000_r1.dta", version=12L)
 
 
 # Also get 12 monthly files for tmin, tmax, prec over 1950-2000
@@ -1057,7 +1057,7 @@ bio.mth.lbl <- c(
   paste0("precipitation", " - ", month.abb, " (mm)"))
 
 attr(bio.wc.mth, "var.labels") <- c(attr, bio.mth.lbl)
-write.dta(bio.wc.mth, "./out/r15.10/svyL2Maps-WorldClim-1km_month_1950-2000_r1.dta", version=12L)
+write.dta(bio.wc.mth, "./out/2015.10/svyL2Maps-WorldClim-1km_month_1950-2000_r1.dta", version=12L)
 
 
 # Sara also needs yearly drought index across districts 1990-2013
@@ -1094,7 +1094,7 @@ setnames(pdsi.svy, 12:34, paste0("pdsi", 1990:2012))
 # Export
 pdsi.lbl <- paste0("Index - Y", 1990:2012)
 attr(pdsi.svy, "var.labels") <- c(attr, pdsi.lbl)
-write.dta(pdsi.svy, "./out/r15.10/svyL2Maps-PDSI-50km_1990-2012_r1.dta", version=12L)
+write.dta(pdsi.svy, "./out/2015.10/svyL2Maps-PDSI-50km_1990-2012_r1.dta", version=12L)
 
 
 # Check on CRU resolution
@@ -1103,5 +1103,5 @@ tmp <- GDALinfo("./CRU_TS.3.22/cru_ts3.22.1901.2013.pre.dat.nc", returnStats=F)
 
 
 # Save all
-save.image(file="./out/r15.10/svyL2Maps_r15.10.RData")
+save.image(file="./out/2015.10/svyL2Maps_2015.10.RData")
 

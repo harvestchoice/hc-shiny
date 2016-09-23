@@ -71,7 +71,7 @@
 # 2016.05.25 update: Sara made ETH woreda codes unique
 #
 # All survey maps were generated on laptop, saved to Dropbox at
-# /SDA/analysis/_global_codes/r16.05/svyMaps_2016.06.22_sara.shp
+# /SDA/analysis/_global_codes/2016.05/svyMaps_2016.06.22_sara.shp
 # and also shared with JG.
 #
 # Malaria incidence downloaded into ./MAP
@@ -81,20 +81,18 @@
 # GPCC V7 monthly climate downloaded into ./GPCC
 
 library(data.table)
-library(reshape2)
 library(raster)
-library(rgdal)
 library(tmap)
 library(stringr)
 
 setwd("~/Projects/hc-data")
-load("./out/r16.05/svyL2Maps_r16.05.RData")
+load("./out/2016.05/svyL2Maps_r16.05.RData")
 
 # Load Sara's list of survey admin units
-dist <- fread("./out/r16.05/District codes and names.csv")
+dist <- fread("./out/2016.05/District codes and names.csv")
 
 # Load survey maps
-l2 <- readOGR("./out/r16.05", "svyMaps_2016.06.22_sara")
+l2 <- readOGR("./out/2016.05", "svyMaps_2016.06.22_sara")
 l2.dt <- data.table(l2@data)
 l2.dt[, rn := row.names(l2)]
 
@@ -197,7 +195,7 @@ l2.lbl.cell5m <- c(
 l2.cell5m <- l2.dt
 setkey(l2.cell5m, svyCode, svyL1Cd, svyL2Cd)
 attr(l2.cell5m, "var.labels") <- c(l2.lbl, l2.lbl.cell5m)
-write.dta(l2.cell5m, "./out/r16.05/svyL2Maps-CELL5M.dta", convert.factors="string", version=12L)
+write.dta(l2.cell5m, "./out/2016.05/svyL2Maps-CELL5M.dta", convert.factors="string", version=12L)
 
 
 
@@ -314,13 +312,13 @@ l2.spei.year <- l2.dt[l2.spei.year]
 spei.lbl <- c(l2.lbl, "month", "mean SPEI index (based in CRU_TS 3.23)")
 attr(l2.spei, "var.labels") <- spei.lbl
 setkey(l2.spei, svyCode, svyL1Cd, svyL2Cd)
-write.dta(l2.spei, "./out/r16.05/svyL2Maps-SPEI_monthly_1950-2014.dta",
+write.dta(l2.spei, "./out/2016.05/svyL2Maps-SPEI_monthly_1950-2014.dta",
   convert.factors="string", version=12L)
 
 spei.lbl <- c(l2.lbl, paste0("mean SPEI index (based in CRU_TS 3.23) in Y", 1950:2014))
 attr(l2.spei.year, "var.labels") <- spei.lbl
 setkey(l2.spei.year, svyCode, svyL1Cd, svyL2Cd)
-write.dta(l2.spei.year, "./out/r16.05/svyL2Maps-SPEI_yearly_1950-2014.dta",
+write.dta(l2.spei.year, "./out/2016.05/svyL2Maps-SPEI_yearly_1950-2014.dta",
   convert.factors="string", version=12L)
 
 ## Table all drought events
@@ -346,7 +344,7 @@ spei.lbl <- c(l2.lbl[1:7],
   "months with extreme drough")
 attr(l2.spei.drought, "var.labels") <- spei.lbl
 setkey(l2.spei.drought, svyCode, svyL1Cd, svyL2Cd)
-write.dta(l2.spei.drought, "./out/r16.05/svyL2Maps-SPEI_drought_1950-2014.dta",
+write.dta(l2.spei.drought, "./out/2016.05/svyL2Maps-SPEI_drought_1950-2014.dta",
   convert.factors="string", version=12L)
 
 
@@ -426,7 +424,7 @@ srtm.lbl <- c(l2.lbl,
   "slope (degree, median)", "slope (degree, min)", "slope (degree, max)")
 attr(l2.srtm, "var.labels") <- srtm.lbl
 setkey(l2.srtm, svyCode, svyL1Cd, svyL2Cd)
-write.dta(l2.srtm, "./out/r16.05/svyL2Maps-SRTM.dta",
+write.dta(l2.srtm, "./out/2016.05/svyL2Maps-SRTM.dta",
   convert.factors="string", version=12L)
 
 
@@ -593,7 +591,7 @@ l2.udel[, `:=`(
 
 # Verify
 tmp.l2 <- SpatialPolygonsDataFrame(l2, data.frame(l2.udel[month==max(l2.udel$month)]), match.ID="rn")
-writeOGR(tmp.l2, "./out/r16.05", "svyL2Maps-UDEL", "ESRI Shapefile", overwrite=T)
+writeOGR(tmp.l2, "./out/2016.05", "svyL2Maps-UDEL", "ESRI Shapefile", overwrite=T)
 
 tm_shape(tmp.l2) +
   tm_polygons("pre_mean", colorNA="grey", border.col="black", palette="Spectral", n=12) +
@@ -664,11 +662,11 @@ attr(l2.udel.jandec, "var.labels") <-c(l2.lbl[1:7],
   "temperature (30-year max, deg C)")
 
 
-write.dta(l2.udel, "./out/r16.05/svyL2Maps-UDEL_monthly_1950-2014.dta",
+write.dta(l2.udel, "./out/2016.05/svyL2Maps-UDEL_monthly_1950-2014.dta",
   convert.factors="string", version=12L)
-write.dta(l2.udel.year, "./out/r16.05/svyL2Maps-UDEL_yearly_1950-2014.dta",
+write.dta(l2.udel.year, "./out/2016.05/svyL2Maps-UDEL_yearly_1950-2014.dta",
   convert.factors="string", version=12L)
-write.dta(l2.udel.jandec, "./out/r16.05/svyL2Maps-UDEL_seasonal_1984-2014.dta",
+write.dta(l2.udel.jandec, "./out/2016.05/svyL2Maps-UDEL_seasonal_1984-2014.dta",
   convert.factors="string", version=12L)
 
 
@@ -759,13 +757,13 @@ attr(l2.pop, "var.labels") <- c(l2.lbl,
   "population density (pp/sq. km., 2012, LandScan)",
   "population sacled to WDI (pp, 2012, LandScan)",
   "population density scaled to WDI (pp/sq. km., 2012, LandScan)")
-write.dta(l2.pop, "./out/r16.05/svyL2Maps-LandScan2012.dta",
+write.dta(l2.pop, "./out/2016.05/svyL2Maps-LandScan2012.dta",
   convert.factors="string", version=12L)
 
 
 ###############################################
-# TODO Rural pop density: need to get the density of each pixel, then classify pixels into
-# urban/rural according to published WDI country rates.
+# TODO Rural pop density: need to get the density of each pixel, then classify pixels
+# into urban/rural according to published WDI country rates.
 popdens <- pop/land
 popdens <- mask(popdens, pop, maskvalue=0, updatevalue=0)
 popdens <- mask(popdens, land, maskvalue=0, updatevalue=0)
@@ -859,11 +857,61 @@ bio.mth.lbl <- c(
   paste0("precipitation", " - ", month.abb, " (mm)"))
 
 attr(bio.wc.mth, "var.labels") <- c(attr, bio.mth.lbl)
-write.dta(bio.wc.mth, "./out/r16.05/svyL2Maps-WorldClim-1km_month_1950-2000.dta",
+write.dta(bio.wc.mth, "./out/2016.05/svyL2Maps-WorldClim-1km_month_1950-2000.dta",
   convert.factors="string", version=12L)
 
 
-
 rm(cl, tmp, tmp.m, tmp.r, i, x, y, svy.split, iso3, l2.pop.iso3)
-save.image("./out/r16.05/svyL2Maps_r16.05.RData")
+save.image("./out/2016.05/svyL2Maps_r16.05.RData")
+
+
+
+#####################################################################################
+# 2016.09.23 SPEI for TZA and GHA Panel regressions (IFPRI Brown Bag)
+#####################################################################################
+
+# Use most recent SPEIbase v2.4 at multiple scales: 3, 6, 12, 24, and 48 months
+# Provide monthly summaries for 1950-2014 period
+# Tim shared all admin units, at /hc-data/Admin/2016.09
+# Details on SPEI at http://sac.csic.es/spei/home.html
+# Downloads at http://digital.csic.es/handle/10261/128892
+#
+# The Global SPEI database, SPEIbase, offers long-time, robust information about
+# drought conditions at the global scale, with a 0.5 degrees spatial resolution and a
+# monthly time resolution. It has a multi-scale character, providing SPEI time-scales
+# between 1 and 48 months. Currently it covers the period between January 1901 and
+# December 2014. The SPEIbase is based on the FAO-56 Penman-Monteith estimation of
+# potential evapotranspiration. This is a major difference with respect to the SPEI
+# Global Drought Monitor, that uses the Thornthwaite PET estimation. The Penman-Montheith
+# method is considered a superior method, so the SPEIbase is recommended for most uses
+# including long-term climatological analysis.
+
+# TODO: note that earlier results for Carlo/Sara poverty paper were rin on AWS and I
+# forgot to copy over all output files from /hc-data/out/2016.05/to BUSTER.
+
+library(data.table)
+library(raster)
+library(tmap)
+library(curl)
+
+setwd("~/Projects/hc-data")
+load("./out/2016.09/svyL2Maps_r16.09.RData")
+
+# Load, verify and combine shapefiles
+g2 <- shapefile("./Admin/2016.09/StudyCountries_06_28_2016_FirstHalf.shp")
+tmp <- shapefile("./Admin/2016.09/StudyCountries_07_07_2016_SecHalf.shp")
+
+
+# Download NC files from CSIC
+nc <- c(
+  "http://digital.csic.es/bitstream/10261/128892/5/spei03.nc",
+  "http://digital.csic.es/bitstream/10261/128892/5/spei06.nc",
+  "http://digital.csic.es/bitstream/10261/128892/5/spei12.nc",
+  "http://digital.csic.es/bitstream/10261/128892/5/spei24.nc",
+  "http://digital.csic.es/bitstream/10261/128892/5/spei48.nc")
+
+
+
+
+
 
