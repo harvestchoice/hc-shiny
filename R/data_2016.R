@@ -867,7 +867,7 @@ save.image("./out/2016.05/svyL2Maps_r16.05.RData")
 
 
 #####################################################################################
-# 2016.09.23 SPEI for TZA and GHA Panel regressions (IFPRI Brown Bag)
+# 2016.09.23 SPEI for UGA, TZA and GHA Panel regressions (IFPRI Brown Bag)
 #####################################################################################
 
 # Use most recent SPEIbase v2.4 at multiple scales: 3, 6, 12, 24, and 48 months
@@ -892,6 +892,7 @@ save.image("./out/2016.05/svyL2Maps_r16.05.RData")
 library(data.table)
 library(raster)
 library(tmap)
+library(foreign)
 library(curl)
 
 setwd("~/Projects/hc-data")
@@ -901,17 +902,158 @@ load("./out/2016.09/svyL2Maps_r16.09.RData")
 g2 <- shapefile("./Admin/2016.09/StudyCountries_06_28_2016_FirstHalf.shp")
 tmp <- shapefile("./Admin/2016.09/StudyCountries_07_07_2016_SecHalf.shp")
 
+proj4string(g2)
+# [1] "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+
+proj4string(tmp)
+# [1] "+proj=tmerc +lat_0=0 +lon_0=33 +k=0.9996 +x_0=500000 +y_0=200000 +datum=WGS84
+# +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0"
+
+tmp <- spTransform(tmp, proj4string(g2))
+unique(g2$svyCode)
+# [1] "tza2007" "gha2005" "uga2005" NA
+unique(tmp$svyCode)
+# [1] "uga2013" "tza2011" "gha2012"
+
+g2$ISO3 <- NULL
+names(g2)[2] <- "ISO3"
+names(g2)[17] <- "svyL1Cd"
+g2 <- rbind(g2[, names(tmp)], tmp)
+g2$rn <- row.names(g2)
+g2.dt <- data.table(g2@data)
+g2.dt[svyCode=="gha2005", ISO3 := "GHA"]
+g2.dt[svyCode=="uga2005", ISO3 := "UGA"]
+g2.dt[, unique(svyCode)]
+g2.dt[, unique(ISO3)]
+
+g2.dt[, .N, keyby=.(ISO3, svyCode)]
+# ISO3 svyCode   N
+# 1:   NA      NA   2
+# 2:  GHA gha2005 110
+# 3:  GHA gha2012 170
+# 4:  TZA tza2007 136
+# 5:  TZA tza2011 168
+# 6:  UGA uga2005  56
+# 7:  UGA uga2013 114
+
+g2.dt[, paste(range(svyL2Cd), collapse=" - "), keyby=.(ISO3, svyCode)]
+# ISO3 svyCode         V1
+# 1:   NA      NA      0 - 0
+# 2:  GHA gha2005 101 - 1005
+# 3:  GHA gha2012     1 - 27
+# 4:  TZA tza2007      0 - 8
+# 5:  TZA tza2011      0 - 8
+# 6:  UGA uga2005  101 - 415
+# 7:  UGA uga2013    0 - 426
+
+# => svyL2Cd codes are not unique, combine with svyL1Cd
+
+# Map and recode the NA units (Lake Albert, Lake Victoria)
+g2.dt[rn=="276", `:=`(ISO3="UGA", svyCode="uga2005")]
+g2.dt[rn=="277", `:=`(ISO3="UGA", svyCode="uga2005")]
+g2.dt[is.na(prttyNm), prttyNm := svyL2Nm]
+g2.dt[, svyL1Cd := as.integer(svyL1Cd)]
+g2.dt[, svyL2Cd := as.integer(svyL2Cd)]
+g2.dt[svyL2Cd==0, .N, by=svyCode]
+
+# Reattach
+g2 <- SpatialPolygonsDataFrame(g2, data.frame(g2.dt), match.ID="rn")
+
 
 # Download NC files from CSIC
-nc <- c(
+nc.url <- c(
   "http://digital.csic.es/bitstream/10261/128892/5/spei03.nc",
-  "http://digital.csic.es/bitstream/10261/128892/5/spei06.nc",
-  "http://digital.csic.es/bitstream/10261/128892/5/spei12.nc",
-  "http://digital.csic.es/bitstream/10261/128892/5/spei24.nc",
-  "http://digital.csic.es/bitstream/10261/128892/5/spei48.nc")
+  "http://digital.csic.es/bitstream/10261/128892/8/spei06.nc",
+  "http://digital.csic.es/bitstream/10261/128892/14/spei12.nc",
+  "http://digital.csic.es/bitstream/10261/128892/26/spei24.nc",
+  "http://digital.csic.es/bitstream/10261/128892/50/spei48.nc")
+
+nc.var <- c(
+  "spei03",
+  "spei06",
+  "spei12",
+  "spei24",
+  "spei48")
+
+nc <- lapply(1:5, function(x) curl_download(nc.url[x], paste0("./SPEIbase/", nc.var[x], ".nc")))
+nc <- unlist(nc)
+nc[1] <- "./SPEIbase/spei03.nc"
+
+spei <- brick("./SPEIbase/spei03.nc")
+identical(proj4string(spei), proj4string(g2))
+g2 <- spTransform(g2, proj4string(spei))
+tm <- seq(as.Date("1901-01-01"), as.Date("2014-12-31"), "month")
+
+monthSum <- function(x) {
+  spei <- brick(nc[x])
+  spei <- setZ(spei, tm, "month")
+  spei <- subset(spei, 589:1368)
+
+  spei <- crop(spei, g2)
+  tmp <- extract(spei, g2, fun=mean, na.rm=T, small=T)
+  names(dimnames(tmp)) <- c("rn", "month")
+
+  # Monthly summaries
+  dt <- data.table(g2@data)
+  dt[, rn := row.names(g2)]
+  tmp <- as.data.table(tmp)
+  setnames(tmp, as.character(seq(as.Date("1950-01-01"), as.Date("2014-12-31"), "month")))
+  tmp[, rn := row.names(g2)]
+  tmp <- melt(tmp, id.vars="rn", variable.name="month", value.name=nc.var[x])
+
+  setkey(tmp, rn)
+  setkey(dt, rn)
+  dt <- dt[tmp]
+  dt[, month := as.Date(month)]
+  return(dt)
+}
+
+out <- lapply(1:5, monthSum)
+sapply(out, dim)
+out <- cbind(out[[1]], out[[2]]$spei06, out[[3]]$spei12, out[[4]]$spei24, out[[5]]$spei48)
+setnames(out, 11:14, c("spei06", "spei12", "spei24", "spei48"))
+
+# Verify
+out[, lapply(.SD, summary), .SDcols=10:14]
+# spei03    spei06    spei12    spei24    spei48
+# 1:    -4.120    -5.123    -5.193    -4.084    -3.298
+# 2:    -0.696    -0.656    -0.616    -0.612    -0.591
+# 3:     0.010     0.021     0.038     0.041     0.067
+# 4:     0.019     0.034     0.054     0.064     0.090
+# 5:     0.710     0.716     0.706     0.730     0.761
+# 6:     3.227     3.419     3.446     3.572     3.316
+# 7: 22645.000 22620.000 22620.000 22620.000 22620.000
+
+# There are a bunch of empty values (some are okay due to Zanzibar islands and Lake Victoria)
+tmp <- out[is.na(spei03), .N, keyby=.(svyCode, year(month), svyL2Cd)]
+tmp <- out[is.na(spei03), unique(rn)]
+
+tmap_mode("view")
+g2.out <- SpatialPolygonsDataFrame(g2, data.frame(out[month=="2014-01-01"]), match.ID="rn")
+tm_shape(spei[["X2014.01.16"]]) + tm_raster() +
+  tm_shape(g2.out[g2.out$rn %in% tmp,], is.master=T) + tm_polygons("svyL1Nm") +
+  tm_layout(legend.outside=T)
+
+# TODO looks at missing values
 
 
+g2.lbl <- c("ISO3 code", "survey code",
+  "adm-1 code (in survey)", "admin-1 name (in survey)",
+  "adm-2 code (in survey, 0 is missing or not surveyed)", "admin-2 name (in survey)",
+  "print label", "shape id")
+
+attr(out, "var.labels") <- c(g2.lbl, "month",
+  "SPEI 3-month scale (mean)",
+  "SPEI 6-month scale (mean)",
+  "SPEI 12-month scale (mean)",
+  "SPEI 24-month scale (mean)",
+  "SPEI 48-month scale (mean)")
+
+write.dta(out, "./out/2016.09/svyL2Maps-SPEIbase.2.4_1950-2014_monthly.dta",
+  convert.factors="string", version=12L)
 
 
+rm(tmp, g2.dt)
+save.image("./out/2016.09/svyL2Maps_r16.09.RData")
 
 
