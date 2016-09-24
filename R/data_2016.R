@@ -1263,13 +1263,14 @@ setkey(out.uga, svyCode, hhid, month)
 
 # Verify again after imputations
 out.uga[is.na(spei03), .N, by=rn]
+out.uga[, unique(urban)]
 tza <- SpatialPointsDataFrame(tza, data.frame(out.tza[month=="2014-01-01"]), match.ID="rn")
 uga <- SpatialPointsDataFrame(uga, data.frame(out.uga[month=="2014-01-01"]), match.ID="rn")
 
-tm_shape(tza[tza$wave=="Y3",]) + tm_dots("spei12")
-tm_shape(tza[tza$wave=="Y3",]) + tm_dots("spei06")
-tm_shape(uga[uga$wave=="Y3",]) + tm_dots("spei12")
-tm_shape(uga[uga$wave=="Y3",]) + tm_dots("spei06")
+tm_shape(tza[tza$wave=="Y3",]) + tm_dots("spei12", title="Wave Y3<br/>spei12", n=8)
+tm_shape(tza[tza$wave=="Y3",]) + tm_dots("spei06", title="Wave Y3<br/>spei06", n=8)
+tm_shape(uga[uga$wave=="Y3",]) + tm_dots("spei12", title="Wave Y3<br/>spei12", n=8)
+tm_shape(uga[uga$wave=="Y3",]) + tm_dots("spei06", title="Wave Y3<br/>spei06", n=8)
 # => looks ok
 
 
@@ -1286,8 +1287,6 @@ attr(out.tza, "var.labels") <- c(
 
 write.dta(out.tza, "./out/2016.09/TZA-GPS-SPEIbase.2.4_1950-2014_monthly_imputed.dta",
   convert.factors="string", version=12L)
-
-out.uga[, unique(urban)]
 
 attr(out.uga, "var.labels") <- c(
   "ISO3 code", "survey code", "wave", "hhld ID (unique)", "urban/rural",
