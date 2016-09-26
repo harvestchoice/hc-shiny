@@ -1076,6 +1076,91 @@ write.dta(out, "./out/2016.09/svyL2Maps-SPEIbase.2.4_1950-2014_monthly_imputed.d
 gps <- c("Tanz_Y1", "Tanz_Y2", "Tanz_Y3", "UGA_Y1", "UGA_Y2", "UGA_Y3")
 gps <- lapply(gps, function(x) shapefile(paste0("./Admin/2016.09/", x)))
 
+
+# Run some tests on unique `hhid` for Beliyou
+gps.ro <- lapply(gps, function(x) shapefile(paste0("./Admin/2016.09/", x)))
+sapply(gps.ro, names)
+tmp <- data.table(gps.ro[[1]]@data)
+tmp[, .(.N, HHID=uniqueN(hhid), Range=paste(range(hhid), collapse=" -> "))]
+#       N HHID                           Range
+# 1: 2806 1258 1010140020170 -> 55020180210100
+tmp[, .(.N, HHID=uniqueN(hhid_text), Range=paste(range(hhid_text), collapse=" -> "))]
+#       N HHID                           Range
+# 1: 2806 2806 10010030040014 -> 9050123250059
+tmp[is.na(lat_modifi) | lat_modifi==0, .N]
+# 0
+tmp[, uniqueN(paste(ea_id, hhid))]
+# 1726
+setkey(tmp, ea_id, hhid)
+tmp <- tmp[duplicated(tmp), .(hhid=as.character(hhid), ea_id, lat_modifi, lon_modifi)]
+
+tmp <- data.table(gps.ro[[2]]@data)
+tmp[, .(.N, HHID=uniqueN(y2_hhid), Range=paste(range(y2_hhid), collapse=" -> "))]
+#       N HHID                               Range
+# 1: 3917 1367 101014002017000 -> 5502018021010000
+tmp[, .(.N, HHID=uniqueN(HH_Text), Range=paste(range(HH_Text), collapse=" -> "))]
+tmp[, .(.N, HHID=uniqueN(HH_Text), Range=paste(range(HH_Text), collapse=" -> "))]
+tmp[is.na(lat_modifi) | lat_modifi==0, .N]
+# 0
+tmp[, uniqueN(paste(ea_id, y2_hhid))]
+# 1975
+tmp[, uniqueN(paste(ea_id, HH_Text))]
+# 3495
+
+tmp <- data.table(gps.ro[[3]]@data)
+tmp[, .(.N, HHID=uniqueN(y3_hhid), Range=paste(range(y3_hhid), collapse=" -> "))]
+#       N HHID                Range
+# 1: 4988 4988 0001-001 -> 3924-001
+tmp[, .(.N, HHID=uniqueN(HH_Text), Range=paste(range(HH_Text), collapse=" -> "))]
+tmp[is.na(lat_dd_mod) | lat_dd_mod==0, .N]
+# 0
+
+tmp <- data.table(gps.ro[[4]]@data)
+tmp[, .(.N, HHID=uniqueN(HHID), Range=paste(range(HHID), collapse=" -> "))]
+#       N HHID                      Range
+# 1: 2975 2931 1013000201 -> 418300230802
+tmp[, .(.N, HHID=uniqueN(HHID_Y0), Range=paste(range(HHID_Y0), collapse=" -> "))]
+#       N HHID           Range
+# 1: 2975 1347 0 -> 2143000310
+tmp[is.na(lat_mod) | lat_mod==0, .N]
+# [1] 24
+
+tmp <- data.table(gps.ro[[5]]@data)
+tmp[, .(.N, HHID=uniqueN(HHID), Range=paste(range(HHID), collapse=" -> "))]
+#       N HHID                         Range
+# 1: 2716 2685 1013000201 -> 211530004040000
+tmp[is.na(lat_mod) | lat_mod==0, .N]
+# [1] 45
+setkey(tmp, HHID)
+
+tmp <- data.table(gps.ro[[6]]@data)
+tmp[, .(.N, HHID=uniqueN(HHID), Range=paste(range(HHID), collapse=" -> "))]
+#       N HHID           Range
+# 1: 2850 1074 0 -> 2143000310
+tmp[, .(.N, HHID=uniqueN(HHID_Text), Range=paste(range(HHID_Text), collapse=" -> "))]
+#       N HHID                    Range
+# 1: 2850 2850 1013000201 -> 4193003509
+tmp[is.na(lat_mod) | lat_mod==0, .N]
+# [1] 89
+
+# | svyCode | var       |    N | HHID | AE+HHID     | Range                                 | Bad N |
+# |---------+-----------+------+------+-------------+---------------------------------------+-------|
+# | tza2008 | hhid      | 2806 | 1258 | 1726        | 1010140020170    ->    55020180210100 |     0 |
+# | tza2008 | hhid_text | 2806 | 2806 | 2806        | 10010030040014   ->     9050123250059 |     0 |
+# |---------+-----------+------+------+-------------+---------------------------------------+-------|
+# | tza2010 | y2_hhid   | 3917 | 1367 | 1975        | 101014002017000  ->  5502018021010000 |     0 |
+# | tza2010 | HH_text   | 3917 | 3495 | 3495        | 1001003004001400 ->   905012325008102 |       |
+# |---------+-----------+------+------+-------------+---------------------------------------+-------|
+# | tza2012 | y3_hhid   | 4988 | 4988 | no `ea` var | 0001-001         ->          3924-001 |     0 |
+# |---------+-----------+------+------+-------------+---------------------------------------+-------|
+# | uga2009 | HHID      | 2975 | 2931 | no `ea` var | 1013000201       ->      418300230802 |    24 |
+# |---------+-----------+------+------+-------------+---------------------------------------+-------|
+# | uga2010 | HHID      | 2716 | 2685 | no `ea` var | 1013000201       ->   211530004040000 |    45 |
+# |---------+-----------+------+------+-------------+---------------------------------------+-------|
+# | uga2011 | HHID      | 2850 | 1074 | no `ea` var | 0                ->        2143000310 |    89 |
+# | uga2011 | HHID_Text | 2850 | 2850 | no `ea` var | 1013000201       ->        4193003509 |    89 |
+
+
 sapply(gps, names)
 # Clean up and rename a few fields
 # There's a `HHID_1` in `UGA_Y3_2` what's that?
@@ -1143,17 +1228,38 @@ setnames(tmp, c("X", "Y", "X-mod", "Y_mod", "svyCode", "wave"))
 uga <- SpatialPointsDataFrame(tmp, uga@data, match.ID=F)
 tmp <- data.table(uga@data)
 tmp[X_mod==0, .N, keyby=.(svyCode, wave)]
-# svyCode wave  N
+#    svyCode wave  N
 # 1: uga2009   Y1 24
 # 2: uga2010   Y2 45
 # 3: uga2011   Y3 89
 
 # Share these bad records with Beliyou to check with FAO
-tmp <- gps[[6]]@data[gps[[6]]$lat_mod==0,]
+tmp <- uga@data[uga$lat_mod==0,]
 write.dta(tmp, "./out/2016.09/uga2011_missing.dta", version=12L)
 
 # Drop all UGA bad records for now
 uga <- uga[uga$X_mod!=0,]
+# => 8383 records out of 8541
+
+uniqueN(paste(uga$svyCode, uga$hhid))
+# => 6690 unique hhids across waves
+
+# Look for duplicated `hhid` in source files
+dim(gps[[4]])
+# 2975
+uniqueN(gps[[4]]$hhid)
+# 2931
+
+dim(gps[[5]])
+# 2716
+uniqueN(gps[[5]]$hhid)
+# 2685
+
+dim(gps[[6]])
+# 2850
+uniqueN(gps[[6]]$hhid)
+# 1074
+
 
 # Plot each wave
 tm_shape(uga[uga$wave=="Y1",]) + tm_dots()
@@ -1302,21 +1408,182 @@ write.dta(out.uga, "./out/2016.09/UGA-GPS-SPEIbase.2.4_1950-2014_monthly_imputed
   convert.factors="string", version=12L)
 
 
-
+#####################################################################################
 ## Also add precipitation, temperature, elevation
 # - temp from CHIRPS (http://chg.geog.ucsb.edu/data/chirps/) 1980-2016
 # - temp from UDEL v4.01
 # - pre from CRU 3.23
 # - pre from UDEL v4.01
+# Pretty much re-run code used for the poverty paper above.
 url <- "ftp://ftp.chg.ucsb.edu/pub/org/chg/products/CHIRPS-2.0/africa_monthly/"
 
+pre <- brick("./UDEL/precip.mon.total.v401.epsg4326.nc")
+temp <- brick("./UDEL/air.mon.mean.v401.epsg4326.nc")
+
+res(pre)
+# [1] 0.5 0.5
+res(spei)
+
+spplot(pre[["X1371"]])
+spplot(temp[["X1371"]])
+
+res(pre)
+# [1] 0.5 0.5 => 50km
+res(temp)
+# [1] 0.5 0.5
+l2 <- spTransform(l2, proj4string(pre))
+pre <- crop(pre, l2)
+temp <- crop(temp, l2)
+
+# Doco says 1901/01 - 2014/12
+names(pre)[1:10]
+tail(names(pre), 10)
+dim(pre)
+# [1]  125  136 1380
+tm <- seq(as.Date("1900-01-01"), as.Date("2014-12-31"), "month")
+pre <- setZ(pre, tm, "month")
+temp <- setZ(temp, tm, "month")
+
+# Keep 1950/01-2014/12
+pre <- subset(pre, 601:1380)
+temp <- subset(temp, 601:1380)
+
+# Extract monthly mean and total precipitation
+tmp <- extract(pre, l2, fun=mean, na.rm=T)
+dim(tmp)
+# [1] 2078 780
+tmp <- data.table(rn=row.names(l2), tmp)
+setnames(tmp, 2:781, format(tm[601:1380], "%Y-%m-%d"))
+tmp <- melt(tmp, id.vars=c("rn"), variable.name="month", value.name="pre_mean", variable.factor=F)
+tmp[, month := as.Date(month)]
+l2.udel <- tmp
+
+tmp <- extract(pre, l2, fun=sum, na.rm=T, small=T)
+tmp <- data.table(rn=row.names(l2), tmp)
+setnames(tmp, 2:781, format(tm[601:1380], "%Y-%m-%d"))
+tmp <- melt(tmp, id.vars=c("rn"), variable.name="month", value.name="pre_total", variable.factor=F)
+tmp[, month := as.Date(month)]
+setkey(l2.udel, rn, month)
+setkey(tmp, rn, month)
+l2.udel$pre_total <- tmp[l2.udel][, pre_total]
+
+summary(l2.udel$month)
+#         Min.      1st Qu.       Median         Mean      3rd Qu.         Max.
+# "1950-01-01" "1966-03-24" "1982-06-16" "1982-06-16" "1998-09-08" "2014-12-01"
+summary(l2.udel$pre_mean)
+#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
+#   0.000   1.230   6.587   9.180  14.570 111.800    7800
+summary(l2.udel$pre_total)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+# 0.00    2.44   12.41   31.57   32.47 2175.00
+
+# Extract monthly mean, min and max temperature
+tmp <- extract(temp, l2, fun=mean, na.rm=T, small=T)
+tmp <- data.table(rn=row.names(l2), tmp)
+setnames(tmp, 2:781, format(tm[601:1380], "%Y-%m-%d"))
+tmp <- melt(tmp, id.vars=c("rn"), variable.name="month", value.name="temp_mean", variable.factor=F)
+tmp[, month := as.Date(month)]
+setkey(tmp, rn, month)
+l2.udel$temp_mean <- tmp[l2.udel][, temp_mean]
+
+tmp <- extract(temp, l2, fun=min, na.rm=T, small=T)
+tmp <- data.table(rn=row.names(l2), tmp)
+setnames(tmp, 2:781, format(tm[601:1380], "%Y-%m-%d"))
+tmp <- melt(tmp, id.vars=c("rn"), variable.name="month", value.name="temp_min", variable.factor=F)
+tmp[, month := as.Date(month)]
+setkey(tmp, rn, month)
+l2.udel$temp_min <- tmp[l2.udel][, temp_min]
+
+tmp <- extract(temp, l2, fun=max, na.rm=T, small=T)
+tmp <- data.table(rn=row.names(l2), tmp)
+setnames(tmp, 2:781, format(tm[601:1380], "%Y-%m-%d"))
+tmp <- melt(tmp, id.vars=c("rn"), variable.name="month", value.name="temp_max", variable.factor=F)
+tmp[, month := as.Date(month)]
+setkey(tmp, rn, month)
+l2.udel$temp_max <- tmp[l2.udel][, temp_max]
+
+summary(l2.udel$temp_mean)
+#     Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
+#    -2.20   19.20   22.50   22.46   25.78   38.50    7800
+summary(l2.udel$temp_min)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+#   -4      18      22     Inf      25     Inf
+summary(l2.udel$temp_max)
+#  Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+#  -Inf      20      24    -Inf      26      40
+
+# Where are the missing values?
+bad.na <- l2.udel[is.na(pre_mean), unique(rn)]
+#       rn   N
+#  1: 1042 780
+#  2: 1043 780
+#  3: 1044 780
+#  4: 1045 780
+#  5: 1046 780
+#  6: 1048 780 => all same as "1047"
+#  7:  107 780 => 153
+#  8:  294 780 => 295
+#  9:   31 780 => 138
+# 10:  431 780 => 383
+
+# Impute all missing values (in all years)
+bad.repl <- c(rep("1047", 6), "153", "295", "138", "383")
+bad.na <- data.table(rn=bad.na, repl=bad.repl)
+setkey(bad.na, repl)
+setkey(l2.udel, rn)
+bad.na <- l2.udel[bad.na]
+bad.na <- bad.na[, .SD, .SDcols=c("rn", "i.rn", "month", "pre_mean", "temp_mean")]
+setnames(bad.na, c("rn", "i.rn"), c("repl", "rn"))
+
+setkey(bad.na, rn, month)
+setkey(l2.udel, rn, month)
+l2.udel <- bad.na[l2.udel]
+l2.udel[is.na(i.pre_mean), i.pre_mean := pre_mean]
+l2.udel[is.na(i.temp_mean), i.temp_mean := temp_mean]
+l2.udel[, pre_mean := NULL]
+l2.udel[, temp_mean := NULL]
+setnames(l2.udel, c("i.pre_mean", "i.temp_mean"), c("pre_mean", "temp_mean"))
+l2.udel[, repl := NULL]
+
+# Verify
+summary(l2.udel$pre_mean)
+summary(l2.udel$temp_mean)
+
+# Convert cm/month to mm/month
+l2.udel[, `:=`(
+  pre_mean=pre_mean*10,
+  pre_total=pre_total*10)]
 
 
 
 
 
-
-rm(tmp, g2.dt, tza.imp, tza.bad, uga.imp, uga.bad)
+rm(i, x, tmp, g2.dt, tza.imp, tza.bad, rn.bad, povmap, gps.ro)
 save.image("./out/2016.09/svyL2Maps_r16.09.RData")
 
+
+#####################################################################################
+# Load Sara's TZA map to compare with Beliyou's
+
+povmap <- shapefile("./Admin/2016.07/svyMaps_2016.06.24.shp")
+
+tmap_mode("plot")
+
+tm_shape(crop(pre[["X1371"]], tza)) +
+  tm_raster(n=10, title="tza2012\nPrecipitation\n2014-03") +
+  tm_shape(povmap[povmap$svyCode=="tza2012",]) + tm_borders() +
+  tm_shape(povmap[povmap$svyCode=="tza2012",]) + tm_text("svyL2Nm", size=.6) +
+  tm_layout(legend.outside=T)
+
+tm_shape(g2[g2$svyCode=="tza2007",]) + tm_borders() +
+  tm_shape(g2[g2$svyCode=="tza2007",]) + tm_text("svyL2Nm", size=.6) +
+  tm_layout(legend.outside=T)
+
+tm_shape(g2[g2$svyCode=="tza2011",]) + tm_borders() +
+  tm_shape(g2[g2$svyCode=="tza2011",]) + tm_text("svyL2Nm", size=.5) +
+  tm_layout(legend.outside=T)
+
+tmp <- povmap@data[povmap$svyCode=="tza2012",]
+tmp <- g2@data[g2$svyCode=="tza2007",]
+tmp <- g2@data[g2$svyCode=="tza2011",]
 
