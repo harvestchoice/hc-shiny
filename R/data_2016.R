@@ -1281,23 +1281,18 @@ speiMean <- function(x, y) {
   spei <- setZ(spei, tm, "month")
   spei <- subset(spei, 589:1368)
 
-  spei <- crop(spei, y)
+  # Crop but buffer by 2 degree too
+  spei <- crop(spei, extent(y)+c(-2, 2, -2, 2))
   tmp <- extract(spei, y)
   names(dimnames(tmp)) <- c("rn", "month")
 
   # Monthly summaries
-  dt <- data.table(y@data)
-  dt[, rn := row.names(y)]
   tmp <- as.data.table(tmp)
-  setnames(tmp, as.character(seq(as.Date("1950-01-01"), as.Date("2014-12-31"), "month")))
+  setnames(tmp, as.character(tm[589:1368]))
   tmp[, rn := row.names(y)]
   tmp <- melt(tmp, id.vars="rn", variable.name="month", value.name=nc.var[x])
-
-  setkey(tmp, rn)
-  setkey(dt, rn)
-  dt <- dt[tmp]
-  dt[, month := as.Date(month)]
-  return(dt)
+  tmp[, month := as.Date(month)]
+  return(tmp)
 }
 
 out.tza <- lapply(1:5, function(x) speiMean(x, tza))
@@ -1459,6 +1454,15 @@ for (i in 1:6) gps[[i]]$svyCode <- svy[i]
 for (i in 1:6) gps[[i]]$wave <- svy.wave[i]
 
 gps <- rbindlist(gps)
+#    svyCode   V1   V2
+# 1: tza2008 2806 2806
+# 2: tza2010 3917 3917
+# 3: tza2012 4988 4988
+# 4: uga2009 2975 2975
+# 5: uga2010 2716 2716
+# 6: uga2011 2850 2850
+# => OK
+
 
 # Check on unique `hhid` codes and share with Beliyou
 tmp <- gps[, .(.N,
@@ -1477,134 +1481,200 @@ tmp <- gps[, .(.N,
 # |uga2010 | 2716| 2716| 2716|     2716|1013000201 -> 4193003510             |  45|
 # |uga2011 | 2850| 2850| 2850|     2850|1013000201 -> 4193003509             |  89|
 
-# Split by country
-tza <- gps[svyCode %in% svy[1:3]]
-uga <- gps[svyCode %in% svy[4:6]]
-nrow(tza)
-# [1] 11711
-nrow(uga)
-# [1] 8541
-
 # Drop all bad records for now
-tza <- tza[!(is.na(X_mod) | X_mod==0),]
-uga <- uga[!(is.na(X_mod) | X_mod==0),]
+gps <- gps[!(is.na(X_mod) | X_mod==0),]
 
-nrow(tza)
-# [1] 11711 => no bad records
-nrow(uga)
-# [1] 8383 => 158 bad records
+# Verify count of unique `hhid`
+gps[, .(uniqueN(hhid), uniqueN(hhid_str)), by=svyCode]
+#    svyCode   V1   V2
+# 1: tza2008 2806 2806
+# 2: tza2010 3917 3917
+# 3: tza2012 4988 4988
+# 4: uga2009 2951 2951 => 24
+# 5: uga2010 2671 2671 => 45
+# 6: uga2011 2761 2761 => 89
+# => OK, as expected
 
-tza <- SpatialPointsDataFrame(tza[, .(X_mod,Y_mod)], data.frame(tza),
+gps[, .(uniqueN(hhid), uniqueN(hhid_str)), by=svyCode][, .(sum(V1), sum(V2))]
+#       V1    V2
+# 1: 20094 20094
+nrow(gps)
+# [1] 20094 => 158 bad records
+
+gps.pts <- SpatialPointsDataFrame(gps[, .(X_mod,Y_mod)], data.frame(gps),
   proj4string=CRS("+init=epsg:4326"), match.ID=F)
-uga <- SpatialPointsDataFrame(uga[, .(X_mod,Y_mod)], data.frame(uga),
-  proj4string=CRS("+init=epsg:4326"), match.ID=F)
 
-
-# Plot each wave
+# Visually check each wave
 tmap_mode("view")
-tm_shape(uga[uga$wave=="Y1",]) + tm_dots()
-tm_shape(uga[uga$wave=="Y2",]) + tm_dots()
-tm_shape(uga[uga$wave=="Y3",]) + tm_dots()
+tm_shape(gps.pts[gps.pts$svyCode==svy[1],]) + tm_dots()
+tm_shape(gps.pts[gps.pts$svyCode==svy[2],]) + tm_dots()
+tm_shape(gps.pts[gps.pts$svyCode==svy[6],]) + tm_dots()
 # => looks ok
 
 ## SPEIbase
 # Reproject to SPEI
 proj4string(spei)
-proj4string(tza)
-tza <- spTransform(tza, proj4string(spei))
-uga <- spTransform(uga, proj4string(spei))
+proj4string(gps.pts)
+gps.pts <- spTransform(gps.pts, proj4string(spei))
+gps.pts$rn <- row.names(gps.pts)
 
-# Extract SPEI values for TZA
-out.tza <- lapply(1:5, function(x) speiMean(x, tza))
-sapply(out.tza, dim)
-out.tza <- cbind(out.tza[[1]], out.tza[[2]]$spei06, out.tza[[3]]$spei12, out.tza[[4]]$spei24, out.tza[[5]]$spei48)
-setnames(out.tza, 12:15, c("spei06", "spei12", "spei24", "spei48"))
+# Extract SPEI values for all waves
+# Note that speiMean() creates a 2 degree buffer around the GPS extent) otherwise it
+# seems we are missing points
+out.spei <- lapply(1:5, function(x) speiMean(x, gps.pts))
+sapply(out.spei, dim)
+out.spei <- cbind(out.spei[[1]], out.spei[[2]]$spei06, out.spei[[3]]$spei12, out.spei[[4]]$spei24, out.spei[[5]]$spei48)
+setnames(out.spei, c("rn", "month", "spei03", "spei06", "spei12", "spei24", "spei48"))
 
-# Extract SPEI values for UGA
-out.uga <- lapply(1:5, function(x) speiMean(x, uga))
-sapply(out.uga, dim)
-out.uga <- cbind(out.uga[[1]], out.uga[[2]]$spei06, out.uga[[3]]$spei12, out.uga[[4]]$spei24, out.uga[[5]]$spei48)
-setnames(out.uga, 12:15, c("spei06", "spei12", "spei24", "spei48"))
-
-
-## Impute any missing SPEI values with nearest point
-out.tza[is.na(spei03), .N, by=hhid][N>500]
-tm_shape(tza[is.na(tza$spei03),]) + tm_dots()
+# Impute any missing SPEI values with nearest point
+tmp <- out.spei[is.na(spei03), .N, by=rn]
+tmp <- out.spei[is.na(spei06), .N, by=rn]
+tmp[, table(N)]
+# N
+#   1    2    3    4    8   11  780
+# 300  214  154   92   27   29 1901
+#
+# Some hhlds are missing 1 to 11 months of data, others are missing the entire 780
+# Let's impute only the ones missing the entire period (i.e. not covered by the rasters)
+# We could also buffer the rasters, but it's pretty much the same as using nearest values
+# given the resolution.
 
 # Find nearest points
 library(nabor)
-# This library provides very fast knn() nearest neighbor algorithm, because
+# This library provides fast knn() nearest neighbor algorithm, because using
 # rgeos::gDistance() is too slow with thousands of points
 
-# TZA
-rn.bad <- out.tza[is.na(spei03), .N, by=rn][N>500][, unique(rn)]
-tm_shape(tza[tza$rn %in% rn.bad,]) + tm_dots()
-tza.imp <- tza[!tza$rn %in% rn.bad,]
-tza.bad <- tza[tza$rn %in% rn.bad,]
-tmp <- knn(coordinates(tza.imp), coordinates(tza.bad), k=1)
-tmp <- data.table(rn.bad=tza.bad$rn, rn.imp=tza.imp@data[tmp$nn.idx[,1], "rn"])
+# Identify hhlds to impute
+rn.bad <- out.spei[is.na(spei03), .N, by=rn][N==780][, unique(rn)]
+# => 2717 hhlds (but some missing only a few months)
+# Let's print them for Beliyou
+tm_shape(spei[[100]]) + tm_raster(n=8) +
+  tm_shape(gps.pts[gps.pts$rn %in% rn.bad,], is.master=T) + tm_dots()
+imp <- gps.pts[!gps.pts$rn %in% rn.bad,]
+bad <- gps.pts[gps.pts$rn %in% rn.bad,]
+tmp <- knn(coordinates(imp), coordinates(bad), k=1)
+tmp <- data.table(rn.bad=rn.bad, rn.imp=imp@data[tmp$nn.idx[,1], "rn"])
 
-# Impute TZA
-setkey(tmp, rn.imp)
-setkey(out.tza, rn)
-tmp <- out.tza[tmp]
-out.tza[rn %in% rn.bad, .N]
-out.tza <- out.tza[!rn %in% rn.bad]
-tmp[, rn := NULL]
-setnames(tmp, "rn.bad", "rn")
-out.tza <- rbind(out.tza, tmp)
-setkey(out.tza, svyCode, hhid, month)
+# Visual check on the neighbors
+tm_shape(spei[["X2014.04.16"]]) + tm_raster(n=8) +
+tm_shape(gps.pts[gps.pts$rn %in% rn.bad,]) + tm_dots() +
+  tm_shape(gps.pts[gps.pts$rn %in% tmp$rn.imp,]) + tm_dots(col="red")
 
-# UGA
-rn.bad <- out.uga[is.na(spei03), .N, by=rn][N>500][, unique(rn)]
-tm_shape(spei[["X2014.01.16"]]) + tm_raster() +
-  tm_shape(uga[uga$rn %in% rn.bad,], is.master=T) + tm_dots()
-uga.imp <- uga[!uga$rn %in% rn.bad,]
-uga.bad <- uga[uga$rn %in% rn.bad,]
-tmp <- knn(coordinates(uga.imp), coordinates(uga.bad), k=1)
-tmp <- data.table(rn.bad=uga.bad$rn, rn.imp=uga.imp@data[tmp$nn.idx[,1], "rn"])
+# Impute all (make sure to impute only the SPEI values)
+id.bad <- out.spei[is.na(spei03), .(rn.bad=rn, month)]
+setkey(tmp, rn.bad)
+setkey(id.bad, rn.bad)
+id.bad <- tmp[id.bad]
+setkey(id.bad, rn.imp, month)
+setkey(out.spei, rn, month)
+tmp <- out.spei[id.bad]
 
-# Impute UGA
-setkey(tmp, rn.imp)
-setkey(out.uga, rn)
-tmp <- out.uga[tmp]
-out.uga[rn %in% rn.bad, .N]
-out.uga <- out.uga[!rn %in% rn.bad]
-tmp[, rn := NULL]
-setnames(tmp, "rn.bad", "rn")
-out.uga <- rbind(out.uga, tmp)
-setkey(out.uga, svyCode, hhid, month)
+out.spei.imp <- out.spei
+setkey(tmp, rn.bad, month)
+setkey(out.spei.imp, rn, month)
+out.spei.imp[tmp, spei03 := tmp$spei03]
+out.spei.imp[tmp, spei06 := tmp$spei06]
+out.spei.imp[tmp, spei12 := tmp$spei12]
+out.spei.imp[tmp, spei24 := tmp$spei24]
+out.spei.imp[tmp, spei48 := tmp$spei48]
+
+# Merge in survey and hhld details
+tmp <- data.table(gps.pts@data)
+setkey(tmp, rn)
+setkey(out.spei.imp, rn)
+out.spei.imp <- tmp[out.spei.imp]
+
+# Verify
+summary(out.spei.imp$spei03)
+#     Min.  1st Qu.   Median     Mean  3rd Qu.     Max.
+# -5.08400 -0.69010  0.03662  0.04982  0.77580  3.44100
+
+# Re-check unique `hhid`
+out.spei.imp[, .(uniqueN(month), uniqueN(hhid), uniqueN(hhid_str), uniqueN(rn)), by=svyCode]
+#    svyCode  V1   V2   V3   V4
+# 1: tza2008 780 2806 2806 2806
+# 2: tza2010 780 3917 3917 3917
+# 3: tza2012 780 4988 4988 4988
+# 4: uga2009 780 2951 2951 2951
+# 5: uga2010 780 2671 2671 2671
+# 6: uga2011 780 2761 2761 2761
+
+# Verify (e.g. bad month 2010-08-01)
+tmp <- out.spei.imp[month=="2010-08-01" & svyCode==svy[3]]
+tmp <- SpatialPointsDataFrame(tmp[, .(X_mod, Y_mod)], data.frame(tmp),
+  proj4string=CRS("+init=epsg:4326"), match.ID=F)
+tm_shape(spei[["X2010.08.16"]]) + tm_raster(n=8) +
+  tm_shape(tmp, is.master=T) +
+  tm_dots("spei03", colorNA="black",
+    title=paste(svy[3], "SPEI03", "2010-Aug", sep="<br/>"))
+
+# What's the deal with the remaining missing months?
+tmp <- out.spei.imp[, is.na(spei03), keyby=.(svyCode, month)]
+ggplot(tmp[svyCode %in% svy[1:3]], aes(month, weight=V1)) +
+  geom_bar(fill="red") + ylim(0, 70) +
+  scale_x_date(date_labels="%y %b") +
+  facet_grid(svyCode~.)
+tmp <- out.spei.imp[is.na(spei03), .(missing=.N), keyby=.(svyCode, month)]
+tmp <- dcast(tmp, month~svyCode)
+
+# Let's impute again as above using nearby values
+rn.bad <- out.spei.imp[is.na(spei03), .N, by=rn][, unique(rn)]
+# => 2717 hhlds (but some missing only a few months)
+imp <- gps.pts[!gps.pts$rn %in% rn.bad,]
+bad <- gps.pts[gps.pts$rn %in% rn.bad,]
+tmp <- knn(coordinates(imp), coordinates(bad), k=1)
+tmp <- data.table(rn.bad=rn.bad, rn.imp=imp@data[tmp$nn.idx[,1], "rn"])
+
+# Visual check on the neighbors
+tm_shape(spei[["X2014.04.16"]]) + tm_raster(n=8) +
+  tm_shape(gps.pts[gps.pts$rn %in% rn.bad,]) + tm_dots() +
+  tm_shape(gps.pts[gps.pts$rn %in% tmp$rn.imp,]) + tm_dots(col="red")
+
+# Impute all by month (make sure to impute only the SPEI values)
+id.bad <- out.spei.imp[is.na(spei03), .(rn.bad=rn, month)]
+setkey(tmp, rn.bad)
+setkey(id.bad, rn.bad)
+id.bad <- tmp[id.bad]
+setkey(id.bad, rn.imp, month)
+setkey(out.spei.imp, rn, month)
+tmp <- out.spei.imp[id.bad]
+
+setkey(tmp, rn.bad, month)
+setkey(out.spei.imp, rn, month)
+out.spei.imp[tmp, spei03 := tmp$spei03]
+out.spei.imp[tmp, spei06 := tmp$spei06]
+out.spei.imp[tmp, spei12 := tmp$spei12]
+out.spei.imp[tmp, spei24 := tmp$spei24]
+out.spei.imp[tmp, spei48 := tmp$spei48]
+
+summary(out.spei.imp$spei03)
+#     Min.  1st Qu.   Median     Mean  3rd Qu.     Max.
+# -5.08400 -0.69130  0.03364  0.04739  0.77420  3.44100
+
+# Seems good
+out.spei <- out.spei.imp
 
 
-# Plot a sample month to PDF to check results
-tza <- SpatialPointsDataFrame(tza, data.frame(out.tza[month=="2014-01-01"]), match.ID="rn")
-uga <- SpatialPointsDataFrame(uga, data.frame(out.uga[month=="2014-01-01"]), match.ID="rn")
-
+# Plot a sample month to PDF to visually check results
 pdf("./out/2016.09/TZA_UGA-GPS-SPEIbase.2.4_2014-01.pdf")
+tmp <- out.spei[month=="2014-01-01"]
+tmp <- SpatialPointsDataFrame(tmp[, .(X_mod, Y_mod)], data.frame(tmp),
+  proj4string=CRS("+init=epsg:4326"), match.ID=F)
 tmap_mode("plot")
 data(World)
 
-for (j in nc.var) {
-  for (i in svy[1:3]) print(
-    tm_shape(World) + tm_borders() +
-    tm_shape(tza[tza$svyCode==i,], is.master=T) +
-      tm_dots(j, size=0.3, title=paste(i, toupper(j), "2014-Jan", sep="\n")) +
-      tm_style_grey()
-  )
-  for (i in svy[4:6]) print(
-    tm_shape(World) + tm_borders() +
-    tm_shape(uga[uga$svyCode==i,], is.master=T) +
-      tm_dots(j, size=0.3, title=paste(i, toupper(j), "2014-Jan", sep="\n")) +
-      tm_style_grey()
-  )
-}
+for (j in nc.var) for (i in svy) print(
+  tm_shape(World) + tm_borders() +
+    tm_shape(tmp[tmp$svyCode==i,], is.master=T) +
+    tm_dots(j, size=0.3, title=paste(i, toupper(j), "2014-Jan", sep="\n")) +
+    tm_style_grey()
+)
 dev.off()
 # => looks ok
 
 
-# Export TZA and UGA to STATA
-setkey(out.tza, svyCode, hhid, month)
-setkey(out.uga, svyCode, hhid, month)
+# Export to STATA, 1 file per country
+setkey(out.spei, svyCode, hhid, month)
 
 lbl <- c(
   "ArcGIS shape ID", "hhld ID", "hhld ID - alternate", "enumeration area",
@@ -1615,12 +1685,14 @@ lbl <- c(
   "SPEI 24-month scale (mean)",
   "SPEI 48-month scale (mean)")
 
-attr(out.tza, "var.labels") <- lbl
-attr(out.uga, "var.labels") <- lbl
-
-write.dta(out.tza, "./out/2016.09/TZA-GPS-SPEIbase.2.4_1950-2014_monthly.dta",
+tmp <- out.spei[svyCode %in% svy[1:3]]
+attr(tmp, "var.labels") <- lbl
+write.dta(tmp, "./out/2016.09/TZA-GPS-SPEIbase.2.4_1950-2014_monthly.dta",
   convert.factors="string", version=12L)
-write.dta(out.uga, "./out/2016.09/UGA-GPS-SPEIbase.2.4_1950-2014_monthly.dta",
+
+tmp <- out.spei[svyCode %in% svy[4:6]]
+attr(tmp, "var.labels") <- lbl
+write.dta(tmp, "./out/2016.09/UGA-GPS-SPEIbase.2.4_1950-2014_monthly.dta",
   convert.factors="string", version=12L)
 
 
@@ -1641,11 +1713,8 @@ spplot(pre[["X1371"]])
 spplot(temp[["X1371"]])
 
 # Don't split GPS coords by country, process all at once to save code
-# Drop bad records for now
-gps.pts <- gps[!(is.na(X_mod) | X_mod==0),]
-gps.pts <- SpatialPointsDataFrame(gps.pts[, .(X_mod,Y_mod)], data.frame(gps.pts),
-  proj4string=CRS("+init=epsg:4326"), match.ID=F)
 gps.pts <- spTransform(gps.pts, proj4string(pre))
+gps.pts$rn <- row.names(gps.pts)
 
 # Don't crop rasters, that somehow creates missing values for points at the margin
 #pre <- crop(pre, gps.pts)
@@ -1679,12 +1748,8 @@ summary(out.udel$month)
 # "1950-01-01" "1966-03-24" "1982-06-16" "1982-06-16" "1998-09-08" "2014-12-01"
 summary(out.udel$pre_udel)
 #   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
-#     0.0     2.8     8.1     9.7    14.2   261.7  487500
-
-#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's
 #     0.0     2.8     8.1     9.7    14.2   261.7  375960
-# => still quite a bit of missing values to be imputed
-
+# => still quite a few missing values to be imputed
 
 # Extract monthly temperature
 tmp <- extract(temp, gps.pts)
@@ -1701,33 +1766,32 @@ summary(out.udel$temp_udel)
 #     1.4    21.2    22.8    22.8    24.7    34.6  375960
 
 # Where are the missing values?
-rn.bad <- out.udel[is.na(pre_udel), .N, by=rn][N>500][, unique(rn)]
-gps.pts$rn <- row.names(gps.pts)
-tm_shape(pre[[771]]) + tm_raster() +
+rn.bad <- out.udel[is.na(pre_udel), .N, by=rn][N==780][, unique(rn)]
+# => 482 hhlds
+# Let's print them for Beliyou
+tm_shape(pre[[100]]) + tm_raster(n=8) +
   tm_shape(gps.pts[gps.pts$rn %in% rn.bad,], is.master=T) + tm_dots()
 # => only TZA islands
 
-out.imp <- gps.pts[!gps.pts$rn %in% rn.bad,]
-out.bad <- gps.pts[gps.pts$rn %in% rn.bad,]
-tmp <- knn(coordinates(out.imp), coordinates(out.bad), k=1)
-tmp <- data.table(rn.bad=out.bad$rn, rn.imp=out.imp@data[tmp$nn.idx[,1], "rn"])
+imp <- gps.pts[!gps.pts$rn %in% rn.bad,]
+bad <- gps.pts[gps.pts$rn %in% rn.bad,]
+tmp <- knn(coordinates(imp), coordinates(bad), k=1)
+tmp <- data.table(rn.bad=rn.bad, rn.imp=imp@data[tmp$nn.idx[,1], "rn"])
 
-# Impute with nearest point
+# Impute all (make sure to impute only the SPEI values, not all attributes!)
 setkey(tmp, rn.imp)
 setkey(out.udel, rn)
 tmp <- out.udel[tmp]
-out.udel[rn %in% rn.bad, .N]
-out.udel <- out.udel[!rn %in% rn.bad]
-tmp[, rn := NULL]
-setnames(tmp, "rn.bad", "rn")
-out.udel <- rbind(out.udel, tmp)
+setkey(tmp, rn.bad, month)
 setkey(out.udel, rn, month)
+out.udel[tmp, pre_udel := tmp$pre_udel]
+out.udel[tmp, temp_udel := tmp$temp_udel]
 
 
 # Verify
 summary(out.udel$pre_udel)
-# Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
-# 0.000   2.760   8.110   9.747  14.270 261.700
+#  Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+# 0.000   2.750   8.100   9.723  14.260 261.700
 summary(out.udel$temp_udel)
 # Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
 # 1.40   21.30   22.90   22.87   24.80   34.60
@@ -1741,42 +1805,38 @@ setkey(tmp, rn)
 setkey(out.udel, rn)
 out.udel <- tmp[out.udel]
 
+# Re-check unique `hhid`
+out.udel[, .(uniqueN(month), uniqueN(hhid), uniqueN(hhid_str), uniqueN(rn)), by=svyCode]
+#    svyCode  V1   V2   V3   V4
+# 1: tza2008 780 2806 2806 2806
+# 2: tza2010 780 3917 3917 3917
+# 3: tza2012 780 4988 4988 4988
+# 4: uga2009 780 2951 2951 2951
+# 5: uga2010 780 2671 2671 2671
+# 6: uga2011 780 2761 2761 2761
+# => OK
+
+# Save hhdls that still have missing month values
+out.udel[is.na(pre_udel), .N, by=.(svyCode, hhid)]
+out.udel[is.na(temp_udel), .N, by=.(svyCode, hhid)]
 
 # Plot a sample month to PDF to check results
-tza <- out.udel[svyCode %in% svy[1:3]]
-uga <- out.udel[svyCode %in% svy[4:6]]
-
-tza <- tza[month=="2014-01-01"]
-uga <- uga[month=="2014-01-01"]
-
-tza <- SpatialPointsDataFrame(tza[, .(X_mod,Y_mod)], data.frame(tza),
-  proj4string=CRS("+init=epsg:4326"), match.ID=F)
-uga <- SpatialPointsDataFrame(uga[, .(X_mod,Y_mod)], data.frame(uga),
-  proj4string=CRS("+init=epsg:4326"), match.ID=F)
-
-# Save PDF
 pdf("./out/2016.09/TZA_UGA-GPS-UDEL_2014-01.pdf")
-tmap_mode("plot")
+  tmp <- out.udel[month=="2014-01-01"]
+  tmp <- SpatialPointsDataFrame(tmp[, .(X_mod,Y_mod)], data.frame(tmp),
+  proj4string=CRS("+init=epsg:4326"), match.ID=F)
+  tmap_mode("plot")
 
-for (j in c("pre_udel", "temp_udel")) {
-  for (i in svy[1:3]) print(
+  for (j in c("pre_udel", "temp_udel")) for (i in svy) print(
     tm_shape(World) + tm_borders() +
-      tm_shape(tza[tza$svyCode==i,], is.master=T) +
-      tm_dots(j, n=8, size=0.3, title=paste(i, "Precipitation (mm)", "2014-Jan", sep="\n")) +
-      tm_style_grey()
-  )
-  for (i in svy[4:6]) print(
-    tm_shape(World) + tm_borders() +
-      tm_shape(uga[uga$svyCode==i,], is.master=T) +
-      tm_dots(j, n=8, size=0.3, title=paste(i, "Temperature (C)", "2014-Jan", sep="\n")) +
-      tm_style_grey()
-  )
-}
+      tm_shape(tmp[tmp$svyCode==i,], is.master=T) +
+      tm_dots(j, n=8, size=0.3, title=paste(i, j, "2014-Jan", sep="\n")) +
+      tm_style_grey())
 dev.off()
 # => looks ok
 
 # Export to STATA (1 file per country)
-setkey(out.udel, svyCode, hhlds, month)
+setkey(out.udel, svyCode, hhid, month)
 
 lbl <- c(
   "ArcGIS shape ID", "hhld ID", "hhld ID - alternate", "enumeration area",
@@ -1784,11 +1844,14 @@ lbl <- c(
   "precipitation (mm)",
   "temperature (C)")
 
-attr(out.udel, "var.labels") <- lbl
-
-write.dta(out.udel[svyCode %in% svy[1:3]], "./out/2016.09/TZA-GPS-UDEL_1950-2014_monthly.dta",
+tmp <- out.udel[svyCode %in% svy[1:3]]
+attr(tmp, "var.labels") <- lbl
+write.dta(tmp, "./out/2016.09/TZA-GPS-UDEL_1950-2014_monthly.dta",
   convert.factors="string", version=12L)
-write.dta(out.udel[svyCode %in% svy[4:6]], "./out/2016.09/UGA-GPS-UDEL_1950-2014_monthly.dta",
+
+tmp <- out.udel[svyCode %in% svy[4:6]]
+attr(tmp, "var.labels") <- lbl
+write.dta(tmp, "./out/2016.09/UGA-GPS-UDEL_1950-2014_monthly.dta",
   convert.factors="string", version=12L)
 
 
@@ -1886,6 +1949,17 @@ setkey(tmp, rn)
 setkey(out.chirps, rn)
 out.chirps <- tmp[out.chirps]
 
+# Re-check unique `hhid`
+out.chirps[, .(uniqueN(month), uniqueN(hhid), uniqueN(hhid_str), uniqueN(rn)), by=svyCode]
+#    svyCode  V1   V2   V3   V4
+# 1: tza2008 780 2806 2806 2806
+# 2: tza2010 780 3917 3917 3917
+# 3: tza2012 780 4988 4988 4988
+# 4: uga2009 780 2951 2951 2951
+# 5: uga2010 780 2671 2671 2671
+# 6: uga2011 780 2761 2761 2761
+# => OK
+
 
 # Export to STATA (1 file per country)
 setkey(out.chirps, svyCode, hhid, month)
@@ -1895,11 +1969,14 @@ lbl <- c(
   "latitude", "longitude", "survey code", "wave", "shape ID", "month",
   "precipitation (mm) CHIRPS v2.0")
 
-attr(out.chirps, "var.labels") <- lbl
-
-write.dta(out.chirps[svyCode %in% svy[1:3]], "./out/2016.09/TZA-GPS-CHIRPS_1981-2016_monthly.dta",
+tmp <- out.chirps[svyCode %in% svy[1:3]]
+attr(tmp, "var.labels") <- lbl
+write.dta(tmp, "./out/2016.09/TZA-GPS-CHIRPS_1981-2016_monthly.dta",
   convert.factors="string", version=12L)
-write.dta(out.chirps[svyCode %in% svy[4:6]], "./out/2016.09/UGA-GPS-CHIRPS_1981-2016_monthly.dta",
+
+tmp <- out.chirps[svyCode %in% svy[4:6]]
+attr(tmp, "var.labels") <- lbl
+write.dta(tmp, "./out/2016.09/UGA-GPS-CHIRPS_1981-2016_monthly.dta",
   convert.factors="string", version=12L)
 
 
@@ -1918,24 +1995,20 @@ gps.pts <- spTransform(gps.pts, proj4string(alt[[1]]))
 tmp <- list()
 tmp[[1]] <- extract(alt[[1]], gps.pts[gps.pts$svyCode %in% svy[1:3],])
 tmp[[2]] <- extract(alt[[2]], gps.pts[gps.pts$svyCode %in% svy[4:6],])
-tmp[[1]] <- data.table(rn=row.names(gps.pts[gps.pts$svyCode %in% svy[1:3],]), alt=tmp[[1]])
-tmp[[2]] <- data.table(rn=row.names(gps.pts[gps.pts$svyCode %in% svy[4:6],]), alt=tmp[[2]])
+tmp[[1]] <- data.table(rn=gps.pts@data[gps.pts$svyCode %in% svy[1:3], "rn"], alt=tmp[[1]])
+tmp[[2]] <- data.table(rn=gps.pts@data[gps.pts$svyCode %in% svy[4:6], "rn"], alt=tmp[[2]])
 out.srtm <- rbindlist(tmp)
 range(out.srtm$rn)
 
 slope <- lapply(alt, terrain, opt=c("slope"), unit="degrees")
 tmp[[1]] <- extract(slope[[1]], gps.pts[gps.pts$svyCode %in% svy[1:3],])
 tmp[[2]] <- extract(slope[[2]], gps.pts[gps.pts$svyCode %in% svy[4:6],])
-tmp[[1]] <- data.table(rn=row.names(gps.pts[gps.pts$svyCode %in% svy[1:3],]), slope=tmp[[1]])
-tmp[[2]] <- data.table(rn=row.names(gps.pts[gps.pts$svyCode %in% svy[4:6],]), slope=tmp[[2]])
+tmp[[1]] <- data.table(rn=gps.pts@data[gps.pts$svyCode %in% svy[1:3], "rn"], slope=tmp[[1]])
+tmp[[2]] <- data.table(rn=gps.pts@data[gps.pts$svyCode %in% svy[4:6], "rn"], slope=tmp[[2]])
 tmp <- rbindlist(tmp)
 setkey(tmp, rn)
 setkey(out.srtm, rn)
 out.srtm$slope <- tmp[out.srtm][, slope]
-
-# Merge in survey and hhlds details
-setkey(l2.dt, rn)
-setkey(alt.dt, rn)
 
 # Verify
 summary(out.srtm$alt)
@@ -1953,27 +2026,62 @@ tm_shape(alt[[1]]) + tm_raster(n=8) +
   tm_shape(gps.pts[gps.pts$rn %in% rn.bad,], is.master=T) + tm_dots()
 # => only TZA islands
 
-out.imp <- gps.pts[!gps.pts$rn %in% rn.bad,]
-out.bad <- gps.pts[gps.pts$rn %in% rn.bad,]
-tmp <- knn(coordinates(out.imp), coordinates(out.bad), k=1)
-tmp <- data.table(rn.bad=out.bad$rn, rn.imp=out.imp@data[tmp$nn.idx[,1], "rn"])
+imp <- gps.pts[!gps.pts$rn %in% rn.bad,]
+bad <- gps.pts[gps.pts$rn %in% rn.bad,]
+tmp <- knn(coordinates(imp), coordinates(bad), k=1)
+tmp <- data.table(rn.bad=rn.bad, rn.imp=imp@data[tmp$nn.idx[,1], "rn"])
 
-# Impute with nearest point
+# Impute all
 setkey(tmp, rn.imp)
 setkey(out.srtm, rn)
 tmp <- out.srtm[tmp]
-out.srtm[rn %in% rn.bad, .N]
-out.srtm <- out.srtm[!rn %in% rn.bad]
-tmp[, rn := NULL]
-setnames(tmp, "rn.bad", "rn")
-out.srtm <- rbind(out.srtm, tmp)
+setkey(tmp, rn.bad)
 setkey(out.srtm, rn)
+out.srtm[tmp, alt := tmp$alt]
+
+# Also impute missing slope values
+rn.bad <- out.srtm[is.na(slope), unique(rn)]
+tm_shape(slope[[1]]) + tm_raster(n=8) +
+  tm_shape(gps.pts[gps.pts$rn %in% rn.bad,], is.master=T) + tm_dots()
+# => only TZA islands
+
+imp <- gps.pts[!gps.pts$rn %in% rn.bad,]
+bad <- gps.pts[gps.pts$rn %in% rn.bad,]
+tmp <- knn(coordinates(imp), coordinates(bad), k=1)
+tmp <- data.table(rn.bad=rn.bad, rn.imp=imp@data[tmp$nn.idx[,1], "rn"])
+
+# Impute all
+setkey(tmp, rn.imp)
+setkey(out.srtm, rn)
+tmp <- out.srtm[tmp]
+setkey(tmp, rn.bad)
+setkey(out.srtm, rn)
+out.srtm[tmp, slope := tmp$slope]
 
 # Merge in survey and hhld details
 tmp <- data.table(gps.pts@data)
 setkey(tmp, rn)
 setkey(out.srtm, rn)
 out.srtm <- tmp[out.srtm]
+
+summary(out.srtm$alt)
+#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+#     3.0   486.0  1114.0   931.2  1244.0  2270.0
+
+summary(out.srtm$slope)
+#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+# 0.0000  0.4097  0.7606  1.2800  1.4990 21.0500
+
+# Re-check unique `hhid`
+out.srtm[, .(uniqueN(hhid), uniqueN(hhid_str), uniqueN(rn)), by=svyCode]
+# s   vyCode   V1   V2   V3
+# 1: tza2008 2806 2806 2806
+# 2: tza2012 4988 4988 4988
+# 3: uga2009 2951 2951 2951
+# 4: uga2010 2671 2671 2671
+# 5: uga2011 2761 2761 2761
+# 6: tza2010 3917 3917 3917
+# => OK
 
 # Export
 setkey(out.srtm, svyCode, hhid)
@@ -1983,20 +2091,24 @@ lbl <- c(
   "latitude", "longitude", "survey code", "wave", "shape ID",
   "altitude (m)", "slope (degree)")
 
-attr(out.srtm, "var.labels") <- lbl
-
-write.dta(out.srtm[svyCode %in% svy[1:3]], "./out/2016.09/TZA-GPS-SRTM.dta",
-  convert.factors="string", version=12L)
-write.dta(out.srtm[svyCode %in% svy[4:6]], "./out/2016.09/UGA-GPS-SRTM.dta",
+tmp <- out.srtm[svyCode %in% svy[1:3]]
+attr(tmp, "var.labels") <- lbl
+write.dta(tmp, "./out/2016.09/TZA-GPS-SRTM.dta",
   convert.factors="string", version=12L)
 
+tmp <- out.srtm[svyCode %in% svy[4:6]]
+attr(tmp, "var.labels") <- lbl
+write.dta(tmp, "./out/2016.09/UGA-GPS-SRTM.dta",
+  convert.factors="string", version=12L)
 
 
+# ZIP all output files for GPS coords
+system("cd /home/projects/hc-data/out/2016.09 && zip biovars_2016.09.28.zip TZA* UGA*")
 
 # Save workspace
-rm(i, j, x, tmp, g2.dt, tza.imp, tza.bad, uga.imp, uga.bad, rn.bad, povmap, gps.ro, World, out.imp, out.bad)
+rm(i, j, x, r, tmp, id.bad, imp, bad, g2.dt, tza.imp, tza.bad, uga.imp, uga.bad,
+  rn.bad, povmap, gps.ro, World, out.imp, out.bad, out.spei.imp)
 save.image("./out/2016.09/svyL2Maps_r16.09.RData")
-
 
 
 #####################################################################################
