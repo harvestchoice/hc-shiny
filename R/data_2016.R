@@ -1359,7 +1359,7 @@ gps <- c("Tanz_Shapefile_Y1", "Tanz_Shapefile_Y2", "Tanz_Shapefile_Y3",
   "UGA_Shapefile_Y1", "UGA_Shapefile_Y2", "UGA_Shapefile_Y3")
 gps <- lapply(gps, function(x) read.dta(paste0("./Admin/2016.09/", x, ".dta")))
 
-# Combine all 6 files
+# Combine all 6 files, need to harmonize var names
 sapply(gps, names)
 gps <- lapply(gps, data.table)
 setnames(gps[[1]], c(1,2,3,4,5,6), c("fid", "hhid", "hhid_str", "ea_id", "Y_mod", "X_mod"))
@@ -1369,34 +1369,34 @@ setnames(gps[[4]], c(1,2,3,4), c("fid", "hhid", "Y_mod", "X_mod"))
 setnames(gps[[5]], c(1,2,3,4), c("fid", "hhid_str", "Y_mod", "X_mod"))
 setnames(gps[[6]], c(1,61,2,3), c("fid", "hhid_str", "Y_mod", "X_mod"))
 
-gps[[2]]$hhid_str <- gps[[2]]$hhid
-gps[[3]]$hhid_str <- gps[[3]]$hhid
-gps[[3]]$ea_id <- as.character(NA)
-gps[[4]]$hhid_str <- gps[[4]]$hhid
-gps[[4]]$ea_id <- as.character(NA)
-gps[[5]]$hhid <- gps[[5]]$hhid_str
-gps[[5]]$ea_id <- as.character(NA)
-gps[[6]]$hhid <- gps[[6]]$hhid_str
-gps[[6]]$ea_id <- as.character(NA)
+gps[[2]][, hhid_str := hhid]
+gps[[3]][, hhid_str := hhid]
+gps[[3]][, ea_id := as.character(NA)]
+gps[[4]][, hhid_str := hhid]
+gps[[4]][, ea_id := as.character(NA)]
+gps[[5]][, hhid := hhid_str]
+gps[[5]][, ea_id := as.character(NA)]
+gps[[6]][, hhid := hhid_str]
+gps[[6]][, ea_id := as.character(NA)]
 
 gps <- lapply(gps, function(x) x[, .(fid, hhid, hhid_str, ea_id, Y_mod, X_mod)])
 
 # Add survey codes and waves
 svy <- c("tza2008", "tza2010", "tza2012", "uga2009", "uga2010", "uga2011")
 svy.wave <- rep(c("Y1", "Y2", "Y3"), 2)
-for (i in 1:6) gps[[i]]$svyCode <- svy[i]
-for (i in 1:6) gps[[i]]$wave <- svy.wave[i]
+for (i in 1:6) gps[[i]][, svyCode := svy[i]]
+for (i in 1:6) gps[[i]][, wave := svy.wave[i]]
 gps <- rbindlist(gps)
 
 # Check on unique `hhid` codes and share with Beliyou
-tmp <- gps[, .(.N,
+gps[, .(.N,
   fid=uniqueN(fid),
   hhid=uniqueN(hhid),
   hhid_str=uniqueN(hhid_str),
-  `range-hhid`=paste(range(hhid), collapse=" -> "),
+  range=paste(range(hhid), collapse=" -> "),
   bad=sum(is.na(X_mod) | X_mod==0, na.rm=T)), keyby=svyCode]
 
-# |svyCode |    N|  fid| hhid| hhid_str|range-hhid                           | bad|
+# |svyCode |    N|  fid| hhid| hhid_str|range                                | bad|
 # |:-------|----:|----:|----:|--------:|:------------------------------------|---:|
 # |tza2008 | 2806| 2806| 2806|     2806|10010030040014 -> 9050123250059      |   0|
 # |tza2010 | 3917| 3917| 3917|     3917|0101014002017101 -> 5502018021007801 |   0|
@@ -1405,7 +1405,7 @@ tmp <- gps[, .(.N,
 # |uga2010 | 2716| 2716| 2716|     2716|1013000201 -> 4193003510             |  45|
 # |uga2011 | 2850| 2850| 2850|     2850|1013000201 -> 4193003509             |  89|
 
-# Drop all bad records for now
+# Drop all records with missing/bad GPS coords for now
 gps <- gps[!(is.na(X_mod) | X_mod==0),]
 
 # Verify count of unique `hhid`
@@ -1435,15 +1435,15 @@ tm_shape(gps.pts[gps.pts$svyCode==svy[2],]) + tm_dots()
 tm_shape(gps.pts[gps.pts$svyCode==svy[6],]) + tm_dots()
 # => looks ok
 
-## SPEIbase
+## Process SPEIbase
 proj4string(spei)
 proj4string(gps.pts)
 gps.pts <- spTransform(gps.pts, proj4string(spei))
 gps.pts$rn <- row.names(gps.pts)
 
 # Extract SPEI values for all waves
-# Note that speiMean() creates a 2 degree buffer around the GPS extent otherwise it
-# seems we are missing values
+# Note that speiMean() defined above adds a 2 degree buffer around the GPS coords
+# extent, otherwise it seems we are missing values
 out.spei <- lapply(1:5, function(x) speiMean(x, gps.pts))
 sapply(out.spei, dim)
 out.spei <- cbind(out.spei[[1]], out.spei[[2]]$spei06, out.spei[[3]]$spei12, out.spei[[4]]$spei24, out.spei[[5]]$spei48)
@@ -1451,7 +1451,6 @@ setnames(out.spei, c("rn", "month", "spei03", "spei06", "spei12", "spei24", "spe
 
 # Impute any missing SPEI values with nearest point
 tmp <- out.spei[is.na(spei03), .N, by=rn]
-tmp <- out.spei[is.na(spei06), .N, by=rn]
 tmp[, table(N)]
 # N
 #   1    2    3    4    8   11  780
@@ -1498,7 +1497,7 @@ out.spei[tmp, spei12 := tmp$spei12]
 out.spei[tmp, spei24 := tmp$spei24]
 out.spei[tmp, spei48 := tmp$spei48]
 
-# Merge in survey and hhld details
+# Merge in survey and hhld attributes
 tmp <- data.table(gps.pts@data)
 setkey(tmp, rn)
 setkey(out.spei, rn)
@@ -1518,15 +1517,6 @@ out.spei[, .(uniqueN(month), uniqueN(hhid), uniqueN(hhid_str), uniqueN(rn)), by=
 # 4: uga2009 780 2951 2951 2951
 # 5: uga2010 780 2671 2671 2671
 # 6: uga2011 780 2761 2761 2761
-
-# Map sample month (e.g. bad month 2010-08-01)
-tmp <- out.spei[month=="2010-08-01" & svyCode==svy[3]]
-tmp <- SpatialPointsDataFrame(tmp[, .(X_mod, Y_mod)], data.frame(tmp),
-  proj4string=CRS("+init=epsg:4326"), match.ID=F)
-tm_shape(spei[["X2010.08.16"]]) + tm_raster(n=8) +
-  tm_shape(tmp, is.master=T) +
-  tm_dots("spei03", colorNA="black",
-    title=paste(svy[3], "SPEI03", "2010-Aug", sep="<br/>"))
 
 # What's the deal with the remaining missing months?
 tmp <- out.spei[, is.na(spei03), keyby=.(svyCode, month)]
