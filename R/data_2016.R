@@ -1414,9 +1414,9 @@ gps[, .(uniqueN(hhid), uniqueN(hhid_str)), by=svyCode]
 # 1: tza2008 2806 2806
 # 2: tza2010 3917 3917
 # 3: tza2012 4988 4988
-# 4: uga2009 2951 2951 => 24
-# 5: uga2010 2671 2671 => 45
-# 6: uga2011 2761 2761 => 89
+# 4: uga2009 2951 2951
+# 5: uga2010 2671 2671
+# 6: uga2011 2761 2761
 # => OK, as expected
 
 gps[, .(uniqueN(hhid), uniqueN(hhid_str)), by=svyCode][, .(sum(V1), sum(V2))]
@@ -1470,6 +1470,7 @@ rn.bad <- out.spei[is.na(spei03), .N, by=rn][N==780][, unique(rn)]
 # Let's print them for Beliyou
 tm_shape(spei[[100]]) + tm_raster(n=8) +
   tm_shape(gps.pts[gps.pts$rn %in% rn.bad,], is.master=T) + tm_dots()
+
 imp <- gps.pts[!gps.pts$rn %in% rn.bad,]
 bad <- gps.pts[gps.pts$rn %in% rn.bad,]
 tmp <- knn(coordinates(imp), coordinates(bad), k=1)
@@ -1531,7 +1532,6 @@ dcast(tmp, month~svyCode)
 
 # Let's impute these again as above using nearby values by month
 rn.bad <- out.spei[is.na(spei03), .N, by=rn][, unique(rn)]
-# => 2717 hhlds (but some missing only a few months)
 imp <- gps.pts[!gps.pts$rn %in% rn.bad,]
 bad <- gps.pts[gps.pts$rn %in% rn.bad,]
 tmp <- knn(coordinates(imp), coordinates(bad), k=1)
@@ -1823,14 +1823,6 @@ NAvalue(chirps) <- -9999
 spplot(chirps[[1]])
 # => OK looks good now
 
-# Re-save well-formatted netCDF for re-use
-chirps <- setZ(chirps, tm)
-names(chirps) <- tm
-writeRaster(chirps, filename="./CHIRPSv2/v2p0chirps.nc",
-  varname="CHIRPS v2.0", varunit="mm", zname="time", zunit="month", overwrite=T)
-chirps <- brick("./CHIRPSv2/v2p0chirps.bak.nc")
-NAvalue(chirps) <- -9999
-
 # Extract monthly precipitation
 spplot(chirps[[100]])
 tm_shape(chirps[[100]]) + tm_raster(n=8) +
@@ -1852,7 +1844,7 @@ summary(out.chirps$pre_chirps)
 rn.bad <- out.chirps[is.na(pre_chirps), .N, by=rn][N>200][, unique(rn)]
 # => none
 
-# Merge in survey and hhlds details
+# Merge in survey and hhlds attributes
 tmp <- data.table(gps.pts@data)
 setkey(tmp, rn)
 setkey(out.chirps, rn)
