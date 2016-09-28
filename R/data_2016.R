@@ -1708,7 +1708,7 @@ summary(out.udel$temp_udel)
 # Convert cm/month to mm/month
 out.udel[, pre_udel := pre_udel*10]
 
-# Merge in survey and hhlds details
+# Merge in survey and hhlds attributes
 tmp <- data.table(gps.pts@data)
 setkey(tmp, rn)
 setkey(out.udel, rn)
@@ -1724,10 +1724,6 @@ out.udel[, .(uniqueN(month), uniqueN(hhid), uniqueN(hhid_str), uniqueN(rn)), by=
 # 5: uga2010 780 2671 2671 2671
 # 6: uga2011 780 2761 2761 2761
 # => OK
-
-# Save hhdls that still have missing month values
-out.udel[is.na(pre_udel), .N, by=.(svyCode, hhid)]
-out.udel[is.na(temp_udel), .N, by=.(svyCode, hhid)]
 
 # Plot a sample month to PDF to check results
 pdf("./out/2016.09/TZA_UGA-GPS-UDEL_2014-01.pdf")
