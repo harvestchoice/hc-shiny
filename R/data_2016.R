@@ -1077,72 +1077,6 @@ gps <- c("Tanz_Y1", "Tanz_Y2", "Tanz_Y3", "UGA_Y1", "UGA_Y2", "UGA_Y3")
 gps <- lapply(gps, function(x) shapefile(paste0("./Admin/2016.09/", x)))
 
 
-# Run some tests on unique `hhid` for Beliyou
-gps.ro <- lapply(gps, function(x) shapefile(paste0("./Admin/2016.09/", x)))
-sapply(gps.ro, names)
-tmp <- data.table(gps.ro[[1]]@data)
-tmp[, .(.N, HHID=uniqueN(hhid), Range=paste(range(hhid), collapse=" -> "))]
-#       N HHID                           Range
-# 1: 2806 1258 1010140020170 -> 55020180210100
-tmp[, .(.N, HHID=uniqueN(hhid_text), Range=paste(range(hhid_text), collapse=" -> "))]
-#       N HHID                           Range
-# 1: 2806 2806 10010030040014 -> 9050123250059
-tmp[is.na(lat_modifi) | lat_modifi==0, .N]
-# 0
-tmp[, uniqueN(paste(ea_id, hhid))]
-# 1726
-setkey(tmp, ea_id, hhid)
-tmp <- tmp[duplicated(tmp), .(hhid=as.character(hhid), ea_id, lat_modifi, lon_modifi)]
-
-tmp <- data.table(gps.ro[[2]]@data)
-tmp[, .(.N, HHID=uniqueN(y2_hhid), Range=paste(range(y2_hhid), collapse=" -> "))]
-#       N HHID                               Range
-# 1: 3917 1367 101014002017000 -> 5502018021010000
-tmp[, .(.N, HHID=uniqueN(HH_Text), Range=paste(range(HH_Text), collapse=" -> "))]
-tmp[, .(.N, HHID=uniqueN(HH_Text), Range=paste(range(HH_Text), collapse=" -> "))]
-tmp[is.na(lat_modifi) | lat_modifi==0, .N]
-# 0
-tmp[, uniqueN(paste(ea_id, y2_hhid))]
-# 1975
-tmp[, uniqueN(paste(ea_id, HH_Text))]
-# 3495
-
-tmp <- data.table(gps.ro[[3]]@data)
-tmp[, .(.N, HHID=uniqueN(y3_hhid), Range=paste(range(y3_hhid), collapse=" -> "))]
-#       N HHID                Range
-# 1: 4988 4988 0001-001 -> 3924-001
-tmp[, .(.N, HHID=uniqueN(HH_Text), Range=paste(range(HH_Text), collapse=" -> "))]
-tmp[is.na(lat_dd_mod) | lat_dd_mod==0, .N]
-# 0
-
-tmp <- data.table(gps.ro[[4]]@data)
-tmp[, .(.N, HHID=uniqueN(HHID), Range=paste(range(HHID), collapse=" -> "))]
-#       N HHID                      Range
-# 1: 2975 2931 1013000201 -> 418300230802
-tmp[, .(.N, HHID=uniqueN(HHID_Y0), Range=paste(range(HHID_Y0), collapse=" -> "))]
-#       N HHID           Range
-# 1: 2975 1347 0 -> 2143000310
-tmp[is.na(lat_mod) | lat_mod==0, .N]
-# [1] 24
-
-tmp <- data.table(gps.ro[[5]]@data)
-tmp[, .(.N, HHID=uniqueN(HHID), Range=paste(range(HHID), collapse=" -> "))]
-#       N HHID                         Range
-# 1: 2716 2685 1013000201 -> 211530004040000
-tmp[is.na(lat_mod) | lat_mod==0, .N]
-# [1] 45
-setkey(tmp, HHID)
-
-tmp <- data.table(gps.ro[[6]]@data)
-tmp[, .(.N, HHID=uniqueN(HHID), Range=paste(range(HHID), collapse=" -> "))]
-#       N HHID           Range
-# 1: 2850 1074 0 -> 2143000310
-tmp[, .(.N, HHID=uniqueN(HHID_Text), Range=paste(range(HHID_Text), collapse=" -> "))]
-#       N HHID                    Range
-# 1: 2850 2850 1013000201 -> 4193003509
-tmp[is.na(lat_mod) | lat_mod==0, .N]
-# [1] 89
-
 # | svyCode | var       |    N | HHID | AE+HHID     | Range                                 | Bad N |
 # |---------+-----------+------+------+-------------+---------------------------------------+-------|
 # | tza2008 | hhid      | 2806 | 1258 | 1726        | 1010140020170    ->    55020180210100 |     0 |
@@ -1452,17 +1386,7 @@ svy <- c("tza2008", "tza2010", "tza2012", "uga2009", "uga2010", "uga2011")
 svy.wave <- rep(c("Y1", "Y2", "Y3"), 2)
 for (i in 1:6) gps[[i]]$svyCode <- svy[i]
 for (i in 1:6) gps[[i]]$wave <- svy.wave[i]
-
 gps <- rbindlist(gps)
-#    svyCode   V1   V2
-# 1: tza2008 2806 2806
-# 2: tza2010 3917 3917
-# 3: tza2012 4988 4988
-# 4: uga2009 2975 2975
-# 5: uga2010 2716 2716
-# 6: uga2011 2850 2850
-# => OK
-
 
 # Check on unique `hhid` codes and share with Beliyou
 tmp <- gps[, .(.N,
@@ -1512,15 +1436,14 @@ tm_shape(gps.pts[gps.pts$svyCode==svy[6],]) + tm_dots()
 # => looks ok
 
 ## SPEIbase
-# Reproject to SPEI
 proj4string(spei)
 proj4string(gps.pts)
 gps.pts <- spTransform(gps.pts, proj4string(spei))
 gps.pts$rn <- row.names(gps.pts)
 
 # Extract SPEI values for all waves
-# Note that speiMean() creates a 2 degree buffer around the GPS extent) otherwise it
-# seems we are missing points
+# Note that speiMean() creates a 2 degree buffer around the GPS extent otherwise it
+# seems we are missing values
 out.spei <- lapply(1:5, function(x) speiMean(x, gps.pts))
 sapply(out.spei, dim)
 out.spei <- cbind(out.spei[[1]], out.spei[[2]]$spei06, out.spei[[3]]$spei12, out.spei[[4]]$spei24, out.spei[[5]]$spei48)
@@ -1535,9 +1458,7 @@ tmp[, table(N)]
 # 300  214  154   92   27   29 1901
 #
 # Some hhlds are missing 1 to 11 months of data, others are missing the entire 780
-# Let's impute only the ones missing the entire period (i.e. not covered by the rasters)
-# We could also buffer the rasters, but it's pretty much the same as using nearest values
-# given the resolution.
+# Let's impute first the ones missing the entire period (i.e. not covered by the rasters)
 
 # Find nearest points
 library(nabor)
@@ -1560,7 +1481,7 @@ tm_shape(spei[["X2014.04.16"]]) + tm_raster(n=8) +
 tm_shape(gps.pts[gps.pts$rn %in% rn.bad,]) + tm_dots() +
   tm_shape(gps.pts[gps.pts$rn %in% tmp$rn.imp,]) + tm_dots(col="red")
 
-# Impute all (make sure to impute only the SPEI values)
+# Impute missing SPEI values
 id.bad <- out.spei[is.na(spei03), .(rn.bad=rn, month)]
 setkey(tmp, rn.bad)
 setkey(id.bad, rn.bad)
@@ -1569,28 +1490,27 @@ setkey(id.bad, rn.imp, month)
 setkey(out.spei, rn, month)
 tmp <- out.spei[id.bad]
 
-out.spei.imp <- out.spei
 setkey(tmp, rn.bad, month)
-setkey(out.spei.imp, rn, month)
-out.spei.imp[tmp, spei03 := tmp$spei03]
-out.spei.imp[tmp, spei06 := tmp$spei06]
-out.spei.imp[tmp, spei12 := tmp$spei12]
-out.spei.imp[tmp, spei24 := tmp$spei24]
-out.spei.imp[tmp, spei48 := tmp$spei48]
+setkey(out.spei, rn, month)
+out.spei[tmp, spei03 := tmp$spei03]
+out.spei[tmp, spei06 := tmp$spei06]
+out.spei[tmp, spei12 := tmp$spei12]
+out.spei[tmp, spei24 := tmp$spei24]
+out.spei[tmp, spei48 := tmp$spei48]
 
 # Merge in survey and hhld details
 tmp <- data.table(gps.pts@data)
 setkey(tmp, rn)
-setkey(out.spei.imp, rn)
-out.spei.imp <- tmp[out.spei.imp]
+setkey(out.spei, rn)
+out.spei <- tmp[out.spei]
 
 # Verify
-summary(out.spei.imp$spei03)
+summary(out.spei$spei03)
 #     Min.  1st Qu.   Median     Mean  3rd Qu.     Max.
 # -5.08400 -0.69010  0.03662  0.04982  0.77580  3.44100
 
 # Re-check unique `hhid`
-out.spei.imp[, .(uniqueN(month), uniqueN(hhid), uniqueN(hhid_str), uniqueN(rn)), by=svyCode]
+out.spei[, .(uniqueN(month), uniqueN(hhid), uniqueN(hhid_str), uniqueN(rn)), by=svyCode]
 #    svyCode  V1   V2   V3   V4
 # 1: tza2008 780 2806 2806 2806
 # 2: tza2010 780 3917 3917 3917
@@ -1599,8 +1519,8 @@ out.spei.imp[, .(uniqueN(month), uniqueN(hhid), uniqueN(hhid_str), uniqueN(rn)),
 # 5: uga2010 780 2671 2671 2671
 # 6: uga2011 780 2761 2761 2761
 
-# Verify (e.g. bad month 2010-08-01)
-tmp <- out.spei.imp[month=="2010-08-01" & svyCode==svy[3]]
+# Map sample month (e.g. bad month 2010-08-01)
+tmp <- out.spei[month=="2010-08-01" & svyCode==svy[3]]
 tmp <- SpatialPointsDataFrame(tmp[, .(X_mod, Y_mod)], data.frame(tmp),
   proj4string=CRS("+init=epsg:4326"), match.ID=F)
 tm_shape(spei[["X2010.08.16"]]) + tm_raster(n=8) +
@@ -1609,16 +1529,18 @@ tm_shape(spei[["X2010.08.16"]]) + tm_raster(n=8) +
     title=paste(svy[3], "SPEI03", "2010-Aug", sep="<br/>"))
 
 # What's the deal with the remaining missing months?
-tmp <- out.spei.imp[, is.na(spei03), keyby=.(svyCode, month)]
+tmp <- out.spei[, is.na(spei03), keyby=.(svyCode, month)]
 ggplot(tmp[svyCode %in% svy[1:3]], aes(month, weight=V1)) +
   geom_bar(fill="red") + ylim(0, 70) +
   scale_x_date(date_labels="%y %b") +
   facet_grid(svyCode~.)
-tmp <- out.spei.imp[is.na(spei03), .(missing=.N), keyby=.(svyCode, month)]
-tmp <- dcast(tmp, month~svyCode)
+tmp <- out.spei[is.na(spei03), .(missing=.N), keyby=.(svyCode, month)]
+dcast(tmp, month~svyCode)
+# => August, Sep, Oct are missing across a few years (don't know why, does not look
+# like the rasters have missing pixel values)
 
-# Let's impute again as above using nearby values
-rn.bad <- out.spei.imp[is.na(spei03), .N, by=rn][, unique(rn)]
+# Let's impute these again as above using nearby values by month
+rn.bad <- out.spei[is.na(spei03), .N, by=rn][, unique(rn)]
 # => 2717 hhlds (but some missing only a few months)
 imp <- gps.pts[!gps.pts$rn %in% rn.bad,]
 bad <- gps.pts[gps.pts$rn %in% rn.bad,]
@@ -1631,28 +1553,25 @@ tm_shape(spei[["X2014.04.16"]]) + tm_raster(n=8) +
   tm_shape(gps.pts[gps.pts$rn %in% tmp$rn.imp,]) + tm_dots(col="red")
 
 # Impute all by month (make sure to impute only the SPEI values)
-id.bad <- out.spei.imp[is.na(spei03), .(rn.bad=rn, month)]
+id.bad <- out.spei[is.na(spei03), .(rn.bad=rn, month)]
 setkey(tmp, rn.bad)
 setkey(id.bad, rn.bad)
 id.bad <- tmp[id.bad]
 setkey(id.bad, rn.imp, month)
-setkey(out.spei.imp, rn, month)
-tmp <- out.spei.imp[id.bad]
+setkey(out.spei, rn, month)
+tmp <- out.spei[id.bad]
 
 setkey(tmp, rn.bad, month)
-setkey(out.spei.imp, rn, month)
-out.spei.imp[tmp, spei03 := tmp$spei03]
-out.spei.imp[tmp, spei06 := tmp$spei06]
-out.spei.imp[tmp, spei12 := tmp$spei12]
-out.spei.imp[tmp, spei24 := tmp$spei24]
-out.spei.imp[tmp, spei48 := tmp$spei48]
+setkey(out.spei, rn, month)
+out.spei[tmp, spei03 := tmp$spei03]
+out.spei[tmp, spei06 := tmp$spei06]
+out.spei[tmp, spei12 := tmp$spei12]
+out.spei[tmp, spei24 := tmp$spei24]
+out.spei[tmp, spei48 := tmp$spei48]
 
 summary(out.spei.imp$spei03)
 #     Min.  1st Qu.   Median     Mean  3rd Qu.     Max.
 # -5.08400 -0.69130  0.03364  0.04739  0.77420  3.44100
-
-# Seems good
-out.spei <- out.spei.imp
 
 
 # Plot a sample month to PDF to visually check results
@@ -1673,7 +1592,7 @@ dev.off()
 # => looks ok
 
 
-# Export to STATA, 1 file per country
+# Export to STATA, make 1 file per country
 setkey(out.spei, svyCode, hhid, month)
 
 lbl <- c(
